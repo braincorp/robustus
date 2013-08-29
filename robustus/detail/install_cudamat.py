@@ -9,16 +9,16 @@ import subprocess
 import sys
 
 
-def install(roboenv, version):
-    cudamat_install_dir = os.path.join(roboenv.cache, 'cudamat')
+def install(robustus, version):
+    cudamat_install_dir = os.path.join(robustus.cache, 'cudamat')
     if not os.path.isdir(cudamat_install_dir):
         logging.info('Downloading cudamat')
         cwd = os.getcwd()
         url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/cudamat-01-15-2010.tar.gz'
-        subprocess.call(['wget', '-c', url, '-P', roboenv.cache])
+        subprocess.call(['wget', '-c', url, '-P', robustus.cache])
 
         logging.info('Unpacking cudamat')
-        os.chdir(roboenv.cache)
+        os.chdir(robustus.cache)
         cudamat_tar = 'cudamat-01-15-2010.tar.gz'
         subprocess.call(['tar', 'xzvf', cudamat_tar])
 

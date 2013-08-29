@@ -4,15 +4,15 @@
 # =============================================================================
 
 from setuptools import setup
-import roboenv
+import robustus
 
 
-setup(name='roboenv',
+setup(name='robustus',
       author='Brain Corporation',
       author_email='trifonov@braincorporation.com',
       url='https://github.com/braincorp/roboenv',
       long_description='Tool to make and configure python virtualenv, setup necessary packages and cache them if necessary.',
-      version=roboenv.__version__,
-      packages=['roboenv', 'roboenv.installers'],
-      scripts=['bin/roboenv'],
+      version=robustus.__version__,
+      packages=['robustus', 'robustus.detail'],
+      scripts=['bin/robustus'],
       install_requires=['virtualenv==1.10.1'])

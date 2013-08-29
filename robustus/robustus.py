@@ -9,60 +9,13 @@ import logging
 import os
 import subprocess
 import sys
+from detail import RobustusException, parse_requirement, read_requirement_file
+# for doctests
+import detail
 
 
-class RoboenvException(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
-
-
-def parse_requirement(requirement):
-    """
-    Extract requirement name and version from requirement string
-    >>> parse_requirement('numpy==1.7.2')
-    ('numpy', '1.7.2')
-    >>> parse_requirement('   numpy == 1.7.2  ')
-    ('numpy', '1.7.2')
-    >>> parse_requirement('numpy')
-    ('numpy', None)
-    >>> parse_requirement('numpy==1.7.2==1.7.2')
-    Traceback (most recent call last):
-        ...
-    RoboenvException: invalid requirement specified "numpy==1.7.2==1.7.2"
-    >>> parse_requirement('   ')
-    Traceback (most recent call last):
-        ...
-    RoboenvException: invalid requirement specified "   "
-    >>> parse_requirement('numpy==')
-    Traceback (most recent call last):
-        ...
-    RoboenvException: invalid requirement specified "numpy=="
-    """
-    args = requirement.split('==')
-    if len(args) == 1:
-        package, version = args[0].strip(), None
-    elif len(args) == 2:
-        package, version = args[0].strip(), args[1].strip()
-    else:
-        raise RoboenvException('invalid requirement specified "%s"' % requirement)
-
-    if not package or (version is not None and not version):
-        raise RoboenvException('invalid requirement specified "%s"' % requirement)
-
-    return package, version
-
-
-def read_requirement_file(requirement_file):
-    requirements = []
-    for line in open(requirement_file, 'r'):
-        if line[0] == '#' or len(line) < 2:
-            continue
-        requirements.append(parse_requirement(line))
-    return requirements
-
-
-class Roboenv(object):
-    settings_file_path = '.roboenv'
+class Robustus(object):
+    settings_file_path = '.robustus'
     installed_requirements_file_path = 'installed_requirements.txt'
     default_settings = {
         'cache': 'wheelhouse'
@@ -70,30 +23,30 @@ class Roboenv(object):
 
     def __init__(self, args):
         """
-        Initialize roboenv tool. Should be called if sys.executable is in roboenv
+        Initialize robustus tool. Should be called if sys.executable is in robustus environment
         @param: args - command line arguments
         """
         self.env = os.path.abspath(os.path.join(sys.executable, os.pardir, os.pardir))
         self.pip_executable = None
         self.easy_install_executable = None
-        self.settings = self._override_settings(Roboenv.default_settings, args)
+        self.settings = self._override_settings(Robustus.default_settings, args)
 
-        # check if we are in roboenv environment
-        if not os.path.isfile(Roboenv.settings_file_path):
-            raise RoboenvException('bad roboenv ' + self.env + ': .roboenv settings file not found')
+        # check if we are in robustus environment
+        if not os.path.isfile(Robustus.settings_file_path):
+            raise RobustusException('bad robustus environment ' + self.env + ': .robustus settings file not found')
         self.pip_executable = os.path.join(self.env, 'bin/pip')
         if not os.path.isfile(self.pip_executable):
-            raise RoboenvException('bad roboenv ' + self.env + ': pip not found')
+            raise RobustusException('bad robustus environment ' + self.env + ': pip not found')
         self.easy_install_executable = os.path.join(self.env, 'bin/easy_install')
         if not os.path.isfile(self.easy_install_executable):
-            raise RoboenvException('bad roboenv ' + self.env + ': easy_install not found')
+            raise RobustusException('bad robustus environment ' + self.env + ': easy_install not found')
 
         # read settings
-        settings = eval(open(Roboenv.settings_file_path).read())
-        settings = Roboenv._override_settings(settings, args)
+        settings = eval(open(Robustus.settings_file_path).read())
+        settings = Robustus._override_settings(settings, args)
 
         # read cached packages
-        req_file = os.path.join(self.cache, Roboenv.installed_requirements_file_path)
+        req_file = os.path.join(self.cache, Robustus.installed_requirements_file_path)
         if os.path.isfile(req_file):
             self.cached_packages = read_requirement_file(req_file)
         else:
@@ -107,9 +60,9 @@ class Roboenv(object):
         return settings
 
     @staticmethod
-    def init(args):
+    def env(args):
         """
-        Create roboenv.
+        Create robustus environment.
         @param args: command line arguments
         """
         # create virtualenv
@@ -170,11 +123,11 @@ class Roboenv(object):
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
         # compose settings file
-        settings = Roboenv._override_settings(Roboenv.default_settings, args)
-        with open(os.path.join(env, Roboenv.settings_file_path), 'w') as file:
+        settings = Robustus._override_settings(Robustus.default_settings, args)
+        with open(os.path.join(env, Robustus.settings_file_path), 'w') as file:
             file.write(str(settings))
 
-        # install roboenv
+        # install robustus
         cwd = os.getcwd()
         script_dir = os.path.dirname(os.path.realpath(__file__))
         setup_dir = os.path.abspath(os.path.join(script_dir, os.path.pardir))
@@ -221,7 +174,7 @@ class Roboenv(object):
 
     def _flush_cached_packages(self):
         # write cached packages list to cache requirements file
-        f = open(os.path.join(self.cache, Roboenv.installed_requirements_file_path))
+        f = open(os.path.join(self.cache, Robustus.installed_requirements_file_path))
         for package, version in self.cached_packages:
             f.write('%s==%s' % (package, version))
 
@@ -230,7 +183,7 @@ class Roboenv(object):
         logging.info('Installing %s==%s' % (package, version))
         try:
             # try to use specific install script
-            install_module = importlib.import_module('install_%s' % package)
+            install_module = importlib.import_module('detail.install_%s' % package)
             install_module.install(self, version)
         except ImportError:
             self.install_through_wheeling(package, version)
@@ -241,7 +194,7 @@ class Roboenv(object):
 
     def install(self, args):
         if args.packages is None and args.requirement is None:
-            raise RoboenvException('You must give at least one requirement to install (see "roboenv install -h")')
+            raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
         # construct requirements list
         requirements = []
@@ -284,16 +237,16 @@ class Roboenv(object):
 def execute(argv):
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
-                                     prog='roboenv')
+                                     prog='robustus')
     parser.add_argument('--cache', default='wheelhouse', help='binary package cache directory')
-    subparsers = parser.add_subparsers(help='roboenv commands')
+    subparsers = parser.add_subparsers(help='robustus commands')
 
-    init_parser = subparsers.add_parser('init', help='make roboenv')
-    init_parser.add_argument('init_args',
+    env_parser = subparsers.add_parser('env', help='make robustus')
+    env_parser.add_argument('init_args',
                              nargs='+',
-                             default=['.env', '--prompt', 'roboenv'],
+                             default=['.env', '--prompt', 'robustus'],
                              help='virtualenv arguments')
-    init_parser.set_defaults(func=Roboenv.init)
+    env_parser.set_defaults(func=Robustus.env)
 
     install_parser = subparsers.add_parser('install', help='install packages')
     install_parser.add_argument('-r', '--requirement',
@@ -303,24 +256,24 @@ def execute(argv):
     install_parser.add_argument('packages',
                                 nargs='?',
                                 help='packages to install in format <package name>==version')
-    install_parser.set_defaults(func=Roboenv.install)
+    install_parser.set_defaults(func=Robustus.install)
 
     download_cache_parser = subparsers.add_parser('download_cache', help='download cache from server or path')
     download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
-    download_cache_parser.set_defaults(func=Roboenv.download_cache)
+    download_cache_parser.set_defaults(func=Robustus.download_cache)
 
     upload_cache_parser = subparsers.add_parser('upload_cache', help='upload cache to server or path')
     upload_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
-    upload_cache_parser.set_defaults(func=Roboenv.upload_cache)
+    upload_cache_parser.set_defaults(func=Robustus.upload_cache)
 
     args = parser.parse_args(argv)
-    if args.func == Roboenv.init:
-        Roboenv.init(args)
+    if args.func == Robustus.env:
+        Robustus.env(args)
     else:
         try:
-            roboenv = Roboenv(args)
-            args.func(roboenv, args)
-        except RoboenvException as exc:
+            robustus = Robustus(args)
+            args.func(robustus, args)
+        except RobustusException as exc:
             logging.critical(exc.message)
             exit(1)
 

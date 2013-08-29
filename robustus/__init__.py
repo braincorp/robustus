@@ -5,4 +5,4 @@
 
 __version__ = '0.0.1'
 
-from roboenv import execute, Roboenv, RoboenvException
+from robustus import execute, Robustus, RobustusException

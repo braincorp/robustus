@@ -8,17 +8,17 @@ import os
 import subprocess
 import shutil
 import sys
-from tools import cp
+from utility import cp
 
 
-def install(roboenv, version):
+def install(robustus, version):
     try:
         import cv2
     except ImportError:
         if version == '2.4.4':
             cwd = os.getcwd()
             cv_work_dir = os.path.join(cwd, 'opencv-2.4.4')
-            cv_install_dir = os.path.join(roboenv.cache, 'opencv-2.4.4')
+            cv_install_dir = os.path.join(robustus.cache, 'opencv-2.4.4')
             cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
             if not os.path.isfile(cv2so):
                 logging.info('Downloading OpenCV')
