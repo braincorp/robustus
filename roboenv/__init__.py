@@ -5,4 +5,4 @@
 
 __version__ = '0.0.1'
 
-from roboenv import execute, init, install, download_cache, upload_cache, RoboenvException
+from roboenv import execute, Roboenv, RoboenvException

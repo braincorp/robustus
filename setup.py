@@ -13,6 +13,6 @@ setup(name='roboenv',
       url='https://github.com/braincorp/roboenv',
       long_description='Tool to make and configure python virtualenv, setup necessary packages and cache them if necessary.',
       version=roboenv.__version__,
-      packages=['roboenv'],
+      packages=['roboenv', 'roboenv.installers'],
       scripts=['bin/roboenv'],
       install_requires=['virtualenv==1.10.1'])
