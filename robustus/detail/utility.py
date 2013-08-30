@@ -73,6 +73,23 @@ def parse_requirement(requirement):
     return package, version
 
 
+def package_str(package, version):
+    """
+    Get string to install package using pip.
+    :param package: name of the package.
+    :param version: version of the package
+    :return: string representing package
+    Examples:
+    >>> package_str('numpy', '1.7.2')
+    numpy==1.7.2
+    >>> package_str('numpy', None)
+    numpy
+    """
+    if version is not None:
+        return '%s==%s' % (package, version)
+    return package
+
+
 def read_requirement_file(requirement_file):
     requirements = []
     for line in open(requirement_file, 'r'):

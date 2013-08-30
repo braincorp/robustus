@@ -30,6 +30,10 @@ You can specify binary package cache where to install package.
 You may also install non pip packages, e.g. opencv or cudamat. Robustus has
 platform specific scripts to setup them.
 
+In order to list binary packages cached in robustus cache you can use freeze command.
+
+    robustus freeze
+
 You may also want to reuse existing binary package cache. You can do that by
 downloading cache directory before installing packages. Robustus has convenience
 command to do that. Cache can be stored as a directory or *.tar.gz, *.tar.bz or
