@@ -7,9 +7,10 @@ import argparse
 import importlib
 import logging
 import os
+import shutil
 import subprocess
 import sys
-from detail import RobustusException, parse_requirement, read_requirement_file, package_str
+from detail import RobustusException, parse_requirement, read_requirement_file, package_str, cp
 # for doctests
 import detail
 
@@ -102,6 +103,7 @@ class Robustus(object):
         subprocess.call([pip_executable, 'uninstall', 'distribute'])
         subprocess.call([pip_executable, 'install', 'https://bitbucket.org/pypa/setuptools/downloads/setuptools-0.8b3.tar.gz'])
         subprocess.call([pip_executable, 'install', 'wheel==0.16.0'])
+        subprocess.call([pip_executable, 'install', 'boto==2.11.0'])
 
         # adding BLAS and LAPACK libraries for CentOS installation
         if os.path.isfile('/usr/lib64/libblas.so.3'):
@@ -150,6 +152,7 @@ class Robustus(object):
         pstr = package_str(package, version)
 
         # if wheelhouse doesn't contain necessary requirement - make a wheel
+        print package, version
         if (package, version) not in self.cached_packages:
             logging.info('Wheel not found, downloading package')
             subprocess.call([self.pip_executable,
@@ -189,16 +192,17 @@ class Robustus(object):
         try:
             # try to use specific install script
             install_module = importlib.import_module('robustus.detail.install_%s' % package)
-            package_installed = install_module.install(self, version)
+            install_module.install(self, version)
         except ImportError:
-            package_installed = self.install_through_wheeling(package, version)
+            self.install_through_wheeling(package, version)
+        except RobustusException as exc:
+            logging.error(exc.message)
+            return
 
-        if package_installed:
+        if (package, version) not in self.cached_packages:
             self.cached_packages.append((package, version))
             self._flush_cached_packages()  # make sure requirements are saved in case of crash
-            logging.info('Done')
-        else:
-            logging.error('Failed to install ' + pstr)
+        logging.info('Done')
 
     def install(self, args):
         # construct requirements list
@@ -219,31 +223,131 @@ class Robustus(object):
         for package, version in self.cached_packages:
             print package_str(package, version)
 
+    def download_cache_from_amazon(self, filename, bucket_name, key, secret):
+        if filename is None or bucket_name is None:
+            raise RobustusException('In order to download from amazon S3 you should specify filename,'
+                                    'bucket, access key and secret access key, see "robustus download_cache -h"')
+
+        try:
+            import boto
+            from boto.s3.key import Key
+
+            # set boto lib debug to critical
+            logging.getLogger('boto').setLevel(logging.CRITICAL)
+
+            # connect to the bucket
+            conn = boto.connect_s3(key, secret)
+            bucket = conn.get_bucket(bucket_name)
+
+            # go through the list of files
+            cwd = os.getcwd()
+            os.chdir(self.cache)
+            for l in bucket.list():
+                if str(l.key) == filename:
+                    l.get_contents_to_filename(filename)
+                    break
+            os.chdir(cwd)
+            if not os.path.exists(os.path.join(self.cache, filename)):
+                raise RobustusException('Can\'t find file %s in amazon cloud bucket %s' % (filename, bucket_name))
+        except ImportError:
+            raise RobustusException('To be able to download from S3 cloud you should install boto library')
+        except Exception as e:
+            raise RobustusException(e.message)
+
     def download_cache(self, args):
         """
         Download wheels (binary package archives) from wheelhouse_url and unzip them in wheelhouse
-        @param wheelhouse: directory to store wheels
-        @param wheelhouse_url: url where to grap wheels archive
         @return: None
         """
         cwd = os.getcwd()
-        os.chdir(wheelhouse)
+        os.chdir(self.cache)
+
+        wheelhouse_archive = os.path.basename(args.url)
         try:
-            wheelhouse_archive = wheelhouse_url.split('/')[-1]
-            logging.info('Downloading ' + wheelhouse_url)
-            # with -c option wget won't download file if it has been already downloaded
-            # and continue if it was partially downloaded
-            subprocess.call(['wget', '-c', wheelhouse_url])
+            if args.bucket is not None:
+                self.download_cache_from_amazon(wheelhouse_archive, args.bucket, args.key, args.secret)
+            else:
+                logging.info('Downloading ' + args.url)
+                # with -c option wget won't download file if it has been already downloaded
+                # and continue if it was partially downloaded
+                subprocess.call(['wget', '-c', args.url])
+        except:
+            os.chdir(cwd)
+            raise
+
+        wheelhouse_archive_lowercase = wheelhouse_archive.lower()
+        if wheelhouse_archive_lowercase.endswith('.tar.gz'):
             logging.info('Unzipping')
-            subprocess.call(['tar', 'xjvf', wheelhouse_archive])
-            logging.info('Done')
-        except Exception as exc:
-            logging.error(exc.message)
+            subprocess.call(['tar', '-xzvf', wheelhouse_archive])
+        elif wheelhouse_archive_lowercase.endswith('.tar.bz'):
+            logging.info('Unzipping')
+            subprocess.call(['tar', '-xjvf', wheelhouse_archive])
+        elif wheelhouse_archive_lowercase.endswith('.zip'):
+            logging.info('Unzipping')
+            subprocess.call(['unzip', wheelhouse_archive])
+        else:
+            cp('%s/*' % wheelhouse_archive, '.')
+            shutil.rmtree(wheelhouse_archive)
+
+        if os.path.isfile(wheelhouse_archive):
+            os.remove(wheelhouse_archive)
         os.chdir(cwd)
+        logging.info('Done')
+
+    def upload_cache_to_amazon(self, filename, bucket_name, key, secret, public):
+        if filename is None or bucket_name is None or key is None or secret is None:
+            raise RobustusException('In order to upload to amazon S3 you should specify filename,'
+                                    'bucket, access key and secret access key, see "robustus upload_cache -h"')
+
+        if os.path.isdir(filename):
+            raise RobustusException('Can\'t upload directory to amazon S3, please specify archive name')
+
+        try:
+            import boto
+            from boto.s3.key import Key
+
+            # set boto lib debug to critical
+            logging.getLogger('boto').setLevel(logging.CRITICAL)
+
+            # connect to the bucket
+            conn = boto.connect_s3(key, secret)
+            bucket = conn.get_bucket(bucket_name)
+
+            # create a key to keep track of our file in the storage
+            k = Key(bucket)
+            k.key = filename
+            k.set_contents_from_filename(filename)
+            if public:
+                k.make_public()
+        except ImportError:
+            raise RobustusException('To be able to upload to S3 cloud you should install boto library')
+        except Exception as e:
+            raise RobustusException(e.message)
 
     def upload_cache(self, args):
-        self._read_settings()
-        pass
+        cwd = os.getcwd()
+        os.chdir(self.cache)
+
+        # compress cache
+        cache_archive = os.path.basename(args.url)
+        cache_archive_lowercase = cache_archive.lower()
+        if cache_archive_lowercase.endswith('.tar.gz'):
+            subprocess.call(['tar', '-zcvf', cache_archive] + os.listdir(os.getcwd()))
+        elif cache_archive_lowercase.endswith('.tar.bz'):
+            subprocess.call(['tar', '-jcvf', cache_archive] + os.listdir(os.getcwd()))
+        elif cache_archive_lowercase.endswith('.zip'):
+            subprocess.call(['zip', cache_archive] + os.listdir(os.getcwd()))
+
+        try:
+            if args.bucket is not None:
+                self.upload_cache_to_amazon(cache_archive, args.bucket, args.key, args.secret, args.public)
+            else:
+                # regular upload
+                raise RobustusException('not implemented')
+        finally:
+            if os.path.isfile(cache_archive):
+                os.remove(cache_archive)
+            os.chdir(cwd)
 
 
 def execute(argv):
@@ -273,12 +377,28 @@ def execute(argv):
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
     freeze_parser.set_defaults(func=Robustus.freeze)
 
-    download_cache_parser = subparsers.add_parser('download_cache', help='download cache from server or path')
+    download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path')
     download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
+    download_cache_parser.add_argument('-b', '--bucket',
+                                       help='amazon S3 bucket to download from')
+    download_cache_parser.add_argument('-k', '--key',
+                                       help='amazon S3 access key')
+    download_cache_parser.add_argument('-s', '--secret',
+                                       help='amazon S3 secret access key')
     download_cache_parser.set_defaults(func=Robustus.download_cache)
 
-    upload_cache_parser = subparsers.add_parser('upload_cache', help='upload cache to server or path')
-    upload_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
+    upload_cache_parser = subparsers.add_parser('upload-cache', help='upload cache to server or path')
+    upload_cache_parser.add_argument('url', help='cache filename or url (directory, *.tar.gz, *.tar.bz or *.zip)')
+    upload_cache_parser.add_argument('-b', '--bucket',
+                                     help='amazon S3 bucket to upload into')
+    upload_cache_parser.add_argument('-k', '--key',
+                                     help='amazon S3 access key')
+    upload_cache_parser.add_argument('-s', '--secret',
+                                     help='amazon S3 secret access key')
+    upload_cache_parser.add_argument('-p', '--public',
+                                     action='store_true',
+                                     default=False,
+                                     help='make uploaded file to amazon S3 public')
     upload_cache_parser.set_defaults(func=Robustus.upload_cache)
 
     args = parser.parse_args(argv)

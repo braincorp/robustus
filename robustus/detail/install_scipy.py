@@ -29,5 +29,3 @@ def install(robustus, version):
         if sys.platform.startswith('darwin'):
             # undo LDFLAGS changes on OS X
             os.environ['LDFLAGS'] = old_ld_flags
-
-    return True

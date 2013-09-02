@@ -7,6 +7,7 @@ Tool to make and configure python virtualenv, setup necessary packages and cache
 * python 2.7
 * virtualenv
 * pytest (for testing)
+* boto (for amazon s3, will be installed automatically into robustus env)
 
 ### Usage
 First you need to create virtual environment. Robustus will automatically look
@@ -48,3 +49,9 @@ In the same manner you can upload cache.
 
 Make sure that binary package cache is suitable for your platform. It is highly
 recommended to use cached packages only on the machine there they have been compiled.
+
+To upload/download from amazon S3 cloud you should also specify bucket name, key and secret key.
+
+    robustus upload-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key> --public
+    robustus download-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key>
+    robustus download-cache https://s3.amazonaws.com/<bucket_name>/cache.tar.bz

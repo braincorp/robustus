@@ -39,5 +39,3 @@ def install(robustus, version):
         with open(cudamat_py, 'w') as f:
             f.write(cudamat_py_source.replace('libcudamat.so', cudamat_so))
         os.symlink(cudamat_install_dir, cudamat_python_dir)
-
-    return True
