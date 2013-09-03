@@ -70,20 +70,22 @@ class Robustus(object):
         @param args: command line arguments
         """
         # create virtualenv
-        env = args.init_args[-1]
         logging.info('Creating virtualenv')
-        subprocess.call(['virtualenv'] + args.init_args)
+        virtualenv_args = ['virtualenv', args.env, '--prompt', args.prompt]
+        if args.python is not None:
+            virtualenv_args += ['--python', args.python]
+        subprocess.call(virtualenv_args)
 
-        python_executable = os.path.abspath(os.path.join(env, 'bin/python'))
-        pip_executable = os.path.abspath(os.path.join(env, 'bin/pip'))
-        easy_install_executable = os.path.abspath(os.path.join(env, 'bin/easy_install'))
+        python_executable = os.path.abspath(os.path.join(args.env, 'bin/python'))
+        pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
+        easy_install_executable = os.path.abspath(os.path.join(args.env, 'bin/easy_install'))
 
         # check for katipo assembly file
         katipo_assembly = '.katipo/assembly'
         if os.path.isfile(katipo_assembly):
             assembly_opts = eval(open(katipo_assembly).read())
             # add search path for katipo repos
-            with open('%s/lib/python2.7/site-packages/katipo_repos.pth' % env, 'w') as f:
+            with open('%s/lib/python2.7/site-packages/katipo_repos.pth' % args.env, 'w') as f:
                 for repo in assembly_opts.repos:
                     f.write('%s/%s' % (os.getcwd(), repo['path']))
 
@@ -108,28 +110,28 @@ class Robustus(object):
         # adding BLAS and LAPACK libraries for CentOS installation
         if os.path.isfile('/usr/lib64/libblas.so.3'):
             logging.info('Linking libblas to venv')
-            blas_so = os.path.join(env, 'lib64/libblas.so')
+            blas_so = os.path.join(args.env, 'lib64/libblas.so')
             os.symlink('/usr/lib64/libblas.so.3', blas_so)
             os.environ['BLAS'] = blas_so
 
         if os.path.isfile('/usr/lib64/liblapack.so.3'):
             logging.info('Linking liblapack to venv')
-            lapack_so = os.path.join(env, 'lib64/liblapack.so')
+            lapack_so = os.path.join(args.env, 'lib64/liblapack.so')
             os.symlink('/usr/lib64/liblapack.so.3', lapack_so)
             os.environ['LAPACK'] = blas_so
 
         # linking PyQt for CentOS installation
         if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
             logging.info('Linking qt for centos matplotlib backend')
-            os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(env, 'lib/python2.7/site-packages/sip.so'))
-            os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(env, 'lib/python2.7/site-packages/PyQt4'))
+            os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+            os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
 
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
         # compose settings file
         settings = Robustus._override_settings(Robustus.default_settings, args)
-        with open(os.path.join(env, Robustus.settings_file_path), 'w') as file:
+        with open(os.path.join(args.env, Robustus.settings_file_path), 'w') as file:
             file.write(str(settings))
 
         # install robustus
@@ -358,10 +360,14 @@ def execute(argv):
     subparsers = parser.add_subparsers(help='robustus commands')
 
     env_parser = subparsers.add_parser('env', help='make robustus')
-    env_parser.add_argument('init_args',
-                             nargs='+',
-                             default=['.env', '--prompt', 'robustus'],
+    env_parser.add_argument('env',
+                             default='.env',
                              help='virtualenv arguments')
+    env_parser.add_argument('-p', '--python',
+                            help='python interpreter to use')
+    env_parser.add_argument('--prompt',
+                            default='robustus',
+                            help='provides an alternative prompt prefix for this environment')
     env_parser.set_defaults(func=Robustus.env)
 
     install_parser = subparsers.add_parser('install', help='install packages')
