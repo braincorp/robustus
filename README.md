@@ -3,6 +3,11 @@ robustus
 
 Tool to make and configure python virtualenv, setup necessary packages and cache them if necessary.
 
+When amount of 3rd-party libraries used by project grows it requires much effort and
+time to setup working environment with all the libraries and tools installed and paths
+configured. Robustus tries to minimize this effort by providing "one command" install
+scripts and ability to cache binary versions of packages to reuse them in future.
+
 ### Prerequesties
 * python 2.7
 * virtualenv
@@ -18,7 +23,9 @@ to mentioned repositories.
 
 Afterwards you can go to env directory and install packages using usual pip syntax.
 Robustus will store binary packages in 'wheelhouse' directory, you can change it
-using --cache option during creation of environment.
+using --cache option during creation of environment. Most of the packages are stored
+in "wheels" - binary package format used by [wheel](https://pypi.python.org/pypi/wheel)
+library.
 
     robustus install numpy==1.7.2
     robustus install -r <requirements file>
@@ -29,7 +36,10 @@ You can specify binary package cache where to install package.
     robustus --cache ~/wheelhouse install numpy==1.7.2
 
 You may also install non pip packages, e.g. opencv or cudamat. Robustus has
-platform specific scripts to setup them.
+platform specific scripts to setup them. There is no specific format to
+store binary packages. Usually scripts rely on internal
+build framework used by package (i.e. setuptools or cmake) if package is not
+under distutils.
 
 In order to list binary packages cached in robustus cache you can use freeze command.
 
