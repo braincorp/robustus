@@ -15,17 +15,13 @@ scripts and ability to cache binary versions of packages to reuse them in future
 * boto (for amazon s3, will be installed automatically into robustus env)
 
 ### Usage
-First you need to create virtual environment. Robustus will automatically look
-for [katipo](https://github.com/braincorp/katipo) assembly file and add paths
-to mentioned repositories.
+First you need to create virtual environment.
 
     robustus env <dir> --cache <binary package dir> <other virtualenv options>
 
 Afterwards you can go to env directory and install packages using usual pip syntax.
 Robustus will store binary packages in 'wheelhouse' directory, you can change it
-using --cache option during creation of environment. Most of the packages are stored
-in "wheels" - binary package format used by [wheel](https://pypi.python.org/pypi/wheel)
-library.
+using --cache option during creation of environment.
 
     robustus install numpy==1.7.2
     robustus install -r <requirements file>
@@ -36,10 +32,7 @@ You can specify binary package cache where to install package.
     robustus --cache ~/wheelhouse install numpy==1.7.2
 
 You may also install non pip packages, e.g. opencv or cudamat. Robustus has
-platform specific scripts to setup them. There is no specific format to
-store binary packages. Usually scripts rely on internal
-build framework used by package (i.e. setuptools or cmake) if package is not
-under distutils.
+platform specific scripts to setup them.
 
 In order to list binary packages cached in robustus cache you can use freeze command.
 
@@ -65,3 +58,23 @@ To upload/download from amazon S3 cloud you should also specify bucket name, key
     robustus upload-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key> --public
     robustus download-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key>
     robustus download-cache https://s3.amazonaws.com/<bucket_name>/cache.tar.bz
+
+## Cache Format
+
+Robustus cache is a directory with binary package archives. Packages under distutils are compressed
+using [wheel](https://pypi.python.org/pypi/wheel) tool. These are archives created using bdist
+with *.whl extension.
+
+Packages which doesn't support distutils doesn't have any specific format. Usually they are stored
+just as a directory with set of headers/libraries/executables obtained using library build tool
+installation utilities (e.g. cmake install).
+
+Additionally robustus cache has .robustus directory where robustus specific information is stored.
+For each cached package there is a file <package_name>_<package_version> (dots replaced with
+underscores). It is needed for robustus to know that package of specific version is stored in cache,
+so during install it won't build it again. By default this file is empty, but installation scripts can
+use it to store information required to install package (i.e. location of specific library within the
+cache).
+
+As you can see you can freely move cache and merge them by just copying files. Though it is dangerous
+to remove files from the cache as well as move separate files from one cache to another.

@@ -80,15 +80,6 @@ class Robustus(object):
         pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
         easy_install_executable = os.path.abspath(os.path.join(args.env, 'bin/easy_install'))
 
-        # check for katipo assembly file
-        katipo_assembly = '.katipo/assembly'
-        if os.path.isfile(katipo_assembly):
-            assembly_opts = eval(open(katipo_assembly).read())
-            # add search path for katipo repos
-            with open('%s/lib/python2.7/site-packages/katipo_repos.pth' % args.env, 'w') as f:
-                for repo in assembly_opts.repos:
-                    f.write('%s/%s' % (os.getcwd(), repo['path']))
-
         # http://wheel.readthedocs.org/en/latest/
         # wheel is binary packager for python/pip
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
