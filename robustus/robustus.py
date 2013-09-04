@@ -112,9 +112,10 @@ class Robustus(object):
             os.environ['LAPACK'] = blas_so
 
         # linking PyQt for CentOS installation
-        if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
+        if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/sip.so'):
             logging.info('Linking qt for centos matplotlib backend')
             os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+        if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4'):
             os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
 
         # readline must be come before everything else

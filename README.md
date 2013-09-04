@@ -59,7 +59,7 @@ To upload/download from amazon S3 cloud you should also specify bucket name, key
     robustus download-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key>
     robustus download-cache https://s3.amazonaws.com/<bucket_name>/cache.tar.bz
 
-## Cache Format
+### Cache Format
 
 Robustus cache is a directory with binary package archives. Packages under distutils are compressed
 using [wheel](https://pypi.python.org/pypi/wheel) tool. These are archives created using bdist
@@ -70,7 +70,7 @@ just as a directory with set of headers/libraries/executables obtained using lib
 installation utilities (e.g. cmake install).
 
 Additionally robustus cache has .robustus directory where robustus specific information is stored.
-For each cached package there is a file <package_name>_<package_version> (dots replaced with
+For each cached package there is a file \<package_name\>_\<package_version\> (dots replaced with
 underscores). It is needed for robustus to know that package of specific version is stored in cache,
 so during install it won't build it again. By default this file is empty, but installation scripts can
 use it to store information required to install package (i.e. location of specific library within the
