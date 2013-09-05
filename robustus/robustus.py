@@ -4,13 +4,15 @@
 # =============================================================================
 
 import argparse
+import glob
 import importlib
 import logging
 import os
 import shutil
 import subprocess
 import sys
-from detail import RobustusException, parse_requirement, read_requirement_file, package_str, cp
+from detail import RobustusException, parse_requirement, read_requirement_file,\
+    package_str, package_to_rob, rob_to_package, cp
 # for doctests
 import detail
 
@@ -50,11 +52,10 @@ class Robustus(object):
             os.mkdir(self.cache)
 
         # read cached packages
-        self.cached_requirements_file_path = os.path.join(self.cache, Robustus.cached_requirements_file_path)
-        if os.path.isfile(self.cached_requirements_file_path):
-            self.cached_packages = read_requirement_file(self.cached_requirements_file_path)
-        else:
-            self.cached_packages = []
+        self.cached_packages = []
+        for rob_file in glob.iglob('%s/*.rob' % self.cache):
+            self.cached_packages.append(rob_to_package(rob_file))
+        print self.cached_packages
 
     @staticmethod
     def _override_settings(settings, args):
@@ -134,7 +135,7 @@ class Robustus(object):
         subprocess.call([python_executable, 'setup.py', 'install'])
         os.chdir(cwd)
 
-    def install_through_wheeling(self, package, version):
+    def install_through_wheeling(self, package, version, rob_file):
         """
         Check if package cache already contains package of specified version, if so install it.
         Otherwise make a wheel and put it into cache.
@@ -146,7 +147,6 @@ class Robustus(object):
         pstr = package_str(package, version)
 
         # if wheelhouse doesn't contain necessary requirement - make a wheel
-        print package, version
         if (package, version) not in self.cached_packages:
             logging.info('Wheel not found, downloading package')
             subprocess.call([self.pip_executable,
@@ -174,28 +174,34 @@ class Robustus(object):
 
         return True
 
-    def _flush_cached_packages(self):
-        # write cached packages list to cache requirements file
-        f = open(self.cached_requirements_file_path, 'w')
-        for package, version in self.cached_packages:
-            f.write('%s\n' % package_str(package, version))
-
     def install_package(self, package, version):
         pstr = package_str(package, version)
         logging.info('Installing ' + pstr)
+
+        rob = os.path.join(self.cache, package_to_rob(package, version))
+        if os.path.isfile(rob):
+            # package cached
+            # open for reading so install script can read required information
+            rob_file = open(rob, 'r')
+        else:
+            # package not cached
+            # open for writing so install script can save required information
+            rob_file = open(rob, 'w')
+
         try:
             # try to use specific install script
             install_module = importlib.import_module('robustus.detail.install_%s' % package)
-            install_module.install(self, version)
+            install_module.install(self, version, rob_file)
         except ImportError:
-            self.install_through_wheeling(package, version)
+            self.install_through_wheeling(package, version, rob_file)
         except RobustusException as exc:
             logging.error(exc.message)
+            rob_file.close()
+            os.path.remove(rob_file)
             return
 
         if (package, version) not in self.cached_packages:
             self.cached_packages.append((package, version))
-            self._flush_cached_packages()  # make sure requirements are saved in case of crash
         logging.info('Done')
 
     def install(self, args):

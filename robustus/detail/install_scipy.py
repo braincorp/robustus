@@ -9,7 +9,7 @@ import sys
 from utility import install_through_wheeling
 
 
-def install(robustus, version):
+def install(robustus, version, rob_file):
     logging.info('Cheking for scipy')
     try:
         import scipy

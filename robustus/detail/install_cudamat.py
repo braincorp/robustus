@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 
-def install(robustus, version):
+def install(robustus, version, rob_file):
     cudamat_install_dir = os.path.join(robustus.cache, 'cudamat')
     if not os.path.isdir(cudamat_install_dir):
         logging.info('Downloading cudamat')

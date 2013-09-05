@@ -11,7 +11,7 @@ import sys
 from utility import cp, RobustusException
 
 
-def install(robustus, version):
+def install(robustus, version, rob_file):
     try:
         import cv2
     except ImportError:
