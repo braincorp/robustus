@@ -4,6 +4,7 @@
 # =============================================================================
 
 import argparse
+import importlib
 import logging
 import os
 import shutil
@@ -95,7 +96,7 @@ class Robustus(object):
         subprocess.call([pip_executable, 'uninstall', 'distribute'])
         subprocess.call([pip_executable, 'install', 'https://bitbucket.org/pypa/setuptools/downloads/setuptools-0.8b3.tar.gz'])
         subprocess.call([pip_executable, 'install', 'wheel==0.16.0'])
-        subprocess.call([pip_executable, 'install', 'boto==2.9.6'])
+        subprocess.call([pip_executable, 'install', 'boto==2.11.0'])
 
         # adding BLAS and LAPACK libraries for CentOS installation
         if os.path.isfile('/usr/lib64/libblas.so.3'):
@@ -184,7 +185,7 @@ class Robustus(object):
         logging.info('Installing ' + pstr)
         try:
             # try to use specific install script
-            install_module = __import__('robustus.detail.install_%s' % package)
+            install_module = importlib.import_module('robustus.detail.install_%s' % package)
             install_module.install(self, version)
         except ImportError:
             self.install_through_wheeling(package, version)
