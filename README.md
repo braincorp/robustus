@@ -13,6 +13,7 @@ scripts and ability to cache binary versions of packages to reuse them in future
 * virtualenv
 * pytest (for testing)
 * boto (for amazon s3, will be installed automatically into robustus env)
+* rsync (to download/upload cache to samba/ftp/http servers)
 
 ### Usage
 First you need to create virtual environment.
@@ -52,6 +53,7 @@ In the same manner you can upload cache.
 
 Make sure that binary package cache is suitable for your platform. It is highly
 recommended to use cached packages only on the machine there they have been compiled.
+If robustus cache is not empty external packages will be added to robustus cache.
 
 To upload/download from amazon S3 cloud you should also specify bucket name, key and secret key.
 

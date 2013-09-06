@@ -55,7 +55,6 @@ class Robustus(object):
         self.cached_packages = []
         for rob_file in glob.iglob('%s/*.rob' % self.cache):
             self.cached_packages.append(rob_to_package(rob_file))
-        print self.cached_packages
 
     @staticmethod
     def _override_settings(settings, args):
@@ -267,9 +266,7 @@ class Robustus(object):
                 self.download_cache_from_amazon(wheelhouse_archive, args.bucket, args.key, args.secret)
             else:
                 logging.info('Downloading ' + args.url)
-                # with -c option wget won't download file if it has been already downloaded
-                # and continue if it was partially downloaded
-                subprocess.call(['wget', '-c', args.url])
+                subprocess.call(['rsync', '-r', '-l', args.url, '.'])
         except:
             os.chdir(cwd)
             raise
@@ -284,9 +281,6 @@ class Robustus(object):
         elif wheelhouse_archive_lowercase.endswith('.zip'):
             logging.info('Unzipping')
             subprocess.call(['unzip', wheelhouse_archive])
-        else:
-            cp('%s/*' % wheelhouse_archive, '.')
-            shutil.rmtree(wheelhouse_archive)
 
         if os.path.isfile(wheelhouse_archive):
             os.remove(wheelhouse_archive)
@@ -341,8 +335,8 @@ class Robustus(object):
             if args.bucket is not None:
                 self.upload_cache_to_amazon(cache_archive, args.bucket, args.key, args.secret, args.public)
             else:
-                # regular upload
-                raise RobustusException('not implemented')
+                for file in glob.iglob('*'):
+                    subprocess.call(['rsync', '-r', '-l', file, args.url])
         finally:
             if os.path.isfile(cache_archive):
                 os.remove(cache_archive)
@@ -380,7 +374,9 @@ def execute(argv):
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
     freeze_parser.set_defaults(func=Robustus.freeze)
 
-    download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path')
+    download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path,'
+                                                                         'if robustus cache is not empty,'
+                                                                         'cached packages will be added to existing ones')
     download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
     download_cache_parser.add_argument('-b', '--bucket',
                                        help='amazon S3 bucket to download from')
@@ -417,4 +413,5 @@ def execute(argv):
 
 
 if __name__ == '__main__':
+    logging.getLogger().setLevel(logging.INFO)
     execute(sys.argv[1:])
