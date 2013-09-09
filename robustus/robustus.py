@@ -74,6 +74,8 @@ class Robustus(object):
         virtualenv_args = ['virtualenv', args.env, '--prompt', args.prompt]
         if args.python is not None:
             virtualenv_args += ['--python', args.python]
+        if args.system_site_packages:
+            virtualenv_args += ['--system-site-packages']
         subprocess.call(virtualenv_args)
 
         python_executable = os.path.abspath(os.path.join(args.env, 'bin/python'))
@@ -359,6 +361,10 @@ def execute(argv):
     env_parser.add_argument('--prompt',
                             default='robustus',
                             help='provides an alternative prompt prefix for this environment')
+    env_parser.add_argument('--system-site-packages',
+                            default=False,
+                            action='store_true',
+                            help='five access to the global site-packages dir to the virtual environment')
     env_parser.set_defaults(func=Robustus.env)
 
     install_parser = subparsers.add_parser('install', help='install packages')
