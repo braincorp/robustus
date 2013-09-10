@@ -200,7 +200,7 @@ class Robustus(object):
                 install_module.install(self, requirement_specifier.version, rob_file)
             except ImportError:
                 self.install_through_wheeling(requirement_specifier, rob_file)
-            except RobustusException as exc:
+            except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
                 os.path.remove(rob_file)
@@ -360,6 +360,7 @@ class Robustus(object):
 
 
 def execute(argv):
+    logging.getLogger().setLevel(logging.INFO)
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
                                      prog='robustus')
@@ -433,5 +434,4 @@ def execute(argv):
 
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
     execute(sys.argv[1:])

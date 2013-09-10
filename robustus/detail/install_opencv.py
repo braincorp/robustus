@@ -8,7 +8,8 @@ import os
 import subprocess
 import shutil
 import sys
-from utility import cp, RobustusException
+from utility import cp
+from requirement import RequirementException
 
 
 def install(robustus, version, rob_file):
@@ -60,4 +61,4 @@ def install(robustus, version, rob_file):
             cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
                os.path.join(python_dir, 'lib/python2.7/site-packages'))
         else:
-            raise RobustusException('Can install only opencv 2.4.4')
+            raise RequirementException('Can install only opencv 2.4.4')
