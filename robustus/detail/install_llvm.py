@@ -21,6 +21,7 @@ def install(robustus, version, rob_file):
         os.mkdir(llvm_install_dir)
         subprocess.call(['./configure', '--enable-optimized', '--prefix', llvm_install_dir])
         subprocess.call('REQUIRES_RTTI=1 make install', shell=True)
+        os.chdir(robustus.cache)
         shutil.rmtree(llvm_src_dir)
     os.environ['LLVM_CONFIG_PATH'] = os.path.join(llvm_install_dir, 'bin/llvm-config')
     os.chdir(cwd)
