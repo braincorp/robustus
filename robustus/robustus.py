@@ -8,13 +8,16 @@ import glob
 import importlib
 import logging
 import os
-import shutil
 import subprocess
 import sys
-from detail import RobustusException, parse_requirement, read_requirement_file,\
-    package_str, package_to_rob, rob_to_package, cp
+from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, cp
 # for doctests
 import detail
+
+
+class RobustusException(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
 
 
 class Robustus(object):
@@ -54,7 +57,7 @@ class Robustus(object):
         # read cached packages
         self.cached_packages = []
         for rob_file in glob.iglob('%s/*.rob' % self.cache):
-            self.cached_packages.append(rob_to_package(rob_file))
+            self.cached_packages.append(Requirement(rob_filename=rob_file))
 
     @staticmethod
     def _override_settings(settings, args):
@@ -135,7 +138,7 @@ class Robustus(object):
         subprocess.call([python_executable, 'setup.py', 'install'])
         os.chdir(cwd)
 
-    def install_through_wheeling(self, package, version, rob_file):
+    def install_through_wheeling(self, requirement_specifier, rob_file):
         """
         Check if package cache already contains package of specified version, if so install it.
         Otherwise make a wheel and put it into cache.
@@ -144,23 +147,21 @@ class Robustus(object):
         :param version: package version string
         :return: None
         """
-        pstr = package_str(package, version)
-
         # if wheelhouse doesn't contain necessary requirement - make a wheel
-        if (package, version) not in self.cached_packages:
+        if self.find_satisfactory_requirement(requirement_specifier) is None:
             logging.info('Wheel not found, downloading package')
             subprocess.call([self.pip_executable,
                              'install',
                              '--download',
                              self.cache,
-                             pstr])
+                             requirement_specifier.freeze()])
             logging.info('Building wheel')
             subprocess.call([self.pip_executable,
                              'wheel',
                              '--no-index',
                              '--find-links=%s' % self.cache,
                              '--wheel-dir=%s' % self.cache,
-                             pstr])
+                             requirement_specifier.freeze()])
             logging.info('Done')
 
         # install from prebuilt wheel
@@ -170,45 +171,58 @@ class Robustus(object):
                          '--no-index',
                          '--use-wheel',
                          '--find-links=%s' % self.cache,
-                         pstr])
+                         requirement_specifier.freeze()])
 
         return True
 
-    def install_package(self, package, version):
-        pstr = package_str(package, version)
-        logging.info('Installing ' + pstr)
+    def install_requirement(self, requirement_specifier):
+        logging.info('Installing ' + requirement_specifier.freeze())
 
-        rob = os.path.join(self.cache, package_to_rob(package, version))
-        if os.path.isfile(rob):
-            # package cached
-            # open for reading so install script can read required information
-            rob_file = open(rob, 'r')
+        if requirement_specifier.url is not None:
+            # install reqularly using pip
+            # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
+            # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
+            subprocess.call([self.pip_executable, 'install', requirement_specifier.url.geturl()])
         else:
-            # package not cached
-            # open for writing so install script can save required information
-            rob_file = open(rob, 'w')
+            rob = os.path.join(self.cache, requirement_specifier.rob_filename())
+            if os.path.isfile(rob):
+                # package cached
+                # open for reading so install script can read required information
+                rob_file = open(rob, 'r')
+            else:
+                # package not cached
+                # open for writing so install script can save required information
+                rob_file = open(rob, 'w')
 
-        try:
-            # try to use specific install script
-            install_module = importlib.import_module('robustus.detail.install_%s' % package)
-            install_module.install(self, version, rob_file)
-        except ImportError:
-            self.install_through_wheeling(package, version, rob_file)
-        except RobustusException as exc:
-            logging.error(exc.message)
-            rob_file.close()
-            os.path.remove(rob_file)
-            return
+            try:
+                # try to use specific install script
+                install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name)
+                install_module.install(self, requirement_specifier.version, rob_file)
+            except ImportError:
+                self.install_through_wheeling(requirement_specifier, rob_file)
+            except RobustusException as exc:
+                logging.error(exc.message)
+                rob_file.close()
+                os.path.remove(rob_file)
+                return
 
-        if (package, version) not in self.cached_packages:
-            self.cached_packages.append((package, version))
+        # add requirement to the this of cached packages
+        if self.find_satisfactory_requirement(requirement_specifier) is None:
+            self.cached_packages.append(requirement_specifier)
         logging.info('Done')
+
+    def find_satisfactory_requirement(self, requirement_specifier):
+        for requirement in self.cached_packages:
+            if requirement_specifier.allows(requirement):
+                return requirement
+
+        return None
 
     def install(self, args):
         # construct requirements list
         requirements = []
         for requirement in args.packages:
-            requirements.append(parse_requirement(requirement))
+            requirements.append(RequirementSpecifier(specifier=requirement))
         if args.requirement:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file)
@@ -216,12 +230,12 @@ class Robustus(object):
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
         # install
-        for package, version in requirements:
-            self.install_package(package, version)
+        for requirement_specifier in requirements:
+            self.install_requirement(requirement_specifier)
 
     def freeze(self, args):
-        for package, version in self.cached_packages:
-            print package_str(package, version)
+        for requirement in self.cached_packages:
+            print requirement.freeze()
 
     def download_cache_from_amazon(self, filename, bucket_name, key, secret):
         if filename is None or bucket_name is None:
@@ -413,7 +427,7 @@ def execute(argv):
         try:
             robustus = Robustus(args)
             args.func(robustus, args)
-        except RobustusException as exc:
+        except (RobustusException, RequirementException) as exc:
             logging.critical(exc.message)
             exit(1)
 

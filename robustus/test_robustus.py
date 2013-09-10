@@ -56,4 +56,5 @@ def test_robustus():
 if __name__ == '__main__':
     doctest.testmod(robustus)
     doctest.testmod(robustus.detail.utility)
+    doctest.testmod(robustus.detail.requirement)
     pytest.main()
