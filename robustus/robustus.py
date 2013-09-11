@@ -138,6 +138,10 @@ class Robustus(object):
             logging.info('Linking opencv for Ubuntu')
             os.symlink('/usr/lib/pymodules/python2.7/cv2.so', os.path.join(args.env, 'lib/python2.7/site-packages/cv2.so'))
             os.symlink('/usr/lib/pymodules/python2.7/cv.py', os.path.join(args.env, 'lib/python2.7/site-packages/cv.py'))
+        elif os.path.isfile('/usr/lib/pyshared/python2.7/cv2.so'):
+            logging.info('Linking opencv for Ubuntu')
+            os.symlink('/usr/lib/pyshared/python2.7/cv2.so', os.path.join(args.env, 'lib/python2.7/site-packages/cv2.so'))
+            os.symlink('/usr/lib/pyshared/python2.7/cv.py', os.path.join(args.env, 'lib/python2.7/site-packages/cv.py'))
 
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
