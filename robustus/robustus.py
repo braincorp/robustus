@@ -377,7 +377,7 @@ def execute(argv):
     env_parser.add_argument('-p', '--python',
                             help='python interpreter to use')
     env_parser.add_argument('--prompt',
-                            default='robustus',
+                            default='(robustus)',
                             help='provides an alternative prompt prefix for this environment')
     env_parser.add_argument('--system-site-packages',
                             default=False,

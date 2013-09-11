@@ -16,15 +16,22 @@ def install(robustus, version, rob_file):
     try:
         import cv2
     except ImportError:
-        if version == '2.4.4':
+        if version == '2.4.4' or version == '2.4.2':
             cwd = os.getcwd()
-            cv_work_dir = os.path.join(cwd, 'opencv-2.4.4')
-            cv_install_dir = os.path.join(robustus.cache, 'opencv-2.4.4')
+            if version == '2.4.4':
+                cv_work_dir = os.path.join(cwd, 'opencv-2.4.4')
+            elif version == '2.4.2':
+                cv_work_dir = os.path.join(cwd, 'OpenCV-2.4.2')
+            cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % version)
             cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
             if not os.path.isfile(cv2so):
                 logging.info('Downloading OpenCV')
-                cv_tar = os.path.join(cwd, 'opencv-2.4.4.tar.bz2')
-                url = 'http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.4/OpenCV-2.4.4a.tar.bz2/download'
+                cv_tar = os.path.join(cwd, 'opencv-%s.tar.bz2' % version)
+                opencv_unix = 'http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/'
+                if version == '2.4.4':
+                    url = opencv_unix + '2.4.4/OpenCV-2.4.4a.tar.bz2/download'
+                elif version == '2.4.2':
+                    url = opencv_unix + '2.4.2/OpenCV-2.4.2.tar.bz2/download'
                 subprocess.call(['wget', '-c', url, '-O', cv_tar])
 
                 logging.info('Unpacking OpenCV')
@@ -61,4 +68,4 @@ def install(robustus, version, rob_file):
             cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
                os.path.join(python_dir, 'lib/python2.7/site-packages'))
         else:
-            raise RequirementException('Can install only opencv 2.4.4')
+            raise RequirementException('Can install only opencv 2.4.2/2.4.4')
