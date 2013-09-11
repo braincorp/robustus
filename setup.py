@@ -14,5 +14,4 @@ setup(name='robustus',
       long_description='Tool to make and configure python virtualenv, setup necessary packages and cache them if necessary.',
       version=robustus.__version__,
       packages=['robustus', 'robustus.detail'],
-      scripts=['bin/robustus'],
-      install_requires=['virtualenv==1.10.1'])
+      scripts=['bin/robustus'])

@@ -10,9 +10,10 @@ scripts and ability to cache binary versions of packages to reuse them in future
 
 ### Prerequesties
 * python 2.7
-* pytest (for testing)
+* virtualenv (to create new robustus environment)
 * boto (to download/upload cache to amazon s3 servers)
 * rsync (to download/upload cache to samba/ftp/http servers)
+* pytest (for testing)
 
 ### Usage
 First you need to create virtual environment.
