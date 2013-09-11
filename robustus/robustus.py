@@ -125,6 +125,12 @@ class Robustus(object):
             os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
             os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
 
+        # linking opencv for CentOs
+        if os.path.isfile('/usr/lib64/python2.7/site-packages/cv2.so'):
+            logging.info('Linking opencv for CentOS')
+            os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(args.env, 'lib/python2.7/site-packages/cv2.so'))
+            os.symlink('/usr/lib64/python2.7/site-packages/cv.py', os.path.join(args.env, 'lib/python2.7/site-packages/cv.py'))
+
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
