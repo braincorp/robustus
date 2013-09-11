@@ -5,6 +5,7 @@
 
 import logging
 import os
+import platform
 import subprocess
 import shutil
 import sys
@@ -16,7 +17,12 @@ def install(robustus, version, rob_file):
     try:
         import cv2
     except ImportError:
-        if version == '2.4.4' or version == '2.4.2':
+        if platform.linux_distribution()[0] == 'CentOS':
+            # linking opencv for CentOs
+            logging.info('Linking opencv for CentOS')
+            os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'))
+            os.symlink('/usr/lib64/python2.7/site-packages/cv.py', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv.py'))
+        elif version == '2.4.4' or version == '2.4.2':
             cwd = os.getcwd()
             if version == '2.4.4':
                 cv_work_dir = os.path.join(cwd, 'opencv-2.4.4')
