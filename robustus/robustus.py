@@ -119,13 +119,17 @@ class Robustus(object):
             os.symlink('/usr/lib64/liblapack.so.3', lapack_so)
             os.environ['LAPACK'] = blas_so
 
-        # linking PyQt for CentOS installation
+        # linking PyQt
         if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
             logging.info('Linking qt for centos matplotlib backend')
             os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
             os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+        elif os.path.isfile('/usr/lib/python2.7/dist-packages/PyQt4/QtCore.so'):
+            logging.info('Linking qt for ubuntu matplotlib backend')
+            os.symlink('/usr/lib/python2.7/dist-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+            os.symlink('/usr/lib/python2.7/dist-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
 
-        # linking opencv for CentOs
+        # linking opencv
         if os.path.isfile('/usr/lib64/python2.7/site-packages/cv2.so'):
             logging.info('Linking opencv for CentOS')
             os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(args.env, 'lib/python2.7/site-packages/cv2.so'))
