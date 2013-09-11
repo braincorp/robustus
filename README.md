@@ -10,25 +10,30 @@ scripts and ability to cache binary versions of packages to reuse them in future
 
 ### Prerequesties
 * python 2.7
-* virtualenv
 * pytest (for testing)
-* boto (for amazon s3, will be installed automatically into robustus env)
+* boto (to download/upload cache to amazon s3 servers)
 * rsync (to download/upload cache to samba/ftp/http servers)
 
 ### Usage
 First you need to create virtual environment.
 
-    robustus env <dir> --cache <binary package dir> <other virtualenv options>
+    robustus env <dir> --cache <binary package cache dir> <other virtualenv options>
+
+Or you can convert existing virtualenv into robustus environment (it will install
+specific pip version and required packages). You can convert even virtualenv where
+you installed robustus.
+
+    robustus env <existing virtualenv> --cache <binary package cache dir>
 
 Afterwards you can go to env directory and install packages using usual pip syntax.
-Robustus will store binary packages in 'wheelhouse' directory, you can change it
-using --cache option during creation of environment.
 
     robustus install numpy==1.7.2
     robustus install -r <requirements file>
     robustus install <other pip options>
 
-You can specify binary package cache where to install package.
+Robustus will store binary packages in the cache directory specified by --cache option
+during creation of virtualenv ('wheelhouse' by default).
+or you can specify binary package cache where to install package.
 
     robustus --cache ~/wheelhouse install numpy==1.7.2
 

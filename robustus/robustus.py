@@ -73,15 +73,18 @@ class Robustus(object):
         @param args: command line arguments
         """
         # create virtualenv
-        logging.info('Creating virtualenv')
-        virtualenv_args = ['virtualenv', args.env, '--prompt', args.prompt]
-        if args.python is not None:
-            virtualenv_args += ['--python', args.python]
-        if args.system_site_packages:
-            virtualenv_args += ['--system-site-packages']
-        subprocess.call(virtualenv_args)
-
         python_executable = os.path.abspath(os.path.join(args.env, 'bin/python'))
+        if os.path.isfile(python_executable):
+            logging.info('Found virtualenv in ' + args.env)
+        else:
+            logging.info('Creating virtualenv')
+            virtualenv_args = ['virtualenv', args.env, '--prompt', args.prompt]
+            if args.python is not None:
+                virtualenv_args += ['--python', args.python]
+            if args.system_site_packages:
+                virtualenv_args += ['--system-site-packages']
+            subprocess.call(virtualenv_args)
+
         pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
         easy_install_executable = os.path.abspath(os.path.join(args.env, 'bin/easy_install'))
 
