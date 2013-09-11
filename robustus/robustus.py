@@ -367,13 +367,13 @@ def execute(argv):
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
                                      prog='robustus')
-    parser.add_argument('--cache', default='wheelhouse', help='binary package cache directory')
+    parser.add_argument('--cache', help='binary package cache directory')
     subparsers = parser.add_subparsers(help='robustus commands')
 
     env_parser = subparsers.add_parser('env', help='make robustus')
     env_parser.add_argument('env',
-                             default='.env',
-                             help='virtualenv arguments')
+                            default='.env',
+                            help='virtualenv arguments')
     env_parser.add_argument('-p', '--python',
                             help='python interpreter to use')
     env_parser.add_argument('--prompt',
