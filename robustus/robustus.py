@@ -106,18 +106,28 @@ class Robustus(object):
         subprocess.call([pip_executable, 'install', 'wheel==0.16.0'])
         subprocess.call([pip_executable, 'install', 'boto==2.11.0'])
 
-        # adding BLAS and LAPACK libraries for CentOS installation
+        # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
-            logging.info('Linking libblas to venv')
+            logging.info('Linking CentOS libblas to venv')
             blas_so = os.path.join(args.env, 'lib64/libblas.so')
             os.symlink('/usr/lib64/libblas.so.3', blas_so)
-            os.environ['BLAS'] = blas_so
+            os.environ['BLAS'] = os.path.join(args.env, 'lib64')
+        elif os.path.isfile('/usr/lib/libblas.so'):
+            logging.info('Linking Ubuntu libblas to venv')
+            blas_so = os.path.join(args.env, 'lib/libblas.so')
+            os.symlink('/usr/lib/libblas.so', blas_so)
+            os.environ['BLAS'] = os.path.join(args.env, 'lib')
 
         if os.path.isfile('/usr/lib64/liblapack.so.3'):
-            logging.info('Linking liblapack to venv')
+            logging.info('Linking CentOS liblapack to venv')
             lapack_so = os.path.join(args.env, 'lib64/liblapack.so')
             os.symlink('/usr/lib64/liblapack.so.3', lapack_so)
-            os.environ['LAPACK'] = blas_so
+            os.environ['LAPACK'] = os.path.join(args.env, 'lib64')
+        elif os.path.isfile('/usr/lib/liblapack.so'):
+            logging.info('Linking Ubuntu liblapack to venv')
+            lapack_so = os.path.join(args.env, 'lib/liblapack.so')
+            os.symlink('/usr/lib/liblapack.so', lapack_so)
+            os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
         # linking PyQt
         if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
