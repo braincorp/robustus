@@ -129,16 +129,6 @@ class Robustus(object):
             os.symlink('/usr/lib/liblapack.so', lapack_so)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
-        # linking PyQt
-        if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
-            logging.info('Linking qt for centos matplotlib backend')
-            os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
-            os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
-        elif os.path.isfile('/usr/lib/python2.7/dist-packages/PyQt4/QtCore.so'):
-            logging.info('Linking qt for ubuntu matplotlib backend')
-            os.symlink('/usr/lib/python2.7/dist-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
-            os.symlink('/usr/lib/python2.7/dist-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
-
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
