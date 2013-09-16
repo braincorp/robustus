@@ -10,7 +10,7 @@ import logging
 import os
 import subprocess
 import sys
-from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, cp
+from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln
 # for doctests
 import detail
 
@@ -110,23 +110,23 @@ class Robustus(object):
         if os.path.isfile('/usr/lib64/libblas.so.3'):
             logging.info('Linking CentOS libblas to venv')
             blas_so = os.path.join(args.env, 'lib64/libblas.so')
-            os.symlink('/usr/lib64/libblas.so.3', blas_so)
+            ln('/usr/lib64/libblas.so.3', blas_so, True)
             os.environ['BLAS'] = os.path.join(args.env, 'lib64')
         elif os.path.isfile('/usr/lib/libblas.so'):
             logging.info('Linking Ubuntu libblas to venv')
             blas_so = os.path.join(args.env, 'lib/libblas.so')
-            os.symlink('/usr/lib/libblas.so', blas_so)
+            ln('/usr/lib/libblas.so', blas_so, True)
             os.environ['BLAS'] = os.path.join(args.env, 'lib')
 
         if os.path.isfile('/usr/lib64/liblapack.so.3'):
             logging.info('Linking CentOS liblapack to venv')
             lapack_so = os.path.join(args.env, 'lib64/liblapack.so')
-            os.symlink('/usr/lib64/liblapack.so.3', lapack_so)
+            ln('/usr/lib64/liblapack.so.3', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib64')
         elif os.path.isfile('/usr/lib/liblapack.so'):
             logging.info('Linking Ubuntu liblapack to venv')
             lapack_so = os.path.join(args.env, 'lib/liblapack.so')
-            os.symlink('/usr/lib/liblapack.so', lapack_so)
+            ln('/usr/lib/liblapack.so', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
         # readline must be come before everything else
@@ -203,8 +203,8 @@ class Robustus(object):
 
             try:
                 # try to use specific install script
-                install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name)
-                install_module.install(self, requirement_specifier.version, rob_file)
+                install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name.lower())
+                install_module.install(self, requirement_specifier, rob_file)
             except ImportError:
                 self.install_through_wheeling(requirement_specifier, rob_file)
             except RequirementException as exc:

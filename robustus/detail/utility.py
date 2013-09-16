@@ -30,3 +30,16 @@ def cp(mask, dest_dir):
     for file in glob.iglob(mask):
         if os.path.isfile(file):
             shutil.copy2(file, dest_dir)
+
+
+def ln(src, dst, force=False):
+    """
+    make symlink as unix ln
+    :param src: source file
+    :param dst: destination file
+    :param force: remove destination file
+    :return: None
+    """
+    if force and os.path.isfile(dst):
+        os.remove(dst)
+    os.symlink(src, dst)
