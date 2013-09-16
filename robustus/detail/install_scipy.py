@@ -6,10 +6,9 @@
 import logging
 import os
 import sys
-from utility import install_through_wheeling
 
 
-def install(robustus, version, rob_file):
+def install(robustus, requirement_specifier, rob_file):
     logging.info('Cheking for scipy')
     try:
         import scipy
@@ -24,7 +23,7 @@ def install(robustus, version, rob_file):
             os.environ['LDFLAGS'] = '-arch x86_64 -Wall -undefined dynamic_lookup -bundle'
             os.environ['FFLAGS'] = '-arch x86_64 -ff2c'
 
-        robustus.install_through_wheeling('scipy', version)
+        robustus.install_through_wheeling(requirement_specifier, rob_file)
 
         if sys.platform.startswith('darwin'):
             # undo LDFLAGS changes on OS X
