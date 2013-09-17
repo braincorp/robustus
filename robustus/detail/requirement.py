@@ -30,6 +30,7 @@ class Requirement(object):
         self.name = kwargs.get('name', None)
         self.version = kwargs.get('version', None)
         self.url = None
+        self.editable = kwargs.get('editable', False)
         if 'url' in kwargs:
             self.url = urlparse.urlparse(kwargs['url'])
         if len(args) > 0:
