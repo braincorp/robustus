@@ -199,7 +199,7 @@ class Robustus(object):
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
-            subprocess.call([self.pip_executable, 'install', requirement_specifier.url.geturl()])
+            subprocess.call([self.pip_executable, 'install', requirement_specifier.freeze()])
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):

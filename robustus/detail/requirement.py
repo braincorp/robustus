@@ -80,11 +80,31 @@ class Requirement(object):
 
     def freeze(self):
         """
-        @return: string representing requirement in pip format
+        @return: string representing requirement in pip format with all necessary flags
         Examples:
         >>> Requirement('numpy', '1.7.2').freeze()
         'numpy==1.7.2'
+        >>> Requirement('numpy', '1.7.2', editable=True).freeze()
+        '-e numpy==1.7.2'
         >>> Requirement(url='http://requirement.org/requirement.zip').freeze()
+        'http://requirement.org/requirement.zip'
+        >>> Requirement(url='http://requirement.org/requirement.zip', editable=True).freeze()
+        '-e http://requirement.org/requirement.zip'
+        """
+        str = ''
+        if self.editable:
+            str += '-e '
+        return str + self._freeze_base()
+
+    def _freeze_base(self):
+        """
+        @return: string representing requirement in pip format without flags
+        Examples:
+        >>> Requirement('numpy', '1.7.2', editable = True)._freeze_base()
+        'numpy==1.7.2'
+        >>> Requirement('numpy', '1.7.2', editable = False)._freeze_base()
+        'numpy==1.7.2'
+        >>> Requirement(url='http://requirement.org/requirement.zip')._freeze_base()
         'http://requirement.org/requirement.zip'
         """
         if self.url is not None:
@@ -93,6 +113,7 @@ class Requirement(object):
             if self.version is not None:
                 return '%s==%s' % (self.name, self.version)
             return self.name
+        
 
     def rob_filename(self):
         """
