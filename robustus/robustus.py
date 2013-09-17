@@ -20,6 +20,14 @@ class RobustusException(Exception):
         Exception.__init__(self, message)
 
 
+def run_shell(command):
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+    if p.returncode != 0:
+        raise Exception('Error running %s, code=%s' % (command, p.returncode))
+    return output
+
+
 class Robustus(object):
     settings_file_path = '.robustus'
     cached_requirements_file_path = 'cached_requirements.txt'
@@ -199,9 +207,13 @@ class Robustus(object):
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
-            command = [self.pip_executable, 'install', requirement_specifier.freeze()]
-            logging.info('Got link error. Fall back to pip executing:%s' % (' '.join(command),))
-            subprocess.call(command)
+
+            # here we have to run via shell because requirement can be editable and then it will require
+            # extra parsing to extract -e flag into separate argument.
+            command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
+            logging.info('Got url-based requirement. '
+                         'Fall back to pip shell command:%s' % (command,))
+            run_shell(command)
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):
