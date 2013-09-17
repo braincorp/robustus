@@ -123,6 +123,8 @@ class RequirementSpecifier(Requirement):
         RequirementSpecifier(url='http://requirement.org/requirement.zip')
         >>> RequirementSpecifier(specifier='numpy>=1.7.1')
         RequirementSpecifier(name='numpy', version='1.7.1', allow_greater_version)
+        >>> RequirementSpecifier(specifier='-e numpy>=1.7.1')
+        RequirementSpecifier(name='numpy', version='1.7.1', allow_greater_version, editable)
         """
         Requirement.__init__(self, *args, **kwargs)
         self.allow_greater_version = kwargs.get('allow_greater_version', False)
@@ -132,24 +134,32 @@ class RequirementSpecifier(Requirement):
     def _from_specifier(self, specifier):
         """
         Extract requirement name and version from requirement string
-        @return: (name, version, url, allow_greater_version)
+        @return: (name, version, url, allow_greater_version, editable)
         Examples:
         >>> RequirementSpecifier()._from_specifier('numpy==1.7.2')
-        ('numpy', '1.7.2', None, False)
+        ('numpy', '1.7.2', None, False, False)
+        >>> RequirementSpecifier()._from_specifier('-e numpy==1.7.2')
+        ('numpy', '1.7.2', None, False, True)
         >>> RequirementSpecifier()._from_specifier('   numpy == 1.7.2  ')
-        ('numpy', '1.7.2', None, False)
+        ('numpy', '1.7.2', None, False, False)
         >>> RequirementSpecifier()._from_specifier('   numpy >= 1.7.2  ')
-        ('numpy', '1.7.2', None, True)
+        ('numpy', '1.7.2', None, True, False)
         >>> RequirementSpecifier()._from_specifier('   numpy == 1.7.2  # comment')
-        ('numpy', '1.7.2', None, False)
+        ('numpy', '1.7.2', None, False, False)
+        >>> RequirementSpecifier()._from_specifier('  -e    numpy == 1.7.2  # comment')
+        ('numpy', '1.7.2', None, False, True)
         >>> RequirementSpecifier()._from_specifier('numpy')
-        ('numpy', None, None, False)
+        ('numpy', None, None, False, False)
         >>> RequirementSpecifier()._from_specifier('pytest-cache==0.7')
-        ('pytest-cache', '0.7', None, False)
+        ('pytest-cache', '0.7', None, False, False)
         >>> RequirementSpecifier()._from_specifier('theano==0.6rc3')
-        ('theano', '0.6rc3', None, False)
+        ('theano', '0.6rc3', None, False, False)
         >>> RequirementSpecifier()._from_specifier('http://some_url/some_package.tar.gz')
-        (None, None, 'http://some_url/some_package.tar.gz', False)
+        (None, None, 'http://some_url/some_package.tar.gz', False, False)
+        >>> RequirementSpecifier()._from_specifier('   http://some_url/some_package.tar.gz')
+        (None, None, 'http://some_url/some_package.tar.gz', False, False)
+        >>> RequirementSpecifier()._from_specifier('-e   http://some_url/some_package.tar.gz')
+        (None, None, 'http://some_url/some_package.tar.gz', False, True)
         >>> RequirementSpecifier()._from_specifier('numpy==1.7.2==1.7.2')
         Traceback (most recent call last):
             ...
@@ -157,7 +167,7 @@ class RequirementSpecifier(Requirement):
         >>> RequirementSpecifier()._from_specifier('   ')
         Traceback (most recent call last):
             ...
-        RequirementException: invalid requirement specified "   "
+        RequirementException: invalid requirement specified ""
         >>> RequirementSpecifier()._from_specifier('numpy==')
         Traceback (most recent call last):
             ...
@@ -166,12 +176,18 @@ class RequirementSpecifier(Requirement):
         self.name = None
         self.version = None
         self.allow_greater_version = False
+        self.editable = False
+
+        specifier = specifier.lstrip()
+        if specifier.startswith('-e'):
+            self.editable = True
+            specifier = specifier[2:].lstrip()
         # check if requirement is url
         self.url = urlparse.urlparse(specifier)
         if len(self.url.scheme) == 0:
             self.url = None
             # check if requirement is in <package>[==|>=]<version> format
-            mo = re.match(r'^\s*([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
+            mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
             if mo is None:
                 raise RequirementException('invalid requirement specified "%s"' % specifier)
             self.name, self.version = mo.group(1, 3)
@@ -181,7 +197,7 @@ class RequirementSpecifier(Requirement):
                 self.allow_greater_version = True
 
         url = None if self.url is None else self.url.geturl()
-        return self.name, self.version, url, self.allow_greater_version
+        return self.name, self.version, url, self.allow_greater_version, self.editable
 
     def __repr__(self):
         str = Requirement.__repr__(self).replace('Requirement', 'RequirementSpecifier')[:-1]
@@ -189,6 +205,8 @@ class RequirementSpecifier(Requirement):
             if len(str) >= len('RequirementSpecifier('):
                 str += ', '
             str += 'allow_greater_version'
+        if self.editable:
+            str += ', editable'
         str += ')'
         return str
 
