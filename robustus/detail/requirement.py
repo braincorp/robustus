@@ -181,6 +181,8 @@ class RequirementSpecifier(Requirement):
         (None, None, 'http://some_url/some_package.tar.gz', False, False)
         >>> RequirementSpecifier()._from_specifier('-e   http://some_url/some_package.tar.gz')
         (None, None, 'http://some_url/some_package.tar.gz', False, True)
+        >>> RequirementSpecifier()._from_specifier('-e git+https://github.com/company/my_package@branch_name#egg=my_package')
+        (None, None, 'git+https://github.com/company/my_package@branch_name#egg=my_package', False, True)
         >>> RequirementSpecifier()._from_specifier('numpy==1.7.2==1.7.2')
         Traceback (most recent call last):
             ...
