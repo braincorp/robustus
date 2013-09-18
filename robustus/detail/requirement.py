@@ -204,6 +204,7 @@ class RequirementSpecifier(Requirement):
         self.editable = False
 
         specifier = specifier.lstrip()
+        specifier = specifier.rstrip()
         if specifier.startswith('-e'):
             self.editable = True
             specifier = specifier[2:].lstrip()

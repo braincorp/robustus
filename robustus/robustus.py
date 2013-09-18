@@ -262,8 +262,7 @@ class Robustus(object):
 
         
         logging.info('Here are all the requirements robustus going to install:\n' +
-                     '\n req:'.join([r.freeze() for r in requirements]))
-        logging.info([r.freeze() for r in requirements])
+                     '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier)
