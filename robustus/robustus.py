@@ -260,6 +260,9 @@ class Robustus(object):
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
+        
+        logging.info('Here are all the requirements robustus going to install:\n' +
+                     '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier)
