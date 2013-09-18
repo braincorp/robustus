@@ -147,6 +147,15 @@ class Robustus(object):
             os.symlink('/usr/lib/python2.7/dist-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
             os.symlink('/usr/lib/python2.7/dist-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
 
+        if sys.platform.startswith('darwin'):
+            logging.info('Linking qt for MacOSX')
+            if os.path.isfile('/Library/Python/2.7/site-packages/PyQt4/Qt.so'):
+                os.symlink('/Library/Python/2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+                os.symlink('/Library/Python/2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+            elif os.path.isfile('/usr/local/lib/python2.7/site-packages/PyQt4/Qt.so'):
+                os.symlink('/usr/local/lib/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+                os.symlink('/usr/local/lib/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
