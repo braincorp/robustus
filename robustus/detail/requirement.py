@@ -297,7 +297,7 @@ def do_requirement_recursion(git_accessor, original_req):
 
     requirements = []
     for line in req_file_content:
-        if line[0] == '#' or line.isspace():
+        if line[0] == '#' or line.isspace() or (len(line) < 2):
             continue
         r = RequirementSpecifier(specifier=line)
         requirements += do_requirement_recursion(git_accessor, r)
@@ -319,7 +319,7 @@ def read_requirement_file(requirement_file):
     requirements = []
     git_accessor = GitAccessor()
     for line in open(requirement_file, 'r'):
-        if line[0] == '#' or line.isspace():
+        if line[0] == '#' or line.isspace() or (len(line) < 2):
             continue
         r = RequirementSpecifier(specifier=line)
         requirements += do_requirement_recursion(git_accessor, r)
