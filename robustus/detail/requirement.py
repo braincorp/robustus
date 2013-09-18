@@ -6,6 +6,7 @@
 import os
 import re
 import urlparse
+from git_accessor import GitAccessor
 
 
 class RequirementException(Exception):
@@ -259,10 +260,68 @@ class RequirementSpecifier(Requirement):
             return False
 
 
-def read_requirement_file(requirement_file):
+def do_requirement_recursion(git_accessor, original_req):
+    '''
+    Recursive extraction of requirements from -e git+.. pip links.
+    @return: list
+    '''
+    if not original_req.editable or original_req.url is None:
+        return [original_req]
+
+    if not original_req.url.geturl().startswith('git+'):
+        return [original_req]
+
+    url = original_req.url.geturl()[4:]
+    egg_position = url.find('#egg')
+    if egg_position < 0:
+        raise RequirementException(
+            'Editable git link %s has to contain egg information.'
+            'Example: -e git+https://github.com/company/my_package@branch_name#egg=my_package' % 
+            original_req.url.geturl())
+    url = url[:egg_position]
+
+    if url.startswith('ssh://git@'):
+        # searching '@' after git@
+        at_pos = url.find('@', 11) 
+    else:
+        at_pos = url.find('@')
+
+    if at_pos > 0:
+        link, tag = url[:at_pos], url[at_pos+1:]
+    else:
+        link, tag = url, None
+
+    req_file_content = git_accessor.access(link, tag, 'requirements.txt')
+    if req_file_content is None:
+        raise RequirementException('Editable requirement %s does not have a requirements.txt file')
+
     requirements = []
+    for line in req_file_content:
+        if line[0] == '#' or len(line) < 2:
+            continue
+        r = RequirementSpecifier(specifier=line)
+        requirements += do_requirement_recursion(git_accessor, r)
+    return requirements + [original_req]
+
+
+def read_requirement_file(requirement_file):
+    '''
+    Nice dirty hack to test the workflow:)
+    In order to process hierarchical dependencies, we assume that -e git+ links
+    may contain another requirements.txt file that we will include.
+    
+    Another way of doing that is to have dependencies only in setup.py and
+    run 'python setup.py egg_info" for each package and analyse results
+    (this is what pip does to process all dependencies in pip).
+    However we loosing wheeling capability - robustus will never get control
+    back if pip started to process dependencies from egg_info.
+    '''
+    requirements = []
+    git_accessor = GitAccessor()
     for line in open(requirement_file, 'r'):
         if line[0] == '#' or len(line) < 2:
             continue
-        requirements.append(RequirementSpecifier(specifier=line))
+        r = RequirementSpecifier(specifier=line)
+        requirements += do_requirement_recursion(git_accessor, r)
+
     return requirements
