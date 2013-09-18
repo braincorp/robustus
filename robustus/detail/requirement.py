@@ -7,6 +7,7 @@ import os
 import re
 import urlparse
 from git_accessor import GitAccessor
+import logging
 
 
 class RequirementException(Exception):
@@ -151,6 +152,7 @@ class RequirementSpecifier(Requirement):
         Requirement.__init__(self, *args, **kwargs)
         self.allow_greater_version = kwargs.get('allow_greater_version', False)
         if 'specifier' in kwargs:
+            logging.info('Got requirement: %s' % kwargs['specifier'])
             self._from_specifier(kwargs['specifier'])
 
     def _from_specifier(self, specifier):
