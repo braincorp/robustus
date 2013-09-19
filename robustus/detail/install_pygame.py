@@ -38,6 +38,7 @@ def install(robustus, requirement_specifier, rob_file):
 
     # Pygame asks to proceed without smpeg,
     # megahack to avoid asking to continue
+    logging.info('Builduing pygame')
     os.chdir(pygame_archive_name)
     config_unix_py = 'config_unix.py'
     config_unix_py_source = open(config_unix_py).read()
