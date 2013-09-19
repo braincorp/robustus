@@ -22,10 +22,11 @@ def test_bullet_installation():
     assert os.path.isdir(os.path.join(test_env, 'wheelhouse/panda3d-1.8.1'))
     assert os.path.isdir(os.path.join(test_env, 'wheelhouse/panda3d-1.8.1/lib'))
     # check that panda3d is installed into env
-    assert os.path.isdir(os.path.join(test_env, 'lib/panda3d-1.81'))
+    assert os.path.isdir(os.path.join(test_env, 'lib/panda3d'))
+    assert os.path.isfile(os.path.join(test_env, 'lib/panda3d/panda3d.py'))
 
     os.chdir(cwd)
     shutil.rmtree(test_env)
 
 if __name__ == '__main__':
-    pytest.main('-s %s' % __file__)
+    pytest.main('-s %s -n0' % __file__)

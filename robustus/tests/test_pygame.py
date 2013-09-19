@@ -27,4 +27,4 @@ def test_bullet_installation():
     shutil.rmtree(test_env)
 
 if __name__ == '__main__':
-    pytest.main('-s %s' % __file__)
+    pytest.main('-s %s -n0' % __file__)

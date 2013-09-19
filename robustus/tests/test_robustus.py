@@ -35,14 +35,9 @@ def test_robustus():
         file.write('pytest==2.3.5\n')
     subprocess.call(['bin/robustus', 'install', '-r', test_requirements1])
     test_requirements2 = 'test_requirements2.txt'
-    with open(test_requirements2, 'w') as file:
-        file.write('numpy==1.7.1\n')
-        file.write('scipy==0.12.0\n')
-        file.write('opencv==2.4.4\n')
-    subprocess.call(['bin/robustus', 'install', '-r', test_requirements1, '-r', test_requirements2])
 
     # check packages are installed
-    packages_to_check = ['pyserial', 'numpy==1.7.1', 'pep8==1.3.3', 'pytest==2.3.5', 'scipy==0.12.0', 'opencv==2.4.4']
+    packages_to_check = ['pyserial', 'pep8==1.3.3', 'pytest==2.3.5']
     with open('freezed_requirements.txt', 'w') as req_file:
         subprocess.call(['bin/robustus', 'freeze'], stdout=req_file)
     with open('freezed_requirements.txt') as req_file:
