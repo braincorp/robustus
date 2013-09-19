@@ -363,6 +363,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None):
     However we loosing wheeling capability - robustus will never get control
     back if pip started to process dependencies from egg_info.
     '''
+    assert(isinstance(specifiers_list, (list, tuple)))
     requirements = []
     if git_accessor is None:
         git_accessor = GitAccessor()
