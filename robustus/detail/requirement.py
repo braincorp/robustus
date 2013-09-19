@@ -245,7 +245,7 @@ class RequirementSpecifier(Requirement):
 
     def _extract_path_specifier(self, specifier):
         try:
-            path = os.path.expanduser(specifier)
+            path = os.path.abspath(os.path.expanduser(specifier))
             if os.path.exists(path):
                 return path
             else:
