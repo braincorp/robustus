@@ -49,6 +49,7 @@ class Robustus(object):
             raise RobustusException('bad robustus environment ' + self.env + ': .robustus settings file not found')
         settings = eval(open(self.settings_file_path).read())
         self.settings = Robustus._override_settings(settings, args)
+        logging.info('Robustus will use the following cache folder: %s' % self.settings['cache'])
 
         self.pip_executable = os.path.join(self.env, 'bin/pip')
         if not os.path.isfile(self.pip_executable):
