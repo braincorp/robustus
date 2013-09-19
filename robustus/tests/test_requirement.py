@@ -8,6 +8,8 @@ import doctest
 import robustus
 import pytest
 import mock
+import tempfile
+import os
 
 
 #FIXME: use from robustus.detail.requirement import ...
@@ -97,8 +99,38 @@ def test_remove_requirements_duplicates():
     assert(sparse_list[2].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
     assert(sparse_list[3].freeze() == 'git+https://github.com/company/my_package@branch_name#egg=my_package')
     assert(sparse_list[4].freeze() == 'numpy==1.7.3')
-    
+
+
+def test_requirement_recursion_starting_with_local_non_editable(tmpdir):
+    temp_folder = str(tmpdir.mkdtemp())
+    with open(os.path.join(temp_folder, 'requirements.txt'), 'w') as f:
+        f.write('-e git+https://github.com/company/my_package@branch_name#egg=my_package\n'
+                'opencv=1\n')
+
+    reqs = do_requirement_recursion(None, RequirementSpecifier(specifier=temp_folder))
+    assert(len(reqs) == 1)
+    assert(reqs[0].freeze() == temp_folder)
+
+
+def test_requirement_recursion_starting_with_local(tmpdir):
+    mock_git = mock.MagicMock()
+    mock_git.access.return_value = ['numpy==1', 'scipy==2']
+
+    temp_folder = str(tmpdir.mkdtemp())
+    with open(os.path.join(temp_folder, 'requirements.txt'), 'w') as f:
+        f.write('-e git+https://github.com/company/my_package@branch_name#egg=my_package\n'
+                'opencv==1\n')
+
+    reqs = do_requirement_recursion(mock_git, RequirementSpecifier(specifier='-e ' + temp_folder))
+    assert(len(reqs) == 5)
+    assert(reqs[0].freeze() == 'numpy==1')
+    assert(reqs[1].freeze() == 'scipy==2')
+    assert(reqs[2].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
+    assert(reqs[3].freeze() == 'opencv==1')
+    assert(reqs[4].freeze() == '-e ' + temp_folder)
+
 
 if __name__ == '__main__':
-    doctest.testmod(robustus.detail.requirement)
+    #test_requirement_recursion_starting_with_local()
+    #doctest.testmod(robustus.detail.requirement)
     pytest.main('-s %s -n0' % __file__)
