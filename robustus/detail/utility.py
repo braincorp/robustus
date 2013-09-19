@@ -40,6 +40,6 @@ def ln(src, dst, force=False):
     :param force: remove destination file
     :return: None
     """
-    if force and os.path.isfile(dst):
+    if force and os.path.exists(dst):
         os.remove(dst)
     os.symlink(src, dst)
