@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln
-from detail.requirement import remove_duplicate_requirements
+from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
 # for doctests
 import detail
 
@@ -282,13 +282,13 @@ class Robustus(object):
         # construct requirements list
         requirements = []
         for requirement in args.packages:
-            requirements.append(RequirementSpecifier(specifier=requirement))
+            requirements.append(expand_requirements_specifiers(requirement))
         if args.requirement:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file)
         if args.editable:
             for requirement in args.editable:
-                requirements.append(RequirementSpecifier(specifier='-e ' + requirement))
+                requirements.append(expand_requirements_specifiers('-e ' + requirement))
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')

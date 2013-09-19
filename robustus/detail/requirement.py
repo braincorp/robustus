@@ -348,18 +348,12 @@ def do_requirement_recursion(git_accessor, original_req):
     if req_file_content is None:
         raise RequirementException('Editable requirement %s does not have a requirements.txt file')
 
-    requirements = []
-    for line in req_file_content:
-        if line[0] == '#' or line.isspace() or (len(line) < 2):
-            continue
-        r = RequirementSpecifier(specifier=line)
-        requirements += do_requirement_recursion(git_accessor, r)
-    return requirements + [original_req]
+    return expand_requirements_specifiers(req_file_content, git_accessor) + [original_req]
 
 
-def read_requirement_file(requirement_file):
+def expand_requirements_specifiers(specifiers_list, git_accessor = None):
     '''
-    Nice dirty hack to test the workflow:)
+    Nice dirty hack to have a clean workflow:)
     In order to process hierarchical dependencies, we assume that -e git+ links
     may contain another requirements.txt file that we will include.
     
@@ -370,14 +364,22 @@ def read_requirement_file(requirement_file):
     back if pip started to process dependencies from egg_info.
     '''
     requirements = []
-    git_accessor = GitAccessor()
-    for line in open(requirement_file, 'r'):
+    if git_accessor is None:
+        git_accessor = GitAccessor()
+    for line in specifiers_list:
         if line[0] == '#' or line.isspace() or (len(line) < 2):
             continue
         r = RequirementSpecifier(specifier=line)
         requirements += do_requirement_recursion(git_accessor, r)
 
     return requirements
+
+
+def read_requirement_file(requirement_file):
+    with open(requirement_file, 'r') as req_file:
+        specifiers_list = req_file.readlines()
+    expand_requirements_specifiers(specifiers_list)
+
 
 def remove_duplicate_requirements(requirements_list):
     '''
