@@ -278,6 +278,8 @@ class Robustus(object):
 
     def install(self, args):
         # construct requirements list
+
+        raise Exception(args.packages, args.requirement, args.editable)
         requirements = []
         for requirement in args.packages:
             requirements.append(RequirementSpecifier(specifier=requirement))
@@ -452,6 +454,9 @@ def execute(argv):
     install_parser.add_argument('packages',
                                 nargs='*',
                                 help='packages to install in format <package name>==version')
+    install_parser.add_argument('-e', '--editable',
+                                action='append',
+                                help='installs package in editable mode')
     install_parser.set_defaults(func=Robustus.install)
 
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
