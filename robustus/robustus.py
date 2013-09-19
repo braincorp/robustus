@@ -20,6 +20,14 @@ class RobustusException(Exception):
         Exception.__init__(self, message)
 
 
+def run_shell(command):
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+    if p.returncode != 0:
+        raise Exception('Error running %s, code=%s' % (command, p.returncode))
+    return output
+
+
 class Robustus(object):
     settings_file_path = '.robustus'
     cached_requirements_file_path = 'cached_requirements.txt'
@@ -129,6 +137,16 @@ class Robustus(object):
             ln('/usr/lib/liblapack.so', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
+        # linking PyQt
+        if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
+            logging.info('Linking qt for centos matplotlib backend')
+            os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+            os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+        elif os.path.isfile('/usr/lib/python2.7/dist-packages/PyQt4/QtCore.so'):
+            logging.info('Linking qt for ubuntu matplotlib backend')
+            os.symlink('/usr/lib/python2.7/dist-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
+            os.symlink('/usr/lib/python2.7/dist-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
@@ -173,12 +191,20 @@ class Robustus(object):
 
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
-        subprocess.call([self.pip_executable,
+        return_code = subprocess.call([self.pip_executable,
                          'install',
                          '--no-index',
                          '--use-wheel',
                          '--find-links=%s' % self.cache,
                          requirement_specifier.freeze()])
+        if return_code > 0:
+            logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
+                         (requirement_specifier.freeze(), self.cache, return_code))
+            rob = os.path.join(self.cache, requirement_specifier.rob_filename())
+            if os.path.exists(rob):
+                logging.info('Robustus will delete the coresponding %s file in order '
+                         'to recreate the wheel in the future. Please run again.' % str(rob))
+                os.remove(rob)
 
         return True
 
@@ -189,7 +215,13 @@ class Robustus(object):
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
-            subprocess.call([self.pip_executable, 'install', requirement_specifier.url.geturl()])
+
+            # here we have to run via shell because requirement can be editable and then it will require
+            # extra parsing to extract -e flag into separate argument.
+            command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
+            logging.info('Got url-based requirement. '
+                         'Fall back to pip shell command:%s' % (command,))
+            run_shell(command)
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):
@@ -236,6 +268,9 @@ class Robustus(object):
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
+        
+        logging.info('Here are all the requirements robustus going to install:\n' +
+                     '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier)
