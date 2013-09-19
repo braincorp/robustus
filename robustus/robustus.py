@@ -40,7 +40,10 @@ class Robustus(object):
         Initialize robustus tool. Should be called if sys.executable is in robustus environment
         @param: args - command line arguments
         """
-        self.env = os.path.abspath(os.path.join(sys.executable, os.pardir, os.pardir))
+        if args.env is not None:
+            self.env = args.env
+        else:
+            self.env = os.path.abspath(os.path.join(sys.executable, os.pardir, os.pardir))
 
         # check if we are in robustus environment
         self.settings_file_path = os.path.join(self.env, Robustus.settings_file_path)
@@ -232,7 +235,7 @@ class Robustus(object):
             except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
-                os.path.remove(rob_file)
+                os.remove(rob_file)
                 return
 
         # add requirement to the this of cached packages
@@ -396,6 +399,7 @@ def execute(argv):
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
                                      prog='robustus')
+    parser.add_argument('--env', help='virtualenv to use')
     parser.add_argument('--cache', help='binary package cache directory')
     subparsers = parser.add_subparsers(help='robustus commands')
 
