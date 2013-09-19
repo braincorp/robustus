@@ -41,7 +41,7 @@ class Robustus(object):
         @param: args - command line arguments
         """
         if args.env is not None:
-            self.env = args.env
+            self.env = os.path.abspath(args.env)
         else:
             self.env = os.path.abspath(os.path.join(sys.executable, os.pardir, os.pardir))
 
@@ -51,6 +51,12 @@ class Robustus(object):
             raise RobustusException('bad robustus environment ' + self.env + ': .robustus settings file not found')
         settings = eval(open(self.settings_file_path).read())
         self.settings = Robustus._override_settings(settings, args)
+
+        self.python_executable = os.path.join(self.env, 'bin/python')
+        if not os.path.isfile(self.python_executable):
+            self.python_executable = os.path.join(self.env, 'bin/python27')
+        if not os.path.isfile(self.python_executable):
+            raise RobustusException('bad robustus environment ' + self.env + ': python not found')
 
         self.pip_executable = os.path.join(self.env, 'bin/pip')
         if not os.path.isfile(self.pip_executable):
