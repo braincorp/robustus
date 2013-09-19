@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln
+from detail.requirement import remove_duplicate_requirements
 # for doctests
 import detail
 
@@ -285,7 +286,8 @@ class Robustus(object):
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
-        
+        requirements = remove_duplicate_requirements(requirements)
+
         logging.info('Here are all the requirements robustus going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]))
         # install

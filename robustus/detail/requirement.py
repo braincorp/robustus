@@ -8,6 +8,7 @@ import re
 import urlparse
 from git_accessor import GitAccessor
 import logging
+from collections import OrderedDict
 
 
 class RequirementException(Exception):
@@ -327,3 +328,14 @@ def read_requirement_file(requirement_file):
         requirements += do_requirement_recursion(git_accessor, r)
 
     return requirements
+
+def remove_duplicate_requirements(requirements_list):
+    '''
+    Given list of requirements, removes all duplicates of requirements comparing
+    then using freeze() strings.
+    '''
+    result = OrderedDict()
+    for r in requirements_list:
+        if r.freeze() not in result:
+            result[r.freeze()] = r
+    return result.values()

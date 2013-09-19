@@ -14,6 +14,7 @@ import mock
 do_requirement_recursion = robustus.detail.requirement.do_requirement_recursion
 RequirementSpecifier = robustus.detail.requirement.RequirementSpecifier
 RequirementException = robustus.detail.requirement.RequirementException
+remove_duplicate_requirements = robustus.detail.requirement.remove_duplicate_requirements
 
 
 def test_requirement_recursion_signle_item():
@@ -72,7 +73,32 @@ def test_requirement_recursion_two_levels():
     assert(reqs[4].freeze() == 'scipy==2')
     assert(reqs[5].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
     
-  
+
+def test_remove_requirements_duplicates():
+    req_list = [RequirementSpecifier(specifier='numpy == 1.7.2  # comment'),
+                RequirementSpecifier(specifier='pytest==2'),
+                RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'),
+                RequirementSpecifier(specifier='pytest==2'),
+                RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'),
+                RequirementSpecifier(specifier='pytest==2'),
+                RequirementSpecifier(specifier='numpy == 1.7.2  # comment'),
+                RequirementSpecifier(specifier='numpy == 1.7.2  # comment'),
+                RequirementSpecifier(specifier='git+https://github.com/company/my_package@branch_name#egg=my_package'),
+                RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'),
+                RequirementSpecifier(specifier='pytest==2'),
+                RequirementSpecifier(specifier='numpy==1.7.2'),
+                RequirementSpecifier(specifier='numpy==1.7.3')]
+                
+    sparse_list = remove_duplicate_requirements(req_list)
+    assert(len(sparse_list) == 5)
+
+    assert(sparse_list[0].freeze() == 'numpy==1.7.2')
+    assert(sparse_list[1].freeze() == 'pytest==2')
+    assert(sparse_list[2].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
+    assert(sparse_list[3].freeze() == 'git+https://github.com/company/my_package@branch_name#egg=my_package')
+    assert(sparse_list[4].freeze() == 'numpy==1.7.3')
+    
+
 if __name__ == '__main__':
     doctest.testmod(robustus.detail.requirement)
     pytest.main('-s %s -n0' % __file__)
