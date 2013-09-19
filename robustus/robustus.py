@@ -200,12 +200,15 @@ class Robustus(object):
 
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
-        subprocess.call([self.pip_executable,
+        return_code = ([self.pip_executable,
                          'install',
                          '--no-index',
                          '--use-wheel',
                          '--find-links=%s' % self.cache,
                          requirement_specifier.freeze()])
+        if return_code > 0:
+            logging.info('pip failed to install requirment %s from wheels cache' %
+                         (requirement_specifier.freeze(), self.cache))
 
         return True
 
