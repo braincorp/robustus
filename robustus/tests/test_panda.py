@@ -9,7 +9,7 @@ import robustus
 import shutil
 
 
-def test_bullet_installation():
+def test_panda_installation():
     cwd = os.getcwd()
     test_env = 'test_env'
     if os.path.isdir(test_env):
