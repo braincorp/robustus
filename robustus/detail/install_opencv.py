@@ -13,7 +13,7 @@ from utility import cp
 from requirement import RequirementException
 
 
-def install(robustus, version, rob_file):
+def install(robustus, requirement_specifier, rob_file):
     try:
         import cv2
     except ImportError:
@@ -22,21 +22,21 @@ def install(robustus, version, rob_file):
             logging.info('Linking opencv for CentOS')
             os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'))
             os.symlink('/usr/lib64/python2.7/site-packages/cv.py', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv.py'))
-        elif version == '2.4.4' or version == '2.4.2':
+        elif requirement_specifier.version == '2.4.4' or requirement_specifier.version == '2.4.2':
             cwd = os.getcwd()
-            if version == '2.4.4':
+            if requirement_specifier.version == '2.4.4':
                 cv_work_dir = os.path.join(cwd, 'opencv-2.4.4')
-            elif version == '2.4.2':
+            elif requirement_specifier.version == '2.4.2':
                 cv_work_dir = os.path.join(cwd, 'OpenCV-2.4.2')
-            cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % version)
+            cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % requirement_specifier.version)
             cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
             if not os.path.isfile(cv2so):
                 logging.info('Downloading OpenCV')
-                cv_tar = os.path.join(cwd, 'opencv-%s.tar.bz2' % version)
+                cv_tar = os.path.join(cwd, 'opencv-%s.tar.bz2' % requirement_specifier.version)
                 opencv_unix = 'http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/'
-                if version == '2.4.4':
+                if requirement_specifier.version == '2.4.4':
                     url = opencv_unix + '2.4.4/OpenCV-2.4.4a.tar.bz2/download'
-                elif version == '2.4.2':
+                elif requirement_specifier.version == '2.4.2':
                     url = opencv_unix + '2.4.2/OpenCV-2.4.2.tar.bz2/download'
                 subprocess.call(['wget', '-c', url, '-O', cv_tar])
 

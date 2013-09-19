@@ -10,7 +10,7 @@ import logging
 import os
 import subprocess
 import sys
-from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, cp
+from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln
 # for doctests
 import detail
 
@@ -118,43 +118,51 @@ class Robustus(object):
         if os.path.isfile('/usr/lib64/libblas.so.3'):
             logging.info('Linking CentOS libblas to venv')
             blas_so = os.path.join(args.env, 'lib64/libblas.so')
-            os.symlink('/usr/lib64/libblas.so.3', blas_so)
+            ln('/usr/lib64/libblas.so.3', blas_so, True)
             os.environ['BLAS'] = os.path.join(args.env, 'lib64')
         elif os.path.isfile('/usr/lib/libblas.so'):
             logging.info('Linking Ubuntu libblas to venv')
             blas_so = os.path.join(args.env, 'lib/libblas.so')
-            os.symlink('/usr/lib/libblas.so', blas_so)
+            ln('/usr/lib/libblas.so', blas_so, True)
             os.environ['BLAS'] = os.path.join(args.env, 'lib')
 
         if os.path.isfile('/usr/lib64/liblapack.so.3'):
             logging.info('Linking CentOS liblapack to venv')
             lapack_so = os.path.join(args.env, 'lib64/liblapack.so')
-            os.symlink('/usr/lib64/liblapack.so.3', lapack_so)
+            ln('/usr/lib64/liblapack.so.3', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib64')
         elif os.path.isfile('/usr/lib/liblapack.so'):
             logging.info('Linking Ubuntu liblapack to venv')
             lapack_so = os.path.join(args.env, 'lib/liblapack.so')
-            os.symlink('/usr/lib/liblapack.so', lapack_so)
+            ln('/usr/lib/liblapack.so', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
         # linking PyQt
-        if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
-            logging.info('Linking qt for centos matplotlib backend')
-            os.symlink('/usr/lib64/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
-            os.symlink('/usr/lib64/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
-        elif os.path.isfile('/usr/lib/python2.7/dist-packages/PyQt4/QtCore.so'):
-            logging.info('Linking qt for ubuntu matplotlib backend')
-            os.symlink('/usr/lib/python2.7/dist-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
-            os.symlink('/usr/lib/python2.7/dist-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
-
         if sys.platform.startswith('darwin'):
             logging.info('Linking qt for MacOSX')
             if os.path.isfile('/Library/Python/2.7/site-packages/PyQt4/Qt.so'):
-                os.symlink('/Library/Python/2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
-                os.symlink('/Library/Python/2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+                ln('/Library/Python/2.7/site-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/Library/Python/2.7/site-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
             elif os.path.isfile('/usr/local/lib/python2.7/site-packages/PyQt4/Qt.so'):
-                os.symlink('/usr/local/lib/python2.7/site-packages/sip.so', os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'))
-                os.symlink('/usr/local/lib/python2.7/site-packages/PyQt4', os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'))
+                ln('/usr/local/lib/python2.7/site-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/local/lib/python2.7/site-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
+        else:
+            if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
+                logging.info('Linking qt for centos matplotlib backend')
+                ln('/usr/lib64/python2.7/site-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/lib64/python2.7/site-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
+            elif os.path.isfile('/usr/lib/python2.7/dist-packages/PyQt4/QtCore.so'):
+                logging.info('Linking qt for ubuntu matplotlib backend')
+                ln('/usr/lib/python2.7/dist-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/lib/python2.7/dist-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
 
         # readline must be come before everything else
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
@@ -244,8 +252,8 @@ class Robustus(object):
 
             try:
                 # try to use specific install script
-                install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name)
-                install_module.install(self, requirement_specifier.version, rob_file)
+                install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name.lower())
+                install_module.install(self, requirement_specifier, rob_file)
             except ImportError:
                 self.install_through_wheeling(requirement_specifier, rob_file)
             except RequirementException as exc:
