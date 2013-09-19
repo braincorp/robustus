@@ -230,7 +230,9 @@ class Robustus(object):
     def install_requirement(self, requirement_specifier):
         logging.info('Installing ' + requirement_specifier.freeze())
 
-        if requirement_specifier.url is not None:
+        if requirement_specifier.path is not None:
+            raise Exception(requirement_specifier.path)
+        if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
@@ -287,7 +289,7 @@ class Robustus(object):
         if args.editable:
             for requirement in args.editable:
                 requirements.append(RequirementSpecifier(specifier='-e ' + requirement))
-        raise Exception(requirements)
+
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
