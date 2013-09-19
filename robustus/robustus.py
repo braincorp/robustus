@@ -200,7 +200,7 @@ class Robustus(object):
 
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
-        return_code = ([self.pip_executable,
+        return_code = subprocess.call([self.pip_executable,
                          'install',
                          '--no-index',
                          '--use-wheel',
