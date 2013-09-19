@@ -25,6 +25,6 @@ else
 fi
 
 # create virtualenv
-virtualenv $DIR/../venv --python=$PYTHONEXEC --prompt "(robustus)"
-source $DIR/../venv/bin/activate
+virtualenv $DIR/venv --python=$PYTHONEXEC --prompt "(robustus)"
+source $DIR/venv/bin/activate
 pip install -r requirements.txt
