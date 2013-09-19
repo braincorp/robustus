@@ -207,12 +207,13 @@ class Robustus(object):
                          '--find-links=%s' % self.cache,
                          requirement_specifier.freeze()])
         if return_code > 0:
-            logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). '
-                         'Robustus will delete the coresponding .rob file in order '
-                         'to recreate the wheel in the future. Please run again.' %
+            logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
                          (requirement_specifier.freeze(), self.cache, return_code))
-            raise RequirementException('Failed to install from wheel %s' % requirement_specifier.freeze())
-            
+            rob = os.path.join(self.cache, requirement_specifier.rob_filename())
+            if os.path.exists(rob):
+                logging.info('Robustus will delete the coresponding %s file in order '
+                         'to recreate the wheel in the future. Please run again.' % str(rob))
+                os.remove(rob)
 
         return True
 
