@@ -230,8 +230,6 @@ class Robustus(object):
     def install_requirement(self, requirement_specifier):
         logging.info('Installing ' + requirement_specifier.freeze())
 
-        if requirement_specifier.path is not None:
-            raise Exception(requirement_specifier.path)
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
