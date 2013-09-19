@@ -282,13 +282,13 @@ class Robustus(object):
         # construct requirements list
         requirements = []
         for requirement in args.packages:
-            requirements.append(expand_requirements_specifiers(requirement))
+            requirements += expand_requirements_specifiers(requirement)
         if args.requirement:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file)
         if args.editable:
             for requirement in args.editable:
-                requirements.append(expand_requirements_specifiers('-e ' + requirement))
+                requirements += expand_requirements_specifiers('-e ' + requirement)
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
