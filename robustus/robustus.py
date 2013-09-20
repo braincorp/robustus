@@ -167,9 +167,11 @@ class Robustus(object):
                    os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
 
         # readline must be come before everything else
+        logging.info('Installing readline...')
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
         # compose settings file
+        logging.info('Write .robustus config file')
         settings = Robustus._override_settings(Robustus.default_settings, args)
         with open(os.path.join(args.env, Robustus.settings_file_path), 'w') as file:
             file.write(str(settings))
@@ -179,8 +181,10 @@ class Robustus(object):
         script_dir = os.path.dirname(os.path.realpath(__file__))
         setup_dir = os.path.abspath(os.path.join(script_dir, os.path.pardir))
         os.chdir(setup_dir)
+        logging.info('Installing robustus from %s, running %s' % (setup_dir, ' '.join([python_executable, 'setup.py', 'install'])) )
         subprocess.call([python_executable, 'setup.py', 'install'])
         os.chdir(cwd)
+        logging.info('Robustus initialized environment with cache located at %s' % settings.cache)
 
     def install_through_wheeling(self, requirement_specifier, rob_file):
         """
