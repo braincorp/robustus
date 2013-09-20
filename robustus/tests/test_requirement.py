@@ -17,6 +17,7 @@ do_requirement_recursion = robustus.detail.requirement.do_requirement_recursion
 RequirementSpecifier = robustus.detail.requirement.RequirementSpecifier
 RequirementException = robustus.detail.requirement.RequirementException
 remove_duplicate_requirements = robustus.detail.requirement.remove_duplicate_requirements
+expand_requirements_specifiers = robustus.detail.requirement.expand_requirements_specifiers
 
 
 def test_requirement_recursion_signle_item():
@@ -128,6 +129,12 @@ def test_requirement_recursion_starting_with_local(tmpdir):
     assert(reqs[2].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
     assert(reqs[3].freeze() == 'opencv==1')
     assert(reqs[4].freeze() == '-e ' + temp_folder)
+
+
+def test_expand_empty_requirements(tmpdir):
+    mock_git = mock.MagicMock()
+    result = expand_requirements_specifiers([], mock_git)
+    assert(result == [])
 
 
 if __name__ == '__main__':
