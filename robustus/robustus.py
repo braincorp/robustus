@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln
+from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
 # for doctests
 import detail
 
@@ -51,6 +52,7 @@ class Robustus(object):
             raise RobustusException('bad robustus environment ' + self.env + ': .robustus settings file not found')
         settings = eval(open(self.settings_file_path).read())
         self.settings = Robustus._override_settings(settings, args)
+        logging.info('Robustus will use the following cache folder: %s' % self.settings['cache'])
 
         self.python_executable = os.path.join(self.env, 'bin/python')
         if not os.path.isfile(self.python_executable):
@@ -146,10 +148,39 @@ class Robustus(object):
             ln('/usr/lib/liblapack.so', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
+        # linking PyQt
+        if sys.platform.startswith('darwin'):
+            logging.info('Linking qt for MacOSX')
+            if os.path.isfile('/Library/Python/2.7/site-packages/PyQt4/Qt.so'):
+                ln('/Library/Python/2.7/site-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/Library/Python/2.7/site-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
+            elif os.path.isfile('/usr/local/lib/python2.7/site-packages/PyQt4/Qt.so'):
+                ln('/usr/local/lib/python2.7/site-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/local/lib/python2.7/site-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
+        else:
+            if os.path.isfile('/usr/lib64/python2.7/site-packages/PyQt4/QtCore.so'):
+                logging.info('Linking qt for centos matplotlib backend')
+                ln('/usr/lib64/python2.7/site-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/lib64/python2.7/site-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
+            elif os.path.isfile('/usr/lib/python2.7/dist-packages/PyQt4/QtCore.so'):
+                logging.info('Linking qt for ubuntu matplotlib backend')
+                ln('/usr/lib/python2.7/dist-packages/sip.so',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/lib/python2.7/dist-packages/PyQt4',
+                   os.path.join(args.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
+
         # readline must be come before everything else
+        logging.info('Installing readline...')
         subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
 
         # compose settings file
+        logging.info('Write .robustus config file')
         settings = Robustus._override_settings(Robustus.default_settings, args)
         with open(os.path.join(args.env, Robustus.settings_file_path), 'w') as file:
             file.write(str(settings))
@@ -161,6 +192,7 @@ class Robustus(object):
         os.chdir(setup_dir)
         subprocess.call([python_executable, 'setup.py', 'install'])
         os.chdir(cwd)
+        logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
     def install_through_wheeling(self, requirement_specifier, rob_file):
         """
@@ -210,7 +242,7 @@ class Robustus(object):
     def install_requirement(self, requirement_specifier):
         logging.info('Installing ' + requirement_specifier.freeze())
 
-        if requirement_specifier.url is not None:
+        if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
@@ -258,15 +290,20 @@ class Robustus(object):
 
     def install(self, args):
         # construct requirements list
-        requirements = []
-        for requirement in args.packages:
-            requirements.append(RequirementSpecifier(specifier=requirement))
-        if args.requirement:
+        specifiers = args.packages
+        if args.editable is not None:
+            specifiers += ['-e ' + r for r in args.editable]
+        requirements = expand_requirements_specifiers(specifiers)
+        if args.requirement is not None:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file)
+
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
         
+
+        requirements = remove_duplicate_requirements(requirements)
+
         logging.info('Here are all the requirements robustus going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]))
         # install
@@ -431,6 +468,9 @@ def execute(argv):
     install_parser.add_argument('packages',
                                 nargs='*',
                                 help='packages to install in format <package name>==version')
+    install_parser.add_argument('-e', '--editable',
+                                action='append',
+                                help='installs package in editable mode')
     install_parser.set_defaults(func=Robustus.install)
 
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')

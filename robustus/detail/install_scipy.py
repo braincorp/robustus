@@ -19,7 +19,10 @@ def install(robustus, requirement_specifier, rob_file):
             logging.info('Changing LDFLAGS on OS X to compile scipy')
             os.environ['CC'] = 'clang'
             os.environ['CXX'] = 'clang'
-            old_ld_flags = os.environ['LDFLAGS']
+            try:
+                old_ld_flags = os.environ['LDFLAGS']
+            except KeyError:
+                old_ld_flags = None
             os.environ['LDFLAGS'] = '-arch x86_64 -Wall -undefined dynamic_lookup -bundle'
             os.environ['FFLAGS'] = '-arch x86_64 -ff2c'
 
@@ -27,4 +30,7 @@ def install(robustus, requirement_specifier, rob_file):
 
         if sys.platform.startswith('darwin'):
             # undo LDFLAGS changes on OS X
-            os.environ['LDFLAGS'] = old_ld_flags
+            if old_ld_flags is not None:
+                os.environ['LDFLAGS'] = old_ld_flags
+            else:
+                del os.environ['LDFLAGS']
