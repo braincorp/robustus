@@ -349,7 +349,8 @@ def do_requirement_recursion(git_accessor, original_req):
         req_file_content = _obtain_requirements_from_local_package(original_req)
 
     if req_file_content is None:
-        raise RequirementException('Editable requirement %s does not have a requirements.txt file')
+        raise RequirementException('Editable requirement %s does not have a requirements.txt file'
+                                   % original_req.freeze())
 
     return expand_requirements_specifiers(req_file_content, git_accessor) + [original_req]
 
