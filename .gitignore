@@ -1,5 +1,41 @@
-*.pyc
-.idea/
-.pydevproject
+*.py[co]
+.DS_Store
+# Packages
+*.egg
+*.egg-info
+.pytest_tmp
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
 .project
+.pydevproject
+
+# Installer logs
+pip-log.txt
+pyopencl*.tar.gz
+
+# Unit test / coverage reports
+.coverage
+coverage.xml
+testresults.xml
+.tox
+
+#Translations
+*.mo
+
+#Mr Developer
+.mr.developer.cfg
+.env
+venv
 .cache
+
+#NDK
+ndkpy_dbg_log*
+tmp*
+_db
