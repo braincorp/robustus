@@ -375,7 +375,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None):
         if line[0] == '#' or line.isspace() or (len(line) < 2):
             continue
         r = RequirementSpecifier(specifier=line)
-        if r.freeze() not in [r.freeze() for r in requirements]:
+        if r.freeze() not in [ritem.freeze() for ritem in requirements]:
             requirements += do_requirement_recursion(git_accessor, r)
             requirements = remove_duplicate_requirements(requirements)
 

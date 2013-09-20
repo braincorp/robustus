@@ -68,13 +68,12 @@ def test_requirement_recursion_two_levels():
     mock_git = MockGit()
     reqs = do_requirement_recursion(mock_git, RequirementSpecifier(
         specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'))
-    assert(len(reqs) == 6)
+    assert(len(reqs) == 5)
     assert(reqs[0].freeze() == 'numpy==1')
-    assert(reqs[1].freeze() == 'numpy==1')
-    assert(reqs[2].freeze() == 'opencv==5')
-    assert(reqs[3].freeze() == '-e git+ssh://git@github.com/company/my_package@another_branch#egg=my_package')
-    assert(reqs[4].freeze() == 'scipy==2')
-    assert(reqs[5].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
+    assert(reqs[1].freeze() == 'opencv==5')
+    assert(reqs[2].freeze() == '-e git+ssh://git@github.com/company/my_package@another_branch#egg=my_package')
+    assert(reqs[3].freeze() == 'scipy==2')
+    assert(reqs[4].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
     
 
 def test_remove_requirements_duplicates():
