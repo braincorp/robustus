@@ -105,7 +105,11 @@ class Robustus(object):
             subprocess.call(virtualenv_args)
 
         pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
+        if not os.path.isfile(pip_executable):
+            raise RobustusException('failed to create virtualenv, pip not found')
         easy_install_executable = os.path.abspath(os.path.join(args.env, 'bin/easy_install'))
+        if not os.path.isfile(easy_install_executable):
+            raise RobustusException('failed to create virtualenv, easy_install not found')
 
         # http://wheel.readthedocs.org/en/latest/
         # wheel is binary packager for python/pip
@@ -300,7 +304,6 @@ class Robustus(object):
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
-        
 
         requirements = remove_duplicate_requirements(requirements)
 
@@ -503,15 +506,15 @@ def execute(argv):
     upload_cache_parser.set_defaults(func=Robustus.upload_cache)
 
     args = parser.parse_args(argv)
-    if args.func == Robustus.env:
-        Robustus.env(args)
-    else:
-        try:
+    try:
+        if args.func == Robustus.env:
+            Robustus.env(args)
+        else:
             robustus = Robustus(args)
             args.func(robustus, args)
-        except (RobustusException, RequirementException) as exc:
-            logging.critical(exc.message)
-            exit(1)
+    except (RobustusException, RequirementException) as exc:
+        logging.critical(exc.message)
+        exit(1)
 
 
 if __name__ == '__main__':
