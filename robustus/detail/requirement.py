@@ -374,6 +374,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None):
             continue
         r = RequirementSpecifier(specifier=line)
         requirements += do_requirement_recursion(git_accessor, r)
+        requirements = remove_duplicate_requirements(requirements)
 
     return requirements
 
