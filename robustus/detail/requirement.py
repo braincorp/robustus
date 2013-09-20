@@ -244,6 +244,8 @@ class RequirementSpecifier(Requirement):
         return self.name, self.version, self.allow_greater_version, self.editable
 
     def _extract_path_specifier(self, specifier):
+        if specifier.isspace() or len(specifier) == 0:
+            return None
         try:
             path = os.path.abspath(os.path.expanduser(specifier))
             if os.path.exists(path):

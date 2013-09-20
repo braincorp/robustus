@@ -131,6 +131,5 @@ def test_requirement_recursion_starting_with_local(tmpdir):
 
 
 if __name__ == '__main__':
-    #test_requirement_recursion_starting_with_local()
-    #doctest.testmod(robustus.detail.requirement)
+    doctest.testmod(robustus.detail.requirement)
     pytest.main('-s %s -n0' % __file__)
