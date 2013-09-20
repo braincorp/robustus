@@ -316,6 +316,7 @@ def _obtain_requirements_from_remote_package(git_accessor, original_req):
     else:
         link, tag = url, None
 
+    logging.info('Obtaining requirements from remote package %s(%s)' % (link, tag))
     return git_accessor.access(link, tag, 'requirements.txt')
 
 
