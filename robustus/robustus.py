@@ -275,11 +275,10 @@ class Robustus(object):
     def install(self, args):
         # construct requirements list
         specifiers = args.packages
-        if args.editable:
+        if args.editable is not None:
             specifiers += ['-e ' + r for r in args.editable]
-        raise Exception(args.packages, args.requirement, args.editable, specifiers)
         requirements = expand_requirements_specifiers(specifiers)
-        if args.requirement:
+        if args.requirement is not None:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file)
 

@@ -381,7 +381,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None):
 def read_requirement_file(requirement_file):
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
-    expand_requirements_specifiers(specifiers_list)
+    return expand_requirements_specifiers(specifiers_list)
 
 
 def remove_duplicate_requirements(requirements_list):
