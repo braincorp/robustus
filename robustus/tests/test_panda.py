@@ -6,6 +6,7 @@
 import os
 import pytest
 import robustus
+from robustus.detail import check_module_available
 import shutil
 
 
@@ -22,6 +23,7 @@ def test_panda_installation(tmpdir):
     # check that panda3d is installed into env
     assert os.path.isdir(os.path.join(test_env, 'lib/panda3d'))
     assert os.path.isfile(os.path.join(test_env, 'lib/panda3d/panda3d.py'))
+    assert check_module_available(test_env, 'panda3d')
 
     shutil.rmtree(test_env)
 

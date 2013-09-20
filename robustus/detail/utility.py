@@ -6,6 +6,7 @@
 import glob
 import os
 import shutil
+import subprocess
 
 
 def write_file(filename, mode, data):
@@ -43,3 +44,18 @@ def ln(src, dst, force=False):
     if force and os.path.exists(dst):
         os.remove(dst)
     os.symlink(src, dst)
+
+
+def check_module_available(env, module):
+    """
+    check if speicified module is available to specified python environment.
+    :param env: path to python environment
+    :param module: module name
+    :return: True if module available, False otherwise
+    """
+    python_executable = os.path.join(env, 'bin/python')
+    if not os.path.isfile(python_executable):
+        python_executable = os.path.join(env, 'bin/python27')
+    if not os.path.isfile(python_executable):
+        raise RuntimeError('can\'t find python executable in %s' % env)
+    return subprocess.call([python_executable, '-c', 'import %s' % module]) == 0

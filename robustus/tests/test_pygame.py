@@ -3,10 +3,10 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
-import glob
 import os
 import pytest
 import robustus
+from robustus.detail import check_module_available
 import shutil
 
 
@@ -20,6 +20,7 @@ def test_pygame_installation(tmpdir):
     # pygame is not cached for now, just check that it has been installed
     assert os.path.isdir(os.path.join(test_env, 'lib/python2.7/site-packages/pygame'))
     assert os.path.isfile(os.path.join(test_env, 'lib/python2.7/site-packages/pygame/display.so'))
+    assert check_module_available(test_env, 'pygame')
 
     shutil.rmtree(test_env)
 
