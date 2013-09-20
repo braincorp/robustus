@@ -33,6 +33,7 @@ class Requirement(object):
         self.name = kwargs.get('name', None)
         self.version = kwargs.get('version', None)
         self.url = None
+        self.path = None
         self.editable = kwargs.get('editable', False)
         if 'url' in kwargs:
             self.url = urlparse.urlparse(kwargs['url'])
@@ -78,6 +79,8 @@ class Requirement(object):
                 str += ', version=\'%s\'' % self.version
         elif self.url is not None:
             str += 'url=\'%s\'' % self.url.geturl()
+        elif self.path is not None:
+            str += 'path=\'%s\'' % self.path
         str += ')'
         return str
 
@@ -112,6 +115,8 @@ class Requirement(object):
         """
         if self.url is not None:
             return self.url.geturl()
+        elif self.path is not None:
+            return self.path
         else:
             if self.version is not None:
                 return '%s==%s' % (self.name, self.version)
@@ -161,31 +166,35 @@ class RequirementSpecifier(Requirement):
         @return: (name, version, url, allow_greater_version, editable)
         Examples:
         >>> RequirementSpecifier()._from_specifier('numpy==1.7.2')
-        ('numpy', '1.7.2', None, False, False)
+        ('numpy', '1.7.2', False, False)
         >>> RequirementSpecifier()._from_specifier('-e numpy==1.7.2')
-        ('numpy', '1.7.2', None, False, True)
+        ('numpy', '1.7.2', False, True)
         >>> RequirementSpecifier()._from_specifier('   numpy == 1.7.2  ')
-        ('numpy', '1.7.2', None, False, False)
+        ('numpy', '1.7.2', False, False)
         >>> RequirementSpecifier()._from_specifier('   numpy >= 1.7.2  ')
-        ('numpy', '1.7.2', None, True, False)
+        ('numpy', '1.7.2', True, False)
         >>> RequirementSpecifier()._from_specifier('   numpy == 1.7.2  # comment')
-        ('numpy', '1.7.2', None, False, False)
+        ('numpy', '1.7.2', False, False)
         >>> RequirementSpecifier()._from_specifier('  -e    numpy == 1.7.2  # comment')
-        ('numpy', '1.7.2', None, False, True)
+        ('numpy', '1.7.2', False, True)
         >>> RequirementSpecifier()._from_specifier('numpy')
-        ('numpy', None, None, False, False)
+        ('numpy', None, False, False)
         >>> RequirementSpecifier()._from_specifier('pytest-cache==0.7')
-        ('pytest-cache', '0.7', None, False, False)
+        ('pytest-cache', '0.7', False, False)
         >>> RequirementSpecifier()._from_specifier('theano==0.6rc3')
-        ('theano', '0.6rc3', None, False, False)
+        ('theano', '0.6rc3', False, False)
         >>> RequirementSpecifier()._from_specifier('http://some_url/some_package.tar.gz')
-        (None, None, 'http://some_url/some_package.tar.gz', False, False)
+        ('http://some_url/some_package.tar.gz', False)
         >>> RequirementSpecifier()._from_specifier('   http://some_url/some_package.tar.gz')
-        (None, None, 'http://some_url/some_package.tar.gz', False, False)
+        ('http://some_url/some_package.tar.gz', False)
         >>> RequirementSpecifier()._from_specifier('-e   http://some_url/some_package.tar.gz')
-        (None, None, 'http://some_url/some_package.tar.gz', False, True)
+        ('http://some_url/some_package.tar.gz', True)
         >>> RequirementSpecifier()._from_specifier('-e git+https://github.com/company/my_package@branch_name#egg=my_package')
-        (None, None, 'git+https://github.com/company/my_package@branch_name#egg=my_package', False, True)
+        ('git+https://github.com/company/my_package@branch_name#egg=my_package', True)
+        >>> RequirementSpecifier()._from_specifier('/dev')
+        ('/dev', False)
+        >>> RequirementSpecifier()._from_specifier('-e /dev')
+        ('/dev', True)
         >>> RequirementSpecifier()._from_specifier('numpy==1.7.2==1.7.2')
         Traceback (most recent call last):
             ...
@@ -203,6 +212,8 @@ class RequirementSpecifier(Requirement):
         self.version = None
         self.allow_greater_version = False
         self.editable = False
+        self.url = None
+        self.path = None
 
         specifier = specifier.lstrip()
         specifier = specifier.rstrip()
@@ -210,21 +221,39 @@ class RequirementSpecifier(Requirement):
             self.editable = True
             specifier = specifier[2:].lstrip()
         # check if requirement is url
-        self.url = urlparse.urlparse(specifier)
-        if len(self.url.scheme) == 0:
-            self.url = None
-            # check if requirement is in <package>[==|>=]<version> format
-            mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
-            if mo is None:
-                raise RequirementException('invalid requirement specified "%s"' % specifier)
-            self.name, self.version = mo.group(1, 3)
-            # check if user accepts greater version, i.e. >= is used
-            version_specifier = mo.group(2)
-            if version_specifier is not None and version_specifier == '>=':
-                self.allow_greater_version = True
+        url = urlparse.urlparse(specifier)
+        if len(url.scheme) > 0:
+            self.url = url
+            return self.url.geturl(), self.editable
 
-        url = None if self.url is None else self.url.geturl()
-        return self.name, self.version, url, self.allow_greater_version, self.editable
+        path_specifier = self._extract_path_specifier(specifier)
+        if path_specifier is not None:
+            self.path = path_specifier
+            return self.path, self.editable
+
+        # check if requirement is in <package>[==|>=]<version> format
+        mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
+        if mo is None:
+            raise RequirementException('invalid requirement specified "%s"' % specifier)
+        self.name, self.version = mo.group(1, 3)
+        # check if user accepts greater version, i.e. >= is used
+        version_specifier = mo.group(2)
+        if version_specifier is not None and version_specifier == '>=':
+            self.allow_greater_version = True
+
+        return self.name, self.version, self.allow_greater_version, self.editable
+
+    def _extract_path_specifier(self, specifier):
+        if specifier.isspace() or len(specifier) == 0:
+            return None
+        try:
+            path = os.path.abspath(os.path.expanduser(specifier))
+            if os.path.exists(path):
+                return path
+            else:
+                return None
+        except SyntaxError:
+            return None
 
     def __repr__(self):
         str = Requirement.__repr__(self).replace('Requirement', 'RequirementSpecifier')[:-1]
@@ -255,6 +284,9 @@ class RequirementSpecifier(Requirement):
         if self.url is not None and other.url is not None:
             # downloaded from same url
             return self.url == other.url
+        elif self.path is not None and other.path is not None:
+            # obtained from the same path
+            return self.path == other.path
         elif self.name is not None and other.name is not None:
             # check if name and version match
             # TODO: check for allow_greater_version, note that version can have weird format, i.e. '1.1rc3'
@@ -263,17 +295,7 @@ class RequirementSpecifier(Requirement):
             return False
 
 
-def do_requirement_recursion(git_accessor, original_req):
-    '''
-    Recursive extraction of requirements from -e git+.. pip links.
-    @return: list
-    '''
-    if not original_req.editable or original_req.url is None:
-        return [original_req]
-
-    if not original_req.url.geturl().startswith('git+'):
-        return [original_req]
-
+def _obtain_requirements_from_remote_package(git_accessor, original_req):
     url = original_req.url.geturl()[4:]
     egg_position = url.find('#egg')
     if egg_position < 0:
@@ -294,22 +316,46 @@ def do_requirement_recursion(git_accessor, original_req):
     else:
         link, tag = url, None
 
-    req_file_content = git_accessor.access(link, tag, 'requirements.txt')
+    return git_accessor.access(link, tag, 'requirements.txt')
+
+
+def _obtain_requirements_from_local_package(original_req):
+    requirement_file_path = os.path.join(original_req.path, 'requirements.txt')
+    if os.path.exists(requirement_file_path):
+        with open(requirement_file_path, 'r') as req_file:
+            content = req_file.readlines()
+        return content
+    else:
+        return None
+
+
+def do_requirement_recursion(git_accessor, original_req):
+    '''
+    Recursive extraction of requirements from -e git+.. pip links.
+    @return: list
+    '''
+    if not original_req.editable or \
+            (original_req.url is None and original_req.path is None):
+        return [original_req]
+
+    if original_req.url is not None:
+        if not original_req.url.geturl().startswith('git+'):
+            return [original_req]
+        else:
+            req_file_content = _obtain_requirements_from_remote_package(
+                git_accessor, original_req)
+    else:
+        req_file_content = _obtain_requirements_from_local_package(original_req)
+
     if req_file_content is None:
         raise RequirementException('Editable requirement %s does not have a requirements.txt file')
 
-    requirements = []
-    for line in req_file_content:
-        if line[0] == '#' or line.isspace() or (len(line) < 2):
-            continue
-        r = RequirementSpecifier(specifier=line)
-        requirements += do_requirement_recursion(git_accessor, r)
-    return requirements + [original_req]
+    return expand_requirements_specifiers(req_file_content, git_accessor) + [original_req]
 
 
-def read_requirement_file(requirement_file):
+def expand_requirements_specifiers(specifiers_list, git_accessor = None):
     '''
-    Nice dirty hack to test the workflow:)
+    Nice dirty hack to have a clean workflow:)
     In order to process hierarchical dependencies, we assume that -e git+ links
     may contain another requirements.txt file that we will include.
     
@@ -319,15 +365,24 @@ def read_requirement_file(requirement_file):
     However we loosing wheeling capability - robustus will never get control
     back if pip started to process dependencies from egg_info.
     '''
+    assert(isinstance(specifiers_list, (list, tuple)))
     requirements = []
-    git_accessor = GitAccessor()
-    for line in open(requirement_file, 'r'):
+    if git_accessor is None:
+        git_accessor = GitAccessor()
+    for line in specifiers_list:
         if line[0] == '#' or line.isspace() or (len(line) < 2):
             continue
         r = RequirementSpecifier(specifier=line)
         requirements += do_requirement_recursion(git_accessor, r)
 
     return requirements
+
+
+def read_requirement_file(requirement_file):
+    with open(requirement_file, 'r') as req_file:
+        specifiers_list = req_file.readlines()
+    return expand_requirements_specifiers(specifiers_list)
+
 
 def remove_duplicate_requirements(requirements_list):
     '''
