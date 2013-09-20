@@ -115,7 +115,6 @@ class Requirement(object):
             if self.version is not None:
                 return '%s==%s' % (self.name, self.version)
             return self.name
-        
 
     def rob_filename(self):
         """

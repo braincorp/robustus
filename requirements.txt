@@ -1,3 +1,5 @@
+mock==1.0.1
+
 # Test functionality
 pep8==1.4.6
 pytest==2.3.5

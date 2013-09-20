@@ -6,4 +6,4 @@ else
     PYTHONEXEC=python
 fi
 
-$PYTHONEXEC -m pytest --junitxml=testresults.xml
+$PYTHONEXEC -m pytest robustus --junitxml=testresults.xml

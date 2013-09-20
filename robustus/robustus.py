@@ -191,18 +191,18 @@ class Robustus(object):
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
         return_code = subprocess.call([self.pip_executable,
-                         'install',
-                         '--no-index',
-                         '--use-wheel',
-                         '--find-links=%s' % self.cache,
-                         requirement_specifier.freeze()])
+                                       'install',
+                                       '--no-index',
+                                       '--use-wheel',
+                                       '--find-links=%s' % self.cache,
+                                       requirement_specifier.freeze()])
         if return_code > 0:
             logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
                          (requirement_specifier.freeze(), self.cache, return_code))
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.exists(rob):
                 logging.info('Robustus will delete the coresponding %s file in order '
-                         'to recreate the wheel in the future. Please run again.' % str(rob))
+                             'to recreate the wheel in the future. Please run again.' % str(rob))
                 os.remove(rob)
 
         return True
@@ -266,7 +266,6 @@ class Robustus(object):
                 requirements += read_requirement_file(requirement_file)
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
-
         
         logging.info('Here are all the requirements robustus going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]))

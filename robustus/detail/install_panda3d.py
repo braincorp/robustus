@@ -101,7 +101,11 @@ def install(robustus, requirement_specifier, rob_file):
                '%s/share/panda3d\n%s/share/lib/panda3d' % (robustus.env, robustus.env))
 
     if sys.platform.startswith('darwin'):
-        os.environ['DYLD_LIBRARY_PATH'] += ':' + libdir
+        env_var = 'DYLD_LIBRARY_PATH'
     else:
-        os.environ['LD_LIBRARY_PATH'] += ':' + libdir
+        env_var = 'LD_LIBRARY_PATH'
+    if env_var in os.environ:
+        os.environ[env_var] += ':' + libdir
+    else:
+        os.environ[env_var] = libdir
     os.environ['PANDA_PRC_DIR'] = etcdir

@@ -10,11 +10,9 @@ import robustus
 import shutil
 
 
-def test_pygame_installation():
-    cwd = os.getcwd()
+def test_pygame_installation(tmpdir):
+    tmpdir.chdir()
     test_env = 'test_env'
-    if os.path.isdir(test_env):
-        shutil.rmtree(test_env)
 
     # create env and install bullet into it
     robustus.execute(['env', test_env])
@@ -23,7 +21,6 @@ def test_pygame_installation():
     assert os.path.isdir(os.path.join(test_env, 'lib/python2.7/site-packages/pygame'))
     assert os.path.isfile(os.path.join(test_env, 'lib/python2.7/site-packages/pygame/display.so'))
 
-    os.chdir(cwd)
     shutil.rmtree(test_env)
 
 if __name__ == '__main__':

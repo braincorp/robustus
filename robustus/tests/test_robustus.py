@@ -12,11 +12,9 @@ import shutil
 import subprocess
 
 
-def test_robustus():
-    cwd = os.getcwd()
+def test_robustus(tmpdir):
+    tmpdir.chdir()
     test_env = 'test_env'
-    if os.path.isdir(test_env):
-        shutil.rmtree(test_env)
 
     # create env and install some packages
     logging.info('creating ' + test_env)
@@ -34,7 +32,6 @@ def test_robustus():
         file.write('pep8==1.3.3\n')
         file.write('pytest==2.3.5\n')
     subprocess.call(['bin/robustus', 'install', '-r', test_requirements1])
-    test_requirements2 = 'test_requirements2.txt'
 
     # check packages are installed
     packages_to_check = ['pyserial', 'pep8==1.3.3', 'pytest==2.3.5']
@@ -45,7 +42,7 @@ def test_robustus():
     for package in packages_to_check:
         assert package in installed_packages
 
-    os.chdir(cwd)
+    os.chdir(os.path.pardir)
     shutil.rmtree(test_env)
 
 if __name__ == '__main__':

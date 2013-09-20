@@ -9,11 +9,9 @@ import robustus
 import shutil
 
 
-def test_panda_installation():
-    cwd = os.getcwd()
+def test_panda_installation(tmpdir):
+    tmpdir.chdir()
     test_env = 'test_env'
-    if os.path.isdir(test_env):
-        shutil.rmtree(test_env)
 
     # create env and install bullet into it
     robustus.execute(['env', test_env])
@@ -25,7 +23,6 @@ def test_panda_installation():
     assert os.path.isdir(os.path.join(test_env, 'lib/panda3d'))
     assert os.path.isfile(os.path.join(test_env, 'lib/panda3d/panda3d.py'))
 
-    os.chdir(cwd)
     shutil.rmtree(test_env)
 
 if __name__ == '__main__':
