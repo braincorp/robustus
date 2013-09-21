@@ -47,6 +47,14 @@ def install(robustus, requirement_specifier, rob_file):
                                               'def confirm(message):\n'
                                               '    return 1\n'))
 
+    # one more megahack to avoid problem with linux/videodev.h
+    # http://stackoverflow.com/questions/5842235/linux-videodev-h-no-such-file-or-directory-opencv-on-ubuntu-11-04
+    camera_h = 'src/camera.h'
+    camera_h_source = open(camera_h).read()
+    with open(camera_h, 'w') as f:
+        f.write(camera_h_source.replace('linux/videodev.h',
+                                        'libv4l1-videodev.h'))
+
     subprocess.call([robustus.python_executable, 'setup.py', 'install'])
     os.chdir(os.path.pardir)
 
