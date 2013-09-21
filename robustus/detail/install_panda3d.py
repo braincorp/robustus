@@ -12,12 +12,16 @@ import subprocess
 import sys
 
 
-def install(robustus, requirement_specifier, rob_file):
+def install(robustus, requirement_specifier, rob_file, ignore_index):
     if requirement_specifier.version != '1.8.1':
         raise RequirementException('can only install panda3d 1.8.1')
 
     panda_install_dir = os.path.join(robustus.cache, 'panda3d-%s' % requirement_specifier.version)
-    if not os.path.isfile(os.path.join(panda_install_dir, 'lib/panda3d.py')):
+
+    def in_cache():
+        return os.path.isfile(os.path.join(panda_install_dir, 'lib/panda3d.py'))
+
+    if not in_cache() and not ignore_index:
         logging.info('Downloading panda3d')
         panda3d_archive_name = 'panda3d-1.8.1'
         panda3d_tgz = panda3d_archive_name + '.tar.gz'
@@ -68,44 +72,47 @@ def install(robustus, requirement_specifier, rob_file):
         shutil.rmtree(panda3d_archive_name)
         os.remove(panda3d_tgz)
 
-    # install panda3d to virtualenv
-    subprocess.call('cp %s/bin/* %s/bin' % (panda_install_dir, robustus.env), shell=True)
-    incdir = os.path.join(robustus.env, 'include/panda3d')
-    shutil.rmtree(incdir, ignore_errors=True)
-    os.mkdir(incdir)
-    subprocess.call('cp -r -u -p %s/include/* %s/' % (panda_install_dir, incdir), shell=True)
-    libdir = os.path.join(robustus.env, 'lib/panda3d')
-    shutil.rmtree(libdir, ignore_errors=True)
-    os.mkdir(libdir)
-    subprocess.call('cp -r -u -p %s/lib/* %s/' % (panda_install_dir, libdir), shell=True)
-    env_sharedir = os.path.join(robustus.env, 'share')
-    if not os.path.isdir(env_sharedir):
-        os.mkdir(env_sharedir)
-    sharedir = os.path.join(env_sharedir, 'panda3d')
-    shutil.rmtree(sharedir, ignore_errors=True)
-    os.mkdir(sharedir)
-    subprocess.call('cp -r -u -p %s/direct/* %s/' % (panda_install_dir, sharedir), shell=True)
-    subprocess.call('cp -r -u -p %s/models/* %s/' % (panda_install_dir, sharedir), shell=True)
-    subprocess.call('cp -r -u -p %s/pandac/* %s/' % (panda_install_dir, sharedir), shell=True)
-    subprocess.call('cp -u %s/lib/panda3d.py %s/' % (panda_install_dir, sharedir), shell=True)
-    env_etcdir = os.path.join(robustus.env, 'etc')
-    if not os.path.isdir(env_etcdir):
-        os.mkdir(env_etcdir)
-    etcdir = os.path.join(env_etcdir, 'panda3d')
-    shutil.rmtree(etcdir, ignore_errors=True)
-    os.mkdir(etcdir)
-    subprocess.call('cp -r -u -p %s/etc/* %s/' % (panda_install_dir, etcdir), shell=True)
+    if in_cache():
+        # install panda3d to virtualenv
+        subprocess.call('cp %s/bin/* %s/bin' % (panda_install_dir, robustus.env), shell=True)
+        incdir = os.path.join(robustus.env, 'include/panda3d')
+        shutil.rmtree(incdir, ignore_errors=True)
+        os.mkdir(incdir)
+        subprocess.call('cp -r -u -p %s/include/* %s/' % (panda_install_dir, incdir), shell=True)
+        libdir = os.path.join(robustus.env, 'lib/panda3d')
+        shutil.rmtree(libdir, ignore_errors=True)
+        os.mkdir(libdir)
+        subprocess.call('cp -r -u -p %s/lib/* %s/' % (panda_install_dir, libdir), shell=True)
+        env_sharedir = os.path.join(robustus.env, 'share')
+        if not os.path.isdir(env_sharedir):
+            os.mkdir(env_sharedir)
+        sharedir = os.path.join(env_sharedir, 'panda3d')
+        shutil.rmtree(sharedir, ignore_errors=True)
+        os.mkdir(sharedir)
+        subprocess.call('cp -r -u -p %s/direct/* %s/' % (panda_install_dir, sharedir), shell=True)
+        subprocess.call('cp -r -u -p %s/models/* %s/' % (panda_install_dir, sharedir), shell=True)
+        subprocess.call('cp -r -u -p %s/pandac/* %s/' % (panda_install_dir, sharedir), shell=True)
+        subprocess.call('cp -u %s/lib/panda3d.py %s/' % (panda_install_dir, sharedir), shell=True)
+        env_etcdir = os.path.join(robustus.env, 'etc')
+        if not os.path.isdir(env_etcdir):
+            os.mkdir(env_etcdir)
+        etcdir = os.path.join(env_etcdir, 'panda3d')
+        shutil.rmtree(etcdir, ignore_errors=True)
+        os.mkdir(etcdir)
+        subprocess.call('cp -r -u -p %s/etc/* %s/' % (panda_install_dir, etcdir), shell=True)
 
-    write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
-               'w',
-               '%s/share/panda3d\n%s/share/lib/panda3d' % (robustus.env, robustus.env))
+        write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
+                   'w',
+                   '%s/share/panda3d\n%s/share/lib/panda3d' % (robustus.env, robustus.env))
 
-    if sys.platform.startswith('darwin'):
-        env_var = 'DYLD_LIBRARY_PATH'
+        if sys.platform.startswith('darwin'):
+            env_var = 'DYLD_LIBRARY_PATH'
+        else:
+            env_var = 'LD_LIBRARY_PATH'
+        if env_var in os.environ:
+            os.environ[env_var] += ':' + libdir
+        else:
+            os.environ[env_var] = libdir
+        os.environ['PANDA_PRC_DIR'] = etcdir
     else:
-        env_var = 'LD_LIBRARY_PATH'
-    if env_var in os.environ:
-        os.environ[env_var] += ':' + libdir
-    else:
-        os.environ[env_var] = libdir
-    os.environ['PANDA_PRC_DIR'] = etcdir
+        raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)

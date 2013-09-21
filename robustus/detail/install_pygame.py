@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 
-def install(robustus, requirement_specifier, rob_file):
+def install(robustus, requirement_specifier, rob_file, ignore_index):
     if requirement_specifier.version != '1.9.1':
         raise RequirementException('can only install pygame 1.9.1')
 
@@ -28,7 +28,11 @@ def install(robustus, requirement_specifier, rob_file):
         print "#####################"
 
     pygame_cache_dir = os.path.join(robustus.cache, 'pygame-%s' % requirement_specifier.version)
-    if not os.path.isfile(os.path.join(pygame_cache_dir, 'pygame/__init__.py')):
+
+    def in_cache():
+        return os.path.isfile(os.path.join(pygame_cache_dir, 'pygame/__init__.py'))
+
+    if not in_cache() and not ignore_index:
         # PYPI index is broken for pygame, download manually
         logging.info('Downloading pygame')
         pygame_archive_name = 'pygame-1.9.1release'
@@ -76,8 +80,10 @@ def install(robustus, requirement_specifier, rob_file):
         shutil.rmtree(pygame_archive_name)
         os.remove(pygame_tgz)
 
-    # install pygame to virtualenv
-    pygame_install_dir = os.path.join(robustus.env, 'lib/python2.7/site-packages')
-    shutil.copytree(os.path.join(pygame_cache_dir, 'pygame'),
-                    os.path.join(pygame_install_dir, 'pygame'))
-
+    if in_cache():
+        # install pygame to virtualenv
+        pygame_install_dir = os.path.join(robustus.env, 'lib/python2.7/site-packages')
+        shutil.copytree(os.path.join(pygame_cache_dir, 'pygame'),
+                        os.path.join(pygame_install_dir, 'pygame'))
+    else:
+        raise RequirementException('can\'t find pygame-%s in robustus cache' % requirement_specifier.version)

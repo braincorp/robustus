@@ -8,8 +8,8 @@ import subprocess
 import sys
 
 
-def install(robustus, requirement_specifier, rob_file):
-    robustus.install_through_wheeling(requirement_specifier, rob_file)
+def install(robustus, requirement_specifier, rob_file, ignore_index):
+    robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
 
     # need links to shared libraries
     cwd = os.getcwd()
@@ -24,3 +24,5 @@ def install(robustus, requirement_specifier, rob_file):
         os.chdir(pyside_setup_dir)
         subprocess.call([sys.executable, 'pyside_postinstall.py', '-install'])
         os.chdir(cwd)
+    else:
+        raise RequirementException('can\'t find pyside-%s in robustus cache' % requirement_specifier.version)

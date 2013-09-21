@@ -198,7 +198,7 @@ class Robustus(object):
         os.chdir(cwd)
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
-    def install_through_wheeling(self, requirement_specifier, rob_file):
+    def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
         Check if package cache already contains package of specified version, if so install it.
         Otherwise make a wheel and put it into cache.
@@ -243,7 +243,7 @@ class Robustus(object):
 
         return True
 
-    def install_requirement(self, requirement_specifier):
+    def install_requirement(self, requirement_specifier, ignore_index):
         logging.info('Installing ' + requirement_specifier.freeze())
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
@@ -271,9 +271,9 @@ class Robustus(object):
             try:
                 # try to use specific install script
                 install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name.lower())
-                install_module.install(self, requirement_specifier, rob_file)
+                install_module.install(self, requirement_specifier, rob_file, ignore_index)
             except ImportError:
-                self.install_through_wheeling(requirement_specifier, rob_file)
+                self.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
             except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
@@ -311,7 +311,7 @@ class Robustus(object):
                      '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
-            self.install_requirement(requirement_specifier)
+            self.install_requirement(requirement_specifier, args.no_index)
 
     def freeze(self, args):
         for requirement in self.cached_packages:
@@ -474,6 +474,9 @@ def execute(argv):
     install_parser.add_argument('-e', '--editable',
                                 action='append',
                                 help='installs package in editable mode')
+    install_parser.add_argument('--no-index',
+                                action='store_true',
+                                help='ignore package index (only looking in robustus cache and at --find-links URLs)')
     install_parser.set_defaults(func=Robustus.install)
 
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
