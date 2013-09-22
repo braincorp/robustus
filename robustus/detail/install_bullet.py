@@ -26,7 +26,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 bullet_tgz = bullet_archive_name + '.tgz'
                 url = 'http://bullet.googlecode.com/files/' + bullet_tgz
             else:
-                bullet_archive_name = 'bullet.bc1'
+                bullet_archive_name = 'bullet-bc1'
                 bullet_tgz = bullet_archive_name + '.tar.gz'
                 url = 'https://github.com/braincorp/robustus_packages/raw/master/' + bullet_tgz
 
