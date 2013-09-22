@@ -13,8 +13,8 @@ import sys
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    if requirement_specifier.version != '1.9.1':
-        raise RequirementException('can only install pygame 1.9.1')
+    if requirement_specifier.version != '1.9.1' and requirement_specifier.version != 'bc1':
+        raise RequirementException('can only install pygame 1.9.1/bc1')
 
     if sys.platform.startswith('darwin'):
         subprocess.call([robustus.pip_executable, 'install', '-U', 'pyobjc-core'])
@@ -35,9 +35,14 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if not in_cache() and not ignore_index:
         # PYPI index is broken for pygame, download manually
         logging.info('Downloading pygame')
-        pygame_archive_name = 'pygame-1.9.1release'
-        pygame_tgz = pygame_archive_name + '.tar.gz'
-        url = 'http://www.pygame.org/ftp/' + pygame_tgz
+        if requirement_specifier.version == '1.9.1':
+            pygame_archive_name = 'pygame-1.9.1release'
+            pygame_tgz = pygame_archive_name + '.tar.gz'
+            url = 'http://www.pygame.org/ftp/' + pygame_tgz
+        else:
+            pygame_archive_name = 'pygame-bc1'
+            pygame_tgz = pygame_archive_name + '.tar.gz'
+            url = 'https://github.com/braincorp/robustus_packages/raw/master/' + pygame_tgz
         subprocess.call(['wget', '-c', url, '-O', pygame_tgz])
 
         logging.info('Unpacking pygame')

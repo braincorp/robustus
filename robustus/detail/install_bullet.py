@@ -16,14 +16,20 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     def in_cache():
         return os.path.isfile(os.path.join(bullet_cache_dir, 'lib/libBulletCollision.a'))
 
-    if requirement_specifier.version == '2.81':
+    if requirement_specifier.version == '2.81' or requirement_specifier.version == 'bc1':
         cwd = os.getcwd()
 
         if not in_cache() and not ignore_index:
             logging.info('Downloading bullet')
-            bullet_archive_name = 'bullet-2.81-rev2613'
-            bullet_tgz = bullet_archive_name + '.tgz'
-            url = 'http://bullet.googlecode.com/files/' + bullet_tgz
+            if requirement_specifier.version == '2.81':
+                bullet_archive_name = 'bullet-2.81-rev2613'
+                bullet_tgz = bullet_archive_name + '.tgz'
+                url = 'http://bullet.googlecode.com/files/' + bullet_tgz
+            else:
+                bullet_archive_name = 'bullet.bc1'
+                bullet_tgz = bullet_archive_name + '.tar.gz'
+                url = 'https://github.com/braincorp/robustus_packages/raw/master/' + bullet_tgz
+
             subprocess.call(['wget', '-c', url, '-O', bullet_tgz])
 
             logging.info('Unpacking bullet')
@@ -55,4 +61,4 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         os.chdir(cwd)
     else:
-        raise RequirementException('Can install only bullet 2.81')
+        raise RequirementException('Can install only bullet 2.81/bc1')
