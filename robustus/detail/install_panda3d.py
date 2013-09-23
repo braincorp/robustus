@@ -29,7 +29,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if requirement_specifier.version == '1.8.1':
             url = 'https://www.panda3d.org/download/panda3d-1.8.1/' + panda3d_tgz
         else:
-            url = 'https://github.com/braincorp/robustus_packages/raw/master/' + panda3d_tgz
+            url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/' + panda3d_tgz
         subprocess.call(['wget', '-c', url, '-O', panda3d_tgz])
 
         logging.info('Unpacking panda3d')

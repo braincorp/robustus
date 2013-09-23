@@ -28,7 +28,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             else:
                 bullet_archive_name = 'bullet-bc1'
                 bullet_tgz = bullet_archive_name + '.tar.gz'
-                url = 'https://github.com/braincorp/robustus_packages/raw/master/' + bullet_tgz
+                url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/' + bullet_tgz
 
             subprocess.call(['wget', '-c', url, '-O', bullet_tgz])
 

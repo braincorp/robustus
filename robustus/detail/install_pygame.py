@@ -42,7 +42,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         else:
             pygame_archive_name = 'pygame-bc1'
             pygame_tgz = pygame_archive_name + '.tar.gz'
-            url = 'https://github.com/braincorp/robustus_packages/raw/master/' + pygame_tgz
+            url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/' + pygame_tgz
         subprocess.call(['wget', '-c', url, '-O', pygame_tgz])
 
         logging.info('Unpacking pygame')
