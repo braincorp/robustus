@@ -3,10 +3,11 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
+import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import cp, write_file
+from utility import ln, write_file
 import shutil
 import subprocess
 import sys
@@ -37,6 +38,24 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         logging.info('Builduing panda3d')
         cwd = os.getcwd()
         os.chdir(panda3d_archive_name)
+
+        # link bullet into panda dependencies dir
+        bullet_installations = glob.glob(os.path.join(robustus.env, 'lib/bullet-*'))
+        if len(bullet_installations) > 0:
+            bullet_dir = bullet_installations[0]
+            if sys.platform.startswith('darwin'):
+                panda_thirdparty_dir = 'thirdparty/darwin-libs-a'
+            elif sys.platform.startswith('linux'):
+                panda_thirdparty_dir = 'thirdparty/linux-libs-x64'
+            else:
+                raise RequirementException('unsupported platform ' + sys.platform)
+            os.mkdir('thirdparty')
+            os.mkdir(panda_thirdparty_dir)
+            os.mkdir(os.path.join(panda_thirdparty_dir, 'bullet'))
+            ln(os.path.join(bullet_dir, 'include/bullet'),
+               os.path.join(panda_thirdparty_dir, 'bullet/include'))
+            ln(os.path.join(bullet_dir, 'lib'),
+               os.path.join(panda_thirdparty_dir, 'bullet/lib'))
 
         make_panda_options = ['--nothing',
                               '--use-python',
