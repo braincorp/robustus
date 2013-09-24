@@ -8,6 +8,7 @@ import os
 import robustus
 import shutil
 import subprocess
+import logging
 
 
 def write_file(filename, mode, data):
@@ -45,6 +46,15 @@ def ln(src, dst, force=False):
     if force and os.path.exists(dst):
         os.remove(dst)
     os.symlink(src, dst)
+
+
+def run_shell(command):
+    logging.info('Running shell command: %s' % command)
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+    if p.returncode != 0:
+        raise Exception('Error running %s, code=%s' % (command, p.returncode))
+    return output
 
 
 def check_module_available(env, module):
