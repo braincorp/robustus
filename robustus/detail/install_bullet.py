@@ -55,6 +55,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if in_cache():
             # install bullet somewhere into venv
             bullet_install_dir = os.path.join(robustus.env, 'lib/bullet-%s' % requirement_specifier.version)
+            if os.path.exists(bullet_install_dir):
+                shutil.rmtree(bullet_install_dir)
             shutil.copytree(bullet_cache_dir, bullet_install_dir)
         else:
             raise RequirementException('can\'t find bullet-%s in robustus cache' % requirement_specifier.version)
