@@ -41,7 +41,10 @@ class Robustus(object):
         Initialize robustus tool. Should be called if sys.executable is in robustus environment
         @param: args - command line arguments
         """
-        self.env = os.path.abspath(os.path.join(sys.executable, os.pardir, os.pardir))
+        if args.env is not None:
+            self.env = os.path.abspath(args.env)
+        else:
+            self.env = os.path.abspath(os.path.join(sys.executable, os.pardir, os.pardir))
 
         # check if we are in robustus environment
         self.settings_file_path = os.path.join(self.env, Robustus.settings_file_path)
@@ -50,6 +53,12 @@ class Robustus(object):
         settings = eval(open(self.settings_file_path).read())
         self.settings = Robustus._override_settings(settings, args)
         logging.info('Robustus will use the following cache folder: %s' % self.settings['cache'])
+
+        self.python_executable = os.path.join(self.env, 'bin/python')
+        if not os.path.isfile(self.python_executable):
+            self.python_executable = os.path.join(self.env, 'bin/python27')
+        if not os.path.isfile(self.python_executable):
+            raise RobustusException('bad robustus environment ' + self.env + ': python not found')
 
         self.pip_executable = os.path.join(self.env, 'bin/pip')
         if not os.path.isfile(self.pip_executable):
@@ -96,7 +105,11 @@ class Robustus(object):
             subprocess.call(virtualenv_args)
 
         pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
+        if not os.path.isfile(pip_executable):
+            raise RobustusException('failed to create virtualenv, pip not found')
         easy_install_executable = os.path.abspath(os.path.join(args.env, 'bin/easy_install'))
+        if not os.path.isfile(easy_install_executable):
+            raise RobustusException('failed to create virtualenv, easy_install not found')
 
         # http://wheel.readthedocs.org/en/latest/
         # wheel is binary packager for python/pip
@@ -176,9 +189,16 @@ class Robustus(object):
         with open(os.path.join(args.env, Robustus.settings_file_path), 'w') as file:
             file.write(str(settings))
 
+        # install robustus
+        cwd = os.getcwd()
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        setup_dir = os.path.abspath(os.path.join(script_dir, os.path.pardir))
+        os.chdir(setup_dir)
+        subprocess.call([python_executable, 'setup.py', 'install'])
+        os.chdir(cwd)
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
-    def install_through_wheeling(self, requirement_specifier, rob_file):
+    def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
         Check if package cache already contains package of specified version, if so install it.
         Otherwise make a wheel and put it into cache.
@@ -207,23 +227,23 @@ class Robustus(object):
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
         return_code = subprocess.call([self.pip_executable,
-                         'install',
-                         '--no-index',
-                         '--use-wheel',
-                         '--find-links=%s' % self.cache,
-                         requirement_specifier.freeze()])
+                                       'install',
+                                       '--no-index',
+                                       '--use-wheel',
+                                       '--find-links=%s' % self.cache,
+                                       requirement_specifier.freeze()])
         if return_code > 0:
             logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
                          (requirement_specifier.freeze(), self.cache, return_code))
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.exists(rob):
                 logging.info('Robustus will delete the coresponding %s file in order '
-                         'to recreate the wheel in the future. Please run again.' % str(rob))
+                             'to recreate the wheel in the future. Please run again.' % str(rob))
                 os.remove(rob)
 
         return True
 
-    def install_requirement(self, requirement_specifier):
+    def install_requirement(self, requirement_specifier, ignore_index):
         logging.info('Installing ' + requirement_specifier.freeze())
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
@@ -251,13 +271,13 @@ class Robustus(object):
             try:
                 # try to use specific install script
                 install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name.lower())
-                install_module.install(self, requirement_specifier, rob_file)
+                install_module.install(self, requirement_specifier, rob_file, ignore_index)
             except ImportError:
-                self.install_through_wheeling(requirement_specifier, rob_file)
+                self.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
             except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
-                os.path.remove(rob_file)
+                os.remove(rob_file)
                 return
 
         # add requirement to the this of cached packages
@@ -291,7 +311,7 @@ class Robustus(object):
                      '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
-            self.install_requirement(requirement_specifier)
+            self.install_requirement(requirement_specifier, args.no_index)
 
     def freeze(self, args):
         for requirement in self.cached_packages:
@@ -424,6 +444,7 @@ def execute(argv):
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
                                      prog='robustus')
+    parser.add_argument('--env', help='virtualenv to use')
     parser.add_argument('--cache', help='binary package cache directory')
     subparsers = parser.add_subparsers(help='robustus commands')
 
@@ -453,6 +474,9 @@ def execute(argv):
     install_parser.add_argument('-e', '--editable',
                                 action='append',
                                 help='installs package in editable mode')
+    install_parser.add_argument('--no-index',
+                                action='store_true',
+                                help='ignore package index (only looking in robustus cache and at --find-links URLs)')
     install_parser.set_defaults(func=Robustus.install)
 
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
@@ -485,15 +509,15 @@ def execute(argv):
     upload_cache_parser.set_defaults(func=Robustus.upload_cache)
 
     args = parser.parse_args(argv)
-    if args.func == Robustus.env:
-        Robustus.env(args)
-    else:
-        try:
+    try:
+        if args.func == Robustus.env:
+            Robustus.env(args)
+        else:
             robustus = Robustus(args)
             args.func(robustus, args)
-        except (RobustusException, RequirementException) as exc:
-            logging.critical(exc.message)
-            exit(1)
+    except (RobustusException, RequirementException) as exc:
+        logging.critical(exc.message)
+        exit(1)
 
 
 if __name__ == '__main__':

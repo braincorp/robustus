@@ -13,7 +13,7 @@ from utility import cp
 from requirement import RequirementException
 
 
-def install(robustus, requirement_specifier, rob_file):
+def install(robustus, requirement_specifier, rob_file, ignore_index):
     try:
         import cv2
     except ImportError:
@@ -30,7 +30,11 @@ def install(robustus, requirement_specifier, rob_file):
                 cv_work_dir = os.path.join(cwd, 'OpenCV-2.4.2')
             cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % requirement_specifier.version)
             cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
-            if not os.path.isfile(cv2so):
+
+            def in_cache():
+                return os.path.isfile(cv2so)
+
+            if not in_cache() and not ignore_index:
                 logging.info('Downloading OpenCV')
                 cv_tar = os.path.join(cwd, 'opencv-%s.tar.bz2' % requirement_specifier.version)
                 opencv_unix = 'http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/'
@@ -69,9 +73,12 @@ def install(robustus, requirement_specifier, rob_file):
                 shutil.rmtree(cv_work_dir)
                 os.chdir(cwd)
 
-            logging.info('Linking OpenCV cv2.so to virtualenv')
-            python_dir = os.path.join(os.path.dirname(sys.executable), os.path.pardir)
-            cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
-               os.path.join(python_dir, 'lib/python2.7/site-packages'))
+            if in_cache():
+                logging.info('Linking OpenCV cv2.so to virtualenv')
+                python_dir = os.path.join(os.path.dirname(sys.executable), os.path.pardir)
+                cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
+                   os.path.join(python_dir, 'lib/python2.7/site-packages'))
+            else:
+                raise RequirementException('can\'t find cudamat-%s in robustus cache' % requirement_specifier.version)
         else:
             raise RequirementException('Can install only opencv 2.4.2/2.4.4')

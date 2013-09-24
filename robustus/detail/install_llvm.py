@@ -8,13 +8,13 @@ import shutil
 import subprocess
 
 
-def install(robustus, requirement_specifier, rob_file):
+def install(robustus, requirement_specifier, rob_file, ignore_index):
     cwd = os.getcwd()
     os.chdir(robustus.cache)
     llvm_archive = 'llvm-%s.src.tar.gz' % requirement_specifier.version
     subprocess.call(['wget', '-c', 'http://llvm.org/releases/%s/%s' % (requirement_specifier.version, llvm_archive)])
     llvm_install_dir = os.path.join(robustus.cache, 'llvm-%s' % requirement_specifier.version)
-    if not os.path.isdir(llvm_install_dir):
+    if not os.path.isdir(llvm_install_dir) and not ignore_index:
         subprocess.call(['tar', 'zxvf', llvm_archive])
         llvm_src_dir = 'llvm-%s.src' % requirement_specifier.version
         os.chdir(llvm_src_dir)
