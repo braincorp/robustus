@@ -139,12 +139,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             env_var = 'LD_LIBRARY_PATH'
 
         if env_var in os.environ:
-            lib_path_line = "import os; os.environ[%s] += ':' + %s" % (env_var, libdir)
+            lib_path_line = "import os; os.environ['%s'] += ':' + '%s'" % (env_var, libdir)
         else:
-            lib_path_line = "import os; os.environ[%s] = %s" % (env_var, libdir)
+            lib_path_line = "import os; os.environ['%s'] = '%s'" % (env_var, libdir)
 
         env_var_lines.append(lib_path_line)
-        env_var_lines.append("import os; os.environ['PANDA_PRC_DIR'] = %s" % etcdir)
+        env_var_lines.append("import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir)
         env_var_lines.append("import os; print('LALALA')")
 
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
