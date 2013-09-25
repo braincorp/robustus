@@ -184,6 +184,17 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                              '        os.chdir(cwd)'
         
             patch_file(extension_native_helpers_path, code_to_erase, code_to_insert)
+
+            another_code_to_erase = 'sys.modules["panda3d"] = this'
+            another_code_to_insert = 'sys.modules["panda3d"] = this\n' \
+                             'for file in os.listdir(os.path.dirname(__file__)):\n' \
+                             '    if file.endswith(".dylib") or file.endswith(".so"):\n' \
+                             '        try:\n' \
+                             '            panda3d_import_manager.libimport(os.path.splitext(file)[0])\n' \
+                             '        except ImportError:\n' \
+                             '            pass\n' 
+        
+            patch_file(extension_native_helpers_path, another_code_to_erase, another_code_to_insert)
         
         patch_extension_native_helpers_py(libdir)
         patch_panda3d_py(libdir)
