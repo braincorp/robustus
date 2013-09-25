@@ -61,6 +61,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                  '-DBUILD_DOCS=OFF',
                                  '-DBUILD_opencv_apps=OFF',
                                  '-DBUILD_opencv_java=OFF',
+                                 '-DWITH_CUDA=OFF',
                                  '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir])
                 subprocess.call(['make', '-j4'])
 
