@@ -134,7 +134,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
                    'w',
-                   '%s/share/panda3d\n%s/share/lib/panda3d' % (robustus.env, robustus.env))
+                   '%s/share/panda3d\n%s/lib/panda3d' % (robustus.env, robustus.env))
 
         if sys.platform.startswith('darwin'):
             env_var = 'DYLD_LIBRARY_PATH'
