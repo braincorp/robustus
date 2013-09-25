@@ -187,6 +187,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
             another_code_to_erase = 'sys.modules["panda3d"] = this'
             another_code_to_insert = 'sys.modules["panda3d"] = this\n' \
+                             'import os\n' \
                              'for file in os.listdir(os.path.dirname(__file__)):\n' \
                              '    if file.endswith(".dylib") or file.endswith(".so"):\n' \
                              '        try:\n' \
