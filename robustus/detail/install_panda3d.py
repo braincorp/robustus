@@ -148,8 +148,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
                    'w',
                    # do not add share
-                   '%s/lib/panda3d\n%s' % (robustus.env, robustus.env,
-                                                             '\n'.join(env_var_lines)))
+                   '%s/lib/panda3d\n%s' % (robustus.env, '\n'.join(env_var_lines)))
         
         def patch_file(filepath, code_to_erase, code_to_insert):
             assert(os.path.exists(filepath))
