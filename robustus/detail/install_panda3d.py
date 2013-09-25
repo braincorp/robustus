@@ -132,18 +132,26 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.mkdir(etcdir)
         shell_cp('%s/etc/* %s/' % (panda_install_dir, etcdir))
 
-        write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
-                   'w',
-                   '%s/share/panda3d\n%s/lib/panda3d' % (robustus.env, robustus.env))
-
+        env_var_lines = []
         if sys.platform.startswith('darwin'):
             env_var = 'DYLD_LIBRARY_PATH'
         else:
             env_var = 'LD_LIBRARY_PATH'
+
         if env_var in os.environ:
-            os.environ[env_var] += ':' + libdir
+            lib_path_line = "import os; os.environ[%s] += ':' + %s" % (env_var, libdir)
         else:
-            os.environ[env_var] = libdir
-        os.environ['PANDA_PRC_DIR'] = etcdir
+            lib_path_line = "import os; os.environ[%s] = %s" % (env_var, libdir)
+
+        env_var_lines.append(lib_path_line)
+        env_var_lines.append("import os; os.environ['PANDA_PRC_DIR'] = %s" % etcdir)
+        env_var_lines.append("import os; print('LALALA')")
+
+        write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
+                   'w',
+                   '%s/share/panda3d\n%s/lib/panda3d\n%s' % (robustus.env, robustus.env,
+                                                             '\n'.join(env_var_lines)))
+
+
     else:
         raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)
