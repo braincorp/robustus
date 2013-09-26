@@ -96,15 +96,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     if in_cache():
         # install panda3d to virtualenv
-
-        def shell_cp(src_and_dist):
-            # mac cp doesn't have --update flag
-            if sys.platform.startswith('darwin'):
-                cp_update_flag = ''
-            else:
-                cp_update_flag = ' -u'
-            run_shell('cp -r%s -p %s' % (cp_update_flag, src_and_dist))
-
         libdir = os.path.join(robustus.env, 'lib/panda3d')
         shutil.rmtree(libdir, ignore_errors=True)
         os.mkdir(libdir)
@@ -116,19 +107,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         shutil.rmtree(etcdir, ignore_errors=True)
         os.mkdir(etcdir)
 
-        shell_cp('%s/lib/* %s/' % (panda_install_dir, libdir))
-        shell_cp('%s/direct %s/' % (panda_install_dir, libdir))
-        shell_cp('%s/pandac %s/' % (panda_install_dir, libdir))
-        shell_cp('%s/etc/* %s/' % (panda_install_dir, etcdir))
-
-        
-        # looks like this is redundant
-        #incdir = os.path.join(robustus.env, 'include/panda3d')
-        #shutil.rmtree(incdir, ignore_errors=True)
-        #os.mkdir(incdir)
-        #shell_cp('%s/models %s/' % (panda_install_dir, libdir))
-        #shell_cp('%s/bin/* %s/bin' % (panda_install_dir, robustus.env))
-        #shell_cp('%s/include/* %s/' % (panda_install_dir, incdir))
+        run_shell('cp -r -p %s/lib/* %s/' % (panda_install_dir, libdir))
+        run_shell('cp -r -p %s/direct %s/' % (panda_install_dir, libdir))
+        run_shell('cp -r -p %s/pandac %s/' % (panda_install_dir, libdir))
+        run_shell('cp -r -p %s/etc/* %s/' % (panda_install_dir, etcdir))
 
         env_var_lines = []
         if sys.platform.startswith('darwin'):
@@ -143,68 +125,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         env_var_lines.append(lib_path_line)
         env_var_lines.append("import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir)
-        #env_var_lines.append("import os; print('LALALA')")
 
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
                    'w',
-                   # do not add share
                    '%s/lib/panda3d\n%s' % (robustus.env, '\n'.join(env_var_lines)))
-        
-        def patch_file(filepath, code_to_erase, code_to_insert):
-            assert(os.path.exists(filepath))
-        
-            with open(filepath, 'r') as f:
-                content = f.read()
-            
-            pos = content.find(code_to_erase)
-            assert(pos > 0)
-            
-            new_content = content[:pos] + code_to_insert + content[pos+len(code_to_erase):]
-            with open(filepath, 'w') as f:
-                f.write(new_content)
-        
-        
-        def patch_extension_native_helpers_py(panda_lib_path):
-            extension_native_helpers_path = os.path.join(panda_lib_path, 'pandac/extension_native_helpers.py')
-            code_to_erase = '    imp.load_dynamic(module, pathname)'
-            code_to_insert = '    cwd = os.getcwd()\n' \
-                             '    os.chdir(os.path.dirname(pathname))\n' \
-                             '    imp.load_dynamic(module, pathname)\n' \
-                             '    os.chdir(cwd)'
-            patch_file(extension_native_helpers_path, code_to_erase, code_to_insert)
-        
-        
-        def patch_panda3d_py(panda_lib_path):
-            extension_native_helpers_path = os.path.join(panda_lib_path, 'panda3d.py')
-            code_to_erase = '        lib = cls.imp.load_dynamic(name, target)'
-            code_to_insert = '        import os\n' \
-                             '        cwd = os.getcwd()\n' \
-                             '        os.chdir(os.path.dirname(target))\n' \
-                             '        lib = cls.imp.load_dynamic(name, target)\n' \
-                             '        os.chdir(cwd)'
-        
-            patch_file(extension_native_helpers_path, code_to_erase, code_to_insert)
-
-            another_code_to_erase = 'sys.modules["panda3d"] = this'
-            another_code_to_insert = 'sys.modules["panda3d"] = this\n' \
-                             'import os\n' \
-                             'for file in os.listdir(os.path.dirname(__file__)):\n' \
-                             '    if file.endswith(".dylib") or file.endswith(".so"):\n' \
-                             '        try:\n' \
-                             '            panda3d_import_manager.libimport(os.path.splitext(file)[0])\n' \
-                             '        except ImportError:\n' \
-                             '            pass\n' 
-        
-            patch_file(extension_native_helpers_path, another_code_to_erase, another_code_to_insert)
-        
-        patch_extension_native_helpers_py(libdir)
-        patch_panda3d_py(libdir)
-
-#         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
-#                    'w',
-#                    '%s/share/panda3d\n%s/lib/panda3d\n%s' % (robustus.env, robustus.env,
-#                                                              '\n'.join(env_var_lines)))
-
 
     else:
         raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)
