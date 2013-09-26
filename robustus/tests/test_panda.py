@@ -15,10 +15,10 @@ def test_panda_installation(tmpdir):
                      'panda3d.core'
                      'panda3d.bullet']
 
-    perform_standard_test('panda3d==bc1', panda_modules, [], ['bullet==bc1'])
+    perform_standard_test('panda3d==bc2', panda_modules, [], ['bullet==bc2'])
     # need bison to build panda 1.8.1
     if os.path.isfile('/usr/bin/bison'):
-        perform_standard_test('panda3d==1.8.1', panda_modules, [], ['bullet==bc1'])
+        perform_standard_test('panda3d==1.8.1', panda_modules, [], ['bullet==bc2'])
 
 
 if __name__ == '__main__':
