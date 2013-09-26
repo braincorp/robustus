@@ -127,14 +127,17 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                    'w',
                    '%s/share/panda3d\n%s/share/lib/panda3d' % (robustus.env, robustus.env))
 
-        if sys.platform.startswith('darwin'):
-            env_var = 'DYLD_LIBRARY_PATH'
-        else:
-            env_var = 'LD_LIBRARY_PATH'
-        if env_var in os.environ:
-            os.environ[env_var] += ':' + libdir
-        else:
-            os.environ[env_var] = libdir
+        # modify rpath of libs
+        patchelf_executable = os.path.join(robustus.env, 'bin/patchelf')
+        if os.path.isfile(patchelf_executable):
+            libdir = os.path.abspath(libdir)
+            if sys.platform.startswith('darwin'):
+                libs = glob.glob(os.path.join(libdir, '*.dyld'))
+            else:
+                libs = glob.glob(os.path.join(libdir, '*.so'))
+            for lib in libs:
+                subprocess.call([patchelf_executable, '--set-rpath', libdir])
+
         os.environ['PANDA_PRC_DIR'] = etcdir
     else:
         raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)
