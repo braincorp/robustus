@@ -14,11 +14,13 @@ def test_panda_installation(tmpdir):
     panda_modules = ['panda3d',
                      'panda3d.core'
                      'panda3d.bullet']
-
-    perform_standard_test('panda3d==bc2', panda_modules, [], ['bullet==bc2'])
+    panda_dependencies = ['patchelf==6fb4cdb',
+                          'bullet==bc2']
+    
+    perform_standard_test('panda3d==bc2', panda_modules, [], panda_dependencies)
     # need bison to build panda 1.8.1
     if os.path.isfile('/usr/bin/bison'):
-        perform_standard_test('panda3d==1.8.1', panda_modules, [], ['bullet==bc2'])
+        perform_standard_test('panda3d==1.8.1', panda_modules, [], panda_dependencies)
 
 
 if __name__ == '__main__':

@@ -112,23 +112,19 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         run_shell('cp -r -p %s/pandac %s/' % (panda_install_dir, libdir))
         run_shell('cp -r -p %s/etc/* %s/' % (panda_install_dir, etcdir))
 
-        env_var_lines = []
-        if sys.platform.startswith('darwin'):
-            env_var = 'DYLD_LIBRARY_PATH'
-        else:
-            env_var = 'LD_LIBRARY_PATH'
-
-        if env_var in os.environ:
-            lib_path_line = "import os; os.environ['%s'] += ':' + '%s'" % (env_var, libdir)
-        else:
-            lib_path_line = "import os; os.environ['%s'] = '%s'" % (env_var, libdir)
-
-        env_var_lines.append(lib_path_line)
-        env_var_lines.append("import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir)
+        # modify rpath of libs
+        patchelf_executable = os.path.join(robustus.env, 'bin/patchelf')
+        if os.path.isfile(patchelf_executable):
+            libdir = os.path.abspath(libdir)
+            if sys.platform.startswith('darwin'):
+                libs = glob.glob(os.path.join(libdir, '*.dyld'))
+            else:
+                libs = glob.glob(os.path.join(libdir, '*.so'))
+            for lib in libs:
+                subprocess.call([patchelf_executable, '--set-rpath', libdir, lib])
 
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
                    'w',
-                   '%s/lib/panda3d\n%s' % (robustus.env, '\n'.join(env_var_lines)))
-
+                   '%s/lib/panda3d\n%s' % robustus.env)
     else:
         raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)
