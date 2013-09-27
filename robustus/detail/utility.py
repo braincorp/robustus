@@ -91,7 +91,7 @@ def add_rpath(env, executable, rpath):
     if sys.platform.startswith('darwin'):
         return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
     else:
-        patchelf_executable = os.path.join(robustus.env, 'bin/patchelf')
+        patchelf_executable = os.path.join(env, 'bin/patchelf')
         if not os.path.isfile(patchelf_executable):
             raise RequirementException('In order to modify rpath of executable on unix system '
                                        'you need to install patchelf: robustus install patchelf')
