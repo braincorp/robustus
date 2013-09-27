@@ -117,7 +117,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if os.path.isfile(patchelf_executable):
             libdir = os.path.abspath(libdir)
             if sys.platform.startswith('darwin'):
-                libs = glob.glob(os.path.join(libdir, '*.dyld'))
+                libs = glob.glob(os.path.join(libdir, '*.dylib'))
             else:
                 libs = glob.glob(os.path.join(libdir, '*.so'))
             for lib in libs:
