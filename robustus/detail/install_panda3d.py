@@ -7,7 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import ln, write_file, run_shell, add_rpath
+from utility import ln, write_file, run_shell, fix_rpath
 import shutil
 import subprocess
 import sys
@@ -119,7 +119,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         else:
             libs = glob.glob(os.path.join(libdir, '*.so'))
         for lib in libs:
-            add_rpath(robustus.env, lib, libdir)
+            fix_rpath(robustus.env, lib, libdir)
 
         prc_dir_setup = "import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),

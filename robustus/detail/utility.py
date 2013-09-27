@@ -84,11 +84,18 @@ def check_module_available(env, module):
     return execute_python_expr(env, 'import %s' % module) == 0
 
 
-def add_rpath(env, executable, rpath):
+def fix_rpath(env, executable, rpath):
     """
-    Add rpath to list of rpaths of given executable.
+    Add rpath to list of rpaths of given executable. For osx also add @rpath/
+    prefix to dependent library names (absolute paths are not prefixed).
     """
     if sys.platform.startswith('darwin'):
+        # extract list o dependent library names
+        otool_output = subprocess.check_output(['otool', '-L', executable])
+        for line in otool_output.splitlines()[1:]:
+            lib = line.split()[0]
+            if not os.path.isabs(lib) and lib != os.path.basename(executable) and not lib.startswith('@rpath'):
+                run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable))
         return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
     else:
         patchelf_executable = os.path.join(env, 'bin/patchelf')
