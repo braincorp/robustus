@@ -269,7 +269,7 @@ class Robustus(object):
             except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
-                os.remove(rob_file)
+                os.remove(rob)
                 return
 
         # add requirement to the this of cached packages
