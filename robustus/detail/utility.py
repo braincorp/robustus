@@ -57,6 +57,21 @@ def run_shell(command):
     return output
 
 
+def execute_python_expr(env, expr):
+    """
+    Execute expression using env python interpreter.
+    :param env: path to python environment
+    :param expr: python expression
+    :return: return code
+    """
+    python_executable = os.path.join(env, 'bin/python')
+    if not os.path.isfile(python_executable):
+        python_executable = os.path.join(env, 'bin/python27')
+    if not os.path.isfile(python_executable):
+        raise RuntimeError('can\'t find python executable in %s' % env)
+    return subprocess.call([python_executable, '-c', expr])
+
+
 def check_module_available(env, module):
     """
     check if speicified module is available to specified python environment.
@@ -64,16 +79,11 @@ def check_module_available(env, module):
     :param module: module name
     :return: True if module available, False otherwise
     """
-    python_executable = os.path.join(env, 'bin/python')
-    if not os.path.isfile(python_executable):
-        python_executable = os.path.join(env, 'bin/python27')
-    if not os.path.isfile(python_executable):
-        raise RuntimeError('can\'t find python executable in %s' % env)
-    return subprocess.call([python_executable, '-c', 'import %s' % module]) == 0
+    return execute_python_expr(env, 'import %s' % module) == 0
 
 
 def perform_standard_test(package,
-                          python_modules=[],
+                          python_imports=[],
                           package_files=[],
                           dependencies=[],
                           test_env='test_env',
@@ -88,8 +98,8 @@ def perform_standard_test(package,
     test_cache = os.path.abspath(test_cache)
 
     def check_module():
-        for module in python_modules:
-            assert check_module_available(test_env, module)
+        for imp in python_imports:
+            assert execute_python_expr(test_env, imp) == 0
         for file in package_files:
             assert os.path.isfile(os.path.join(test_env, file))
 
