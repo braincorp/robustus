@@ -5,9 +5,11 @@
 
 import glob
 import os
+from requirement import RequirementException
 import robustus
 import shutil
 import subprocess
+import sys
 import logging
 
 
@@ -80,6 +82,25 @@ def check_module_available(env, module):
     :return: True if module available, False otherwise
     """
     return execute_python_expr(env, 'import %s' % module) == 0
+
+
+def add_rpath(env, executable, rpath):
+    """
+    Add rpath to list of rpaths of given executable.
+    """
+    if sys.platform.startswith('darwin'):
+        return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
+    else:
+        patchelf_executable = os.path.join(robustus.env, 'bin/patchelf')
+        if not os.path.isfile(patchelf_executable):
+            raise RequirementException('In order to modify rpath of executable on unix system '
+                                       'you need to install patchelf: robustus install patchelf')
+        old_rpath = subprocess.check_output([patchelf_executable, '--print-rpath', executable])
+        if len(old_rpath) > 1:
+            new_rpath = old_rpath[:-1] + ':' + rpath
+        else:
+            new_rpath = rpath
+        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, executable, new_rpath))
 
 
 def perform_standard_test(package,

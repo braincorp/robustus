@@ -7,7 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import ln, write_file, run_shell
+from utility import ln, write_file, run_shell, add_rpath
 import shutil
 import subprocess
 import sys
@@ -113,15 +113,13 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         run_shell('cp -r -p %s/etc/* %s/' % (panda_install_dir, etcdir))
 
         # modify rpath of libs
-        patchelf_executable = os.path.join(robustus.env, 'bin/patchelf')
-        if os.path.isfile(patchelf_executable):
-            libdir = os.path.abspath(libdir)
-            if sys.platform.startswith('darwin'):
-                libs = glob.glob(os.path.join(libdir, '*.dylib'))
-            else:
-                libs = glob.glob(os.path.join(libdir, '*.so'))
-            for lib in libs:
-                run_shell('%s --set-rpath %s %s' % (patchelf_executable, libdir, lib))
+        libdir = os.path.abspath(libdir)
+        if sys.platform.startswith('darwin'):
+            libs = glob.glob(os.path.join(libdir, '*.dylib'))
+        else:
+            libs = glob.glob(os.path.join(libdir, '*.so'))
+        for lib in libs:
+            add_rpath(robustus.env, lib, libdir)
 
         prc_dir_setup = "import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
