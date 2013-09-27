@@ -100,7 +100,7 @@ def add_rpath(env, executable, rpath):
             new_rpath = old_rpath[:-1] + ':' + rpath
         else:
             new_rpath = rpath
-        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, executable, new_rpath))
+        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable))
 
 
 def perform_standard_test(package,
