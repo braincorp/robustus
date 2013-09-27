@@ -123,8 +123,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             for lib in libs:
                 run_shell('%s --set-rpath %s %s' % (patchelf_executable, libdir, lib))
 
+        prc_dir_setup = "import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
                    'w',
-                   '%s\n' % libdir)
+                   '%s\n%s\n' % (libdir, prc_dir_setup))
     else:
         raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)
