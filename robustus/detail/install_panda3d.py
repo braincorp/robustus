@@ -73,7 +73,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                               '--use-tinydisplay',
                               '--threads', '4']
         if sys.platform.startswith('darwin'):
-            make_panda_options += ' --use-cocoa'
+            make_panda_options += [' --use-cocoa']
             os.environ['CC'] = 'gcc'
             os.environ['CXX'] = 'g++'
 
