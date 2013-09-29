@@ -126,5 +126,23 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
                    'w',
                    '%s\n%s\n' % (libdir, prc_dir_setup))
+
+        # patch panda prc file
+        with open(os.path.join(etcdir, 'Config.prc'), 'a') as f:
+            extra_options = []
+            extra_options.append("# enable antialiasing\n"
+                                "framebuffer-multisample 1\n"
+                                "multisamples 4\n")
+            extra_options.append("# disable panda3d transform caching to avoid memory leak in bullet bindings\n"
+                                 "garbage-collect-states 0\n")
+
+            extra_options.append("# enable software rendering as fallback\n"
+                                 "aux-display p3tinydisplay\n")
+
+            extra_options.append("# add texture and model path\n"
+                                 "model-path %s/../loco/environment/textures\n" % robustus.env)
+            
+            f.write('\n'.join(extra_options))
+
     else:
         raise RequirementException('can\'t find panda3d-%s in robustus cache' % requirement_specifier.version)
