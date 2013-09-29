@@ -90,7 +90,6 @@ def fix_rpath(env, executable, rpath):
     prefix to dependent library names (absolute paths are not prefixed).
     """
     if sys.platform.startswith('darwin'):
-        return
         # extract list o dependent library names
         otool_output = subprocess.check_output(['otool', '-L', executable])
         for line in otool_output.splitlines()[1:]:
