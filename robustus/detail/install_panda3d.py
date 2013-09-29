@@ -139,9 +139,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             extra_options.append("# enable software rendering as fallback\n"
                                  "aux-display p3tinydisplay\n")
 
-            extra_options.append("# add texture and model path\n"
-                                 "model-path %s/../loco/environment/textures\n" % robustus.env)
-            
             f.write('\n'.join(extra_options))
 
     else:
