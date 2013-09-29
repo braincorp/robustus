@@ -73,11 +73,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                               '--use-tinydisplay',
                               '--threads', '4']
         if sys.platform.startswith('darwin'):
-            make_panda_options += [' --use-cocoa']
+            make_panda_options += ['--use-cocoa']
             os.environ['CC'] = 'gcc'
             os.environ['CXX'] = 'g++'
 
-        subprocess.call([robustus.python_executable, 'makepanda/makepanda.py'] + make_panda_options)
+        makepanda_cmd = [robustus.python_executable, 'makepanda/makepanda.py'] + make_panda_options
+        run_shell(' '.join(makepanda_cmd))
 
         # copy panda3d files to cache
         shutil.rmtree(panda_install_dir, ignore_errors=True)
