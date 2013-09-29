@@ -88,7 +88,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if in_cache():
         # install pygame to virtualenv
         pygame_install_dir = os.path.join(robustus.env, 'lib/python2.7/site-packages')
+        installation_path = os.path.join(pygame_install_dir, 'pygame')
+        if os.path.exists(installation_path):
+            shutil.rmtree(installation_path)
         shutil.copytree(os.path.join(pygame_cache_dir, 'pygame'),
-                        os.path.join(pygame_install_dir, 'pygame'))
+                        installation_path)
     else:
         raise RequirementException('can\'t find pygame-%s in robustus cache' % requirement_specifier.version)

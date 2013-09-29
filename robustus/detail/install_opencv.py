@@ -80,6 +80,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
                    os.path.join(python_dir, 'lib/python2.7/site-packages'))
             else:
-                raise RequirementException('can\'t find cudamat-%s in robustus cache' % requirement_specifier.version)
+                raise RequirementException('can\'t find opencv-%s in robustus cache' % requirement_specifier.version)
         else:
             raise RequirementException('Can install only opencv 2.4.2/2.4.4')

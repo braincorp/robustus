@@ -5,9 +5,12 @@
 
 import glob
 import os
+from requirement import RequirementException
 import robustus
 import shutil
 import subprocess
+import sys
+import logging
 
 
 def write_file(filename, mode, data):
@@ -47,6 +50,30 @@ def ln(src, dst, force=False):
     os.symlink(src, dst)
 
 
+def run_shell(command):
+    logging.info('Running shell command: %s' % command)
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+    if p.returncode != 0:
+        raise Exception('Error running %s, code=%s' % (command, p.returncode))
+    return output
+
+
+def execute_python_expr(env, expr):
+    """
+    Execute expression using env python interpreter.
+    :param env: path to python environment
+    :param expr: python expression
+    :return: return code
+    """
+    python_executable = os.path.join(env, 'bin/python')
+    if not os.path.isfile(python_executable):
+        python_executable = os.path.join(env, 'bin/python27')
+    if not os.path.isfile(python_executable):
+        raise RuntimeError('can\'t find python executable in %s' % env)
+    return subprocess.call([python_executable, '-c', expr])
+
+
 def check_module_available(env, module):
     """
     check if speicified module is available to specified python environment.
@@ -54,16 +81,37 @@ def check_module_available(env, module):
     :param module: module name
     :return: True if module available, False otherwise
     """
-    python_executable = os.path.join(env, 'bin/python')
-    if not os.path.isfile(python_executable):
-        python_executable = os.path.join(env, 'bin/python27')
-    if not os.path.isfile(python_executable):
-        raise RuntimeError('can\'t find python executable in %s' % env)
-    return subprocess.call([python_executable, '-c', 'import %s' % module]) == 0
+    return execute_python_expr(env, 'import %s' % module) == 0
+
+
+def fix_rpath(env, executable, rpath):
+    """
+    Add rpath to list of rpaths of given executable. For osx also add @rpath/
+    prefix to dependent library names (absolute paths are not prefixed).
+    """
+    if sys.platform.startswith('darwin'):
+        # extract list o dependent library names
+        otool_output = subprocess.check_output(['otool', '-L', executable])
+        for line in otool_output.splitlines()[1:]:
+            lib = line.split()[0]
+            if not os.path.isabs(lib) and lib != os.path.basename(executable) and not lib.startswith('@rpath'):
+                run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable))
+        return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
+    else:
+        patchelf_executable = os.path.join(env, 'bin/patchelf')
+        if not os.path.isfile(patchelf_executable):
+            raise RequirementException('In order to modify rpath of executable on unix system '
+                                       'you need to install patchelf: robustus install patchelf')
+        old_rpath = subprocess.check_output([patchelf_executable, '--print-rpath', executable])
+        if len(old_rpath) > 1:
+            new_rpath = old_rpath[:-1] + ':' + rpath
+        else:
+            new_rpath = rpath
+        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable))
 
 
 def perform_standard_test(package,
-                          python_modules=[],
+                          python_imports=[],
                           package_files=[],
                           dependencies=[],
                           test_env='test_env',
@@ -78,8 +126,8 @@ def perform_standard_test(package,
     test_cache = os.path.abspath(test_cache)
 
     def check_module():
-        for module in python_modules:
-            assert check_module_available(test_env, module)
+        for imp in python_imports:
+            assert execute_python_expr(test_env, imp) == 0
         for file in package_files:
             assert os.path.isfile(os.path.join(test_env, file))
 
