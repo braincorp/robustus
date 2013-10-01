@@ -4,4 +4,4 @@ python:
 install:
   - source use_repo.sh
 script:
-  - py.test
+  - py.test -s
