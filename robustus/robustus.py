@@ -10,7 +10,7 @@ import logging
 import os
 import subprocess
 import sys
-from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln
+from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln, run_shell
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
 # for doctests
 import detail
@@ -19,14 +19,6 @@ import detail
 class RobustusException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
-
-
-def run_shell(command):
-    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    output = p.communicate()[0]
-    if p.returncode != 0:
-        raise Exception('Error running %s, code=%s' % (command, p.returncode))
-    return output
 
 
 class Robustus(object):
@@ -277,7 +269,7 @@ class Robustus(object):
             except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
-                os.remove(rob_file)
+                os.remove(rob)
                 return
 
         # add requirement to the this of cached packages

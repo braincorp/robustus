@@ -3,17 +3,16 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
-import os
 import pytest
 from robustus.detail import perform_standard_test
 
 
-def test_pygame_installation(tmpdir):
+def test_patchelf_installation(tmpdir):
     tmpdir.chdir()
-    perform_standard_test('Pygame==bc1', ['import pygame'])
-    # need lib4l-videodev for Pygame 1.9.1
-    if os.path.isfile('/usr/include/libv4l1-videodev.h'):
-        perform_standard_test('Pygame==1.9.1', ['import pygame'])
+    patchelf_versions = ['6fb4cdb']
+    for ver in patchelf_versions:
+        patchelf_files = ['bin/patchelf']
+        perform_standard_test('patchelf==%s' % ver, [], patchelf_files)
 
 if __name__ == '__main__':
     pytest.main('-s %s -n0' % __file__)

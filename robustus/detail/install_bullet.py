@@ -16,7 +16,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     def in_cache():
         return os.path.isfile(os.path.join(bullet_cache_dir, 'lib/libBulletCollision.a'))
 
-    if requirement_specifier.version == '2.81' or requirement_specifier.version == 'bc1':
+    if requirement_specifier.version == '2.81' or requirement_specifier.version.startswith('bc'):
         cwd = os.getcwd()
 
         if not in_cache() and not ignore_index:
@@ -26,7 +26,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 bullet_tgz = bullet_archive_name + '.tgz'
                 url = 'http://bullet.googlecode.com/files/' + bullet_tgz
             else:
-                bullet_archive_name = 'bullet-bc1'
+                bullet_archive_name = 'bullet-%s' % requirement_specifier.version
                 bullet_tgz = bullet_archive_name + '.tar.gz'
                 url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/' + bullet_tgz
 
@@ -55,10 +55,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if in_cache():
             # install bullet somewhere into venv
             bullet_install_dir = os.path.join(robustus.env, 'lib/bullet-%s' % requirement_specifier.version)
+            if os.path.exists(bullet_install_dir):
+                shutil.rmtree(bullet_install_dir)
             shutil.copytree(bullet_cache_dir, bullet_install_dir)
         else:
             raise RequirementException('can\'t find bullet-%s in robustus cache' % requirement_specifier.version)
 
         os.chdir(cwd)
     else:
-        raise RequirementException('Can install only bullet 2.81/bc1')
+        raise RequirementException('Can install only bullet 2.81/bc1/bc2')
