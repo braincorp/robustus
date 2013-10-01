@@ -5,10 +5,12 @@
 
 import os
 import pytest
+import logging
 from robustus.detail import perform_standard_test
 
 
 def test_panda_installation(tmpdir):
+    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
 
     panda_imports = ['import panda3d',

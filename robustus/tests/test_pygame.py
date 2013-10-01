@@ -5,10 +5,12 @@
 
 import os
 import pytest
+import logging
 from robustus.detail import perform_standard_test
 
 
 def test_pygame_installation(tmpdir):
+    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     perform_standard_test('Pygame==bc1', ['import pygame'])
     # need lib4l-videodev for Pygame 1.9.1

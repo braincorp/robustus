@@ -4,10 +4,12 @@
 # =============================================================================
 
 import pytest
+import logging
 from robustus.detail import perform_standard_test
 
 
 def test_bullet_installation(tmpdir):
+    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     bullet_versions = ['bc2', '2.81']
     for ver in bullet_versions:
