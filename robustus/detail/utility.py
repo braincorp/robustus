@@ -60,9 +60,9 @@ def unpack(archive, path='.'):
     :return: None
     """
     if tarfile.is_tarfile(archive):
-        f = tarfile.TarFile(archive)
+        f = tarfile.open(archive)
     elif zipfile.is_zipfile(archive):
-        f = zipfile.ZipFile(archive)
+        f = zipfile.open(archive)
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)
