@@ -9,7 +9,7 @@ import platform
 import subprocess
 import shutil
 import sys
-from utility import cp
+from utility import cp, unpack
 from requirement import RequirementException
 
 
@@ -45,7 +45,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 subprocess.call(['wget', '-c', url, '-O', cv_tar])
 
                 logging.info('Unpacking OpenCV')
-                subprocess.call(['tar', 'xvjf', cv_tar])
+                unpack(cv_tar)
 
                 logging.info('Building OpenCV')
                 cv_build_dir = os.path.join(cv_work_dir, 'build')

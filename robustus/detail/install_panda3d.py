@@ -7,7 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import ln, write_file, run_shell, fix_rpath
+from utility import ln, write_file, run_shell, fix_rpath, unpack
 import shutil
 import subprocess
 import sys
@@ -33,7 +33,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         subprocess.call(['wget', '-c', url, '-O', panda3d_tgz])
 
         logging.info('Unpacking panda3d')
-        subprocess.call(['tar', 'xzf', panda3d_tgz, '.'])
+        unpack(panda3d_tgz)
 
         logging.info('Builduing panda3d')
         cwd = os.getcwd()
@@ -131,8 +131,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         with open(os.path.join(etcdir, 'Config.prc'), 'a') as f:
             extra_options = []
             extra_options.append("# enable antialiasing\n"
-                                "framebuffer-multisample 1\n"
-                                "multisamples 4\n")
+                                 "framebuffer-multisample 1\n"
+                                 "multisamples 4\n")
             extra_options.append("# disable panda3d transform caching to avoid memory leak in bullet bindings\n"
                                  "garbage-collect-states 0\n")
 
