@@ -33,7 +33,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         subprocess.call(['wget', '-c', url, '-O', panda3d_tgz])
 
         logging.info('Unpacking panda3d')
-        subprocess.call(['tar', 'xzf', panda3d_tgz])
+        subprocess.call(['tar', 'xzf', panda3d_tgz, '.'])
 
         logging.info('Builduing panda3d')
         cwd = os.getcwd()
