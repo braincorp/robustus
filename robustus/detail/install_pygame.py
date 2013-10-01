@@ -46,7 +46,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         subprocess.call(['wget', '-c', url, '-O', pygame_tgz])
 
         logging.info('Unpacking pygame')
-        subprocess.call(['tar', 'xvzf', pygame_tgz])
+        subprocess.call(['tar', 'xvzf', pygame_tgz, '.'])
 
         # Pygame asks to proceed without smpeg,
         # megahack to avoid asking to continue
