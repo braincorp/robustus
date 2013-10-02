@@ -245,7 +245,7 @@ class Robustus(object):
 
             # here we have to run via shell because requirement can be editable and then it will require
             # extra parsing to extract -e flag into separate argument.
-            command = ' '.join([self.pip_executable, '--exists-action=w', 'install', requirement_specifier.freeze()])
+            command = ' '.join([self.pip_executable, '--exists-action=i', 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '
                          'Fall back to pip shell command:%s' % (command,))
             run_shell(command)
