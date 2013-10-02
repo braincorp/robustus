@@ -225,7 +225,6 @@ class RequirementSpecifier(Requirement):
             self.url = url
             if self.editable:
                 actual_url, self.name = _split_egg_and_url(self.url.geturl())
-                raise Exception(self.url.geturl(), actual_url, self.name)
             return self.url.geturl(), self.editable
 
         path_specifier = self._extract_path_specifier(specifier)
