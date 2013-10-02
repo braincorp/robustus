@@ -223,6 +223,9 @@ class RequirementSpecifier(Requirement):
         url = urlparse.urlparse(specifier)
         if len(url.scheme) > 0:
             self.url = url
+            egg_position = self.url.geturl().find('#egg')
+            if egg_position > 0:
+                self.name = self.url.geturl()[egg_position:]
             return self.url.geturl(), self.editable
 
         path_specifier = self._extract_path_specifier(specifier)
