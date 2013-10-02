@@ -245,7 +245,7 @@ class Robustus(object):
 
             # here we have to run via shell because requirement can be editable and then it will require
             # extra parsing to extract -e flag into separate argument.
-            if requirement_specifier.url is not None:
+            if requirement_specifier.url is not None and requirement_specifier.editable:
                 editable_requirement_path = os.path.join(self.env, 'src', requirement_specifier.name)
                 logging.info('Got url-based requirement. Checking if exists %s ' % (editable_requirement_path,))
                 if os.path.exists(editable_requirement_path):
