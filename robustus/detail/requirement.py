@@ -224,8 +224,8 @@ class RequirementSpecifier(Requirement):
         if len(url.scheme) > 0:
             self.url = url
             if self.editable:
-                actual_url, name = _split_egg_and_url(self.url.geturl())
-                raise Exception(self.url.geturl(), actual_url, name)
+                actual_url, self.name = _split_egg_and_url(self.url.geturl())
+                raise Exception(self.url.geturl(), actual_url, self.name)
             return self.url.geturl(), self.editable
 
         path_specifier = self._extract_path_specifier(specifier)
@@ -304,7 +304,7 @@ def _split_egg_and_url(url):
             'Editable git link %s has to contain egg information.'
             'Example: -e git+https://github.com/company/my_package@branch_name#egg=my_package' % 
             url)
-    return url[:egg_position], url[egg_position+4:]
+    return url[:egg_position], url[egg_position+5:]
 
 
 def _obtain_requirements_from_remote_package(git_accessor, original_req):
