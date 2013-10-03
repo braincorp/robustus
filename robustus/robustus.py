@@ -249,11 +249,12 @@ class Robustus(object):
                 editable_requirement_path = os.path.join(self.env, 'src', requirement_specifier.name)
                 logging.info('Got url-based requirement. Checking if exists %s ' % (editable_requirement_path,))
                 if os.path.exists(editable_requirement_path):
-                    raise Exception('For safety reasons robustus will not proceed with requirement %s, '
-                                    'because directors for installing this package already exists (%s). '
-                                    'To update editable dependecy, please remove folder and run again.' %
-                                    (requirement_specifier.freeze(),
-                                     os.path.join(self.env, 'src', requirement_specifier.name)))
+                    logging.info('For safety reasons robustus will not proceed with requirement %s, '
+                                 'because directors for installing this package already exists (%s). '
+                                 'To update editable dependecy, please remove folder and run again.' %
+                                 (requirement_specifier.freeze(),
+                                 os.path.join(self.env, 'src', requirement_specifier.name)))
+                    return
             command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '
                          'Fall back to pip shell command:%s' % (command,))
