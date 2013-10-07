@@ -22,9 +22,6 @@ def test_panda_installation(tmpdir):
                           'bullet==bc2']
     
     perform_standard_test('panda3d==bc2', panda_imports, [], panda_dependencies)
-    # need bison to build panda 1.8.1
-    if os.path.isfile('/usr/bin/bison'):
-        perform_standard_test('panda3d==1.8.1', panda_imports, [], panda_dependencies)
 
 
 if __name__ == '__main__':

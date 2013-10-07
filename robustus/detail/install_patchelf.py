@@ -21,12 +21,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if not in_cache() and not ignore_index:
         logging.info('Downloading patchelf')
         patchelf_archive_name = 'patchelf-%s' % requirement_specifier.version
-        patchelf_tgz = patchelf_archive_name + '.tar.gz'
-        url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/' + patchelf_tgz
-
-        subprocess.call(['wget', '-c', url, '-O', patchelf_tgz])
-
-        logging.info('Unpacking patchelf')
+        patchelf_tgz = robustus.download('patchelf', requirement_specifier.version)
         unpack(patchelf_tgz)
 
         logging.info('Building patchelf')
