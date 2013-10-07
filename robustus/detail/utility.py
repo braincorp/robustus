@@ -104,7 +104,7 @@ def unpack(archive, path='.'):
 
     root, ext = os.path.splitext(archive)
     if ext in ['.gz', '.bz2']:
-       root = os.path.splitext(root)[0]
+        root = os.path.splitext(root)[0]
     return root
 
 
