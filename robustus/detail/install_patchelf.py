@@ -20,9 +20,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     cwd = os.getcwd()
     if not in_cache() and not ignore_index:
         logging.info('Downloading patchelf')
-        patchelf_archive_name = 'patchelf-%s' % requirement_specifier.version
         patchelf_tgz = robustus.download('patchelf', requirement_specifier.version)
-        unpack(patchelf_tgz)
+        patchelf_archive_name = unpack(patchelf_tgz)
 
         logging.info('Building patchelf')
         os.chdir(patchelf_archive_name)

@@ -91,7 +91,8 @@ def unpack(archive, path='.'):
     unpack '.tar', '.tar.gz', '.tar.bz2' or '.zip' to path
     :param archive: archive file
     :param path: path where to unpack
-    :return: None
+    :return: archive name without extension, this is convenient as most
+    packages archives are compressed folders of the same name
     """
     logging.info('Unpacking ' + archive)
     if tarfile.is_tarfile(archive):
@@ -101,6 +102,7 @@ def unpack(archive, path='.'):
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)
+    return os.path.splitext(archive)[0]
 
 
 def run_shell(command):

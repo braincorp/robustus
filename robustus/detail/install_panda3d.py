@@ -25,9 +25,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if not in_cache() and not ignore_index:
         cwd = os.getcwd()
         try:
-            panda3d_archive_name = 'panda3d-%s' % requirement_specifier.version
             panda3d_tgz = robustus.download('panda3d', requirement_specifier.version)
-            unpack(panda3d_tgz)
+            panda3d_archive_name = unpack(panda3d_tgz)
 
             logging.info('Builduing panda3d')
             os.chdir(panda3d_archive_name)
