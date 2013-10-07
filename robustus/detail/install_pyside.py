@@ -4,6 +4,7 @@
 # =============================================================================
 
 import os
+from requirement import RequirementException
 import subprocess
 import sys
 

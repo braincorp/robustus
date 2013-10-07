@@ -53,37 +53,36 @@ def ln(src, dst, force=False):
     os.symlink(src, dst)
 
 
-def download(url, file=None):
+def download(url, filename=None):
     """
     download file from url, store it under name
     :param url: url to download file
-    :param file: location to store downloaded file, if None try to extract filename from url
-    :return: None
+    :param filename: location to store downloaded file, if None try to extract filename from url
+    :return: filename of downloaded file
     """
-    url = "http://download.thinkbroadband.com/10MB.zip"
+    if filename is None:
+        filename = url.split('/')[-1]
 
-    if file is None:
-        file = url.split('/')[-1]
     u = urllib2.urlopen(url)
-    f = open(file, 'wb')
-    meta = u.info()
-    file_size = int(meta.getheaders("Content-Length")[0])
+    file_size = int(u.info().getheaders("Content-Length")[0])
     logging.info("Downloading: %s Bytes: %s" % (file, file_size))
 
-    file_size_dl = 0
-    block_sz = 8192
-    while True:
-        buffer = u.read(block_sz)
-        if not buffer:
-            break
+    with open(filename, 'wb') as f:
+        file_size_dl = 0
+        block_sz = 8192
+        while True:
+            buffer = u.read(block_sz)
+            if not buffer:
+                break
 
-        file_size_dl += len(buffer)
-        f.write(buffer)
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-        status += chr(8)*(len(status)+1)
-        logging.info(status,)
+            file_size_dl += len(buffer)
+            f.write(buffer)
+            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+            status += chr(8)*(len(status)+1)
+            logging.info(status,)
+        f.close()
 
-    f.close()
+    return filename
 
 
 def unpack(archive, path='.'):
@@ -102,7 +101,11 @@ def unpack(archive, path='.'):
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)
-    return os.path.splitext(archive)[0]
+
+    root, ext = os.path.splitext(archive)
+    if ext in ['.gz', '.bz2']:
+       root = os.path.splitext(root)[0]
+    return root
 
 
 def run_shell(command):

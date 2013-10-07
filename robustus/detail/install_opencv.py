@@ -19,7 +19,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         logging.info('Linking opencv for CentOS')
         os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'))
         os.symlink('/usr/lib64/python2.7/site-packages/cv.py', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv.py'))
-    elif requirement_specifier.version == '2.4.4' or requirement_specifier.version == '2.4.2':
+    else:
         cwd = os.getcwd()
         cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % requirement_specifier.version)
         cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
