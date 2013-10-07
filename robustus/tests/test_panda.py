@@ -14,7 +14,7 @@ def test_panda_installation(tmpdir):
     tmpdir.chdir()
 
     panda_imports = ['import panda3d',
-                     'import panda3d.core'
+                     'import panda3d.core',
                      'import panda3d.bullet',
                      'from panda3d.core import Mat4, TransformState',
                      'from panda3d.bullet import BulletWorld']
