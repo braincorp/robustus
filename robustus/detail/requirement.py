@@ -223,6 +223,8 @@ class RequirementSpecifier(Requirement):
         url = urlparse.urlparse(specifier)
         if len(url.scheme) > 0:
             self.url = url
+            if self.editable:
+                actual_url, self.name = _split_egg_and_url(self.url.geturl())
             return self.url.geturl(), self.editable
 
         path_specifier = self._extract_path_specifier(specifier)
@@ -294,15 +296,19 @@ class RequirementSpecifier(Requirement):
             return False
 
 
-def _obtain_requirements_from_remote_package(git_accessor, original_req):
-    url = original_req.url.geturl()[4:]
+def _split_egg_and_url(url):
     egg_position = url.find('#egg')
     if egg_position < 0:
         raise RequirementException(
             'Editable git link %s has to contain egg information.'
             'Example: -e git+https://github.com/company/my_package@branch_name#egg=my_package' % 
-            original_req.url.geturl())
-    url = url[:egg_position]
+            url)
+    return url[:egg_position], url[egg_position+5:]
+
+
+def _obtain_requirements_from_remote_package(git_accessor, original_req):
+    url = original_req.url.geturl()[4:]
+    url, name = _split_egg_and_url(url)
 
     if url.startswith('ssh://git@'):
         # searching '@' after git@
