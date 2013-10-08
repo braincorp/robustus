@@ -112,18 +112,8 @@ class Robustus(object):
         # wheel is binary packager for python/pip
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
 
-        # wheel needs pip 1.4, at the moment of writing it was development version
-        # and we can't reinstall pip after virtualenv activation
-        subprocess.call([pip_executable,
-                         'install',
-                         '-e',
-                         'git+https://github.com/pypa/pip.git@978662b08b118bbeaae5aba57c823090b1c3b3ee#egg=pip'])
-
-        # install requirements for wheel
-        # need to uninstall distribute, because they conflict with setuptools
-        subprocess.call([pip_executable, 'uninstall', 'distribute'])
-        subprocess.call([pip_executable, 'install', 'https://bitbucket.org/pypa/setuptools/downloads/setuptools-0.8b3.tar.gz'])
-        subprocess.call([pip_executable, 'install', 'wheel==0.16.0'])
+        # wheel needs pip 1.4.1 for wheeling, and we can't reinstall pip after virtualenv activation
+        subprocess.call([pip_executable, 'install', 'pip==1.4.1', '--upgrade'])
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
