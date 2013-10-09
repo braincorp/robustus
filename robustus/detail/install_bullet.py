@@ -6,6 +6,7 @@
 import logging
 import os
 from requirement import RequirementException
+from utility import unpack
 import shutil
 import subprocess
 
@@ -33,7 +34,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             subprocess.call(['wget', '-c', url, '-O', bullet_tgz])
 
             logging.info('Unpacking bullet')
-            subprocess.call(['tar', 'xvzf', bullet_tgz])
+            unpack(bullet_tgz)
 
             logging.info('Building bullet')
             os.chdir(bullet_archive_name)

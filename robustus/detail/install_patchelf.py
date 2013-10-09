@@ -6,7 +6,7 @@
 import logging
 import os
 from requirement import RequirementException
-from utility import cp
+from utility import cp, unpack
 import shutil
 import subprocess
 
@@ -27,7 +27,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         subprocess.call(['wget', '-c', url, '-O', patchelf_tgz])
 
         logging.info('Unpacking patchelf')
-        subprocess.call(['tar', 'xvzf', patchelf_tgz])
+        unpack(patchelf_tgz)
 
         logging.info('Building patchelf')
         os.chdir(patchelf_archive_name)

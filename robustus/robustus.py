@@ -253,7 +253,7 @@ class Robustus(object):
                                  'because directors for installing this package already exists (%s). '
                                  'To update editable dependecy, please remove folder and run again.' %
                                  (requirement_specifier.freeze(),
-                                 os.path.join(self.env, 'src', requirement_specifier.name)))
+                                  os.path.join(self.env, 'src', requirement_specifier.name)))
                     return
             command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '

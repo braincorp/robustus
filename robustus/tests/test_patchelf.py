@@ -4,10 +4,12 @@
 # =============================================================================
 
 import pytest
+import logging
 from robustus.detail import perform_standard_test
 
 
 def test_patchelf_installation(tmpdir):
+    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     patchelf_versions = ['6fb4cdb']
     for ver in patchelf_versions:

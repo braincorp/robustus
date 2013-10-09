@@ -10,6 +10,8 @@ import robustus
 import shutil
 import subprocess
 import sys
+import tarfile
+import zipfile
 import logging
 
 
@@ -48,6 +50,22 @@ def ln(src, dst, force=False):
     if force and os.path.exists(dst):
         os.remove(dst)
     os.symlink(src, dst)
+
+
+def unpack(archive, path='.'):
+    """
+    unpack '.tar', '.tar.gz', '.tar.bz2' or '.zip' to path
+    :param archive: archive file
+    :param path: path where to unpack
+    :return: None
+    """
+    if tarfile.is_tarfile(archive):
+        f = tarfile.open(archive)
+    elif zipfile.is_zipfile(archive):
+        f = zipfile.open(archive)
+    else:
+        raise RuntimeError('unknown archive type %s' % archive)
+    f.extractall(path)
 
 
 def run_shell(command):

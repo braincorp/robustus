@@ -7,6 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
+from utility import unpack
 import shutil
 import subprocess
 import sys
@@ -46,7 +47,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         subprocess.call(['wget', '-c', url, '-O', pygame_tgz])
 
         logging.info('Unpacking pygame')
-        subprocess.call(['tar', 'xvzf', pygame_tgz])
+        unpack(pygame_tgz)
 
         # Pygame asks to proceed without smpeg,
         # megahack to avoid asking to continue
