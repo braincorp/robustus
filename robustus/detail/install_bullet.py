@@ -6,7 +6,7 @@
 import logging
 import os
 from requirement import RequirementException
-from utility import unpack
+from utility import unpack, safe_remove
 import shutil
 import subprocess
 
@@ -19,6 +19,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     if not in_cache() and not ignore_index:
         cwd = os.getcwd()
+        bullet_archive = None
+        bullet_archive_name = None
         try:
             bullet_archive = robustus.download('bullet', requirement_specifier.version)
             bullet_archive_name = unpack(bullet_archive)
@@ -40,9 +42,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             if retcode != 0:
                 raise RequirementException('bullet "make install" failed')
         finally:
+            safe_remove(bullet_archive)
+            safe_remove(bullet_archive_name)
             os.chdir(cwd)
-            os.remove(bullet_archive)
-            shutil.rmtree(bullet_archive_name)
 
     if in_cache():
         # install bullet somewhere into venv

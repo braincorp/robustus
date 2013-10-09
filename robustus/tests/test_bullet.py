@@ -11,7 +11,7 @@ from robustus.detail import perform_standard_test
 def test_bullet_installation(tmpdir):
     logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
-    bullet_versions = ['bc2', '2.81']
+    bullet_versions = ['bc2']
     for ver in bullet_versions:
         bullet_files = ['lib/bullet-%s/lib/libBulletCollision.a' % ver,
                         'lib/bullet-%s/lib/libBulletDynamics.a' % ver,

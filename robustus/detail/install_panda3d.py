@@ -7,7 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import ln, write_file, run_shell, fix_rpath, unpack
+from utility import ln, write_file, run_shell, fix_rpath, unpack, safe_remove
 import shutil
 import subprocess
 import sys
@@ -24,6 +24,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     if not in_cache() and not ignore_index:
         cwd = os.getcwd()
+        panda3d_tgz = None
+        panda3d_archive_name = None
         try:
             panda3d_tgz = robustus.download('panda3d', requirement_specifier.version)
             panda3d_archive_name = unpack(panda3d_tgz)
@@ -86,9 +88,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             subprocess.call('cp -R built/models %s' % panda_install_dir, shell=True)
             subprocess.call('cp -R built/etc %s' % panda_install_dir, shell=True)
         finally:
+            safe_remove(panda3d_tgz)
+            safe_remove(panda3d_archive_name)
             os.chdir(cwd)
-            shutil.rmtree(panda3d_archive_name)
-            os.remove(panda3d_tgz)
 
     if in_cache():
         # install panda3d to virtualenv

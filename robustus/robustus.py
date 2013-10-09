@@ -324,7 +324,7 @@ class Robustus(object):
             for archive_name in [archive_base_name + ext for ext in extensions]:
                 try:
                     download(os.path.join(index, archive_name), archive_name)
-                    return archive_name
+                    return os.path.abspath(archive_name)
                 except urllib2.URLError:
                     pass
 
@@ -453,7 +453,7 @@ class Robustus(object):
 
 
 def execute(argv):
-    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
                                      prog='robustus')

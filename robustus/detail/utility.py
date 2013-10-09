@@ -77,8 +77,7 @@ def download(url, filename=None):
 
             file_size_dl += len(buffer)
             f.write(buffer)
-            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-            status += chr(8)*(len(status)+1)
+            status = "%10d  [%3.2f%%]\r" % (file_size_dl, file_size_dl * 100. / file_size)
             logging.info(status,)
         f.close()
 
@@ -105,7 +104,19 @@ def unpack(archive, path='.'):
     root, ext = os.path.splitext(archive)
     if ext in ['.gz', '.bz2']:
         root = os.path.splitext(root)[0]
-    return root
+    return os.path.abspath(root)
+
+
+def safe_remove(path):
+    """
+    Remove file or directory if it exists.
+    """
+    if path is None:
+        return
+    if os.path.isfile(path):
+        os.remove(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
 
 
 def run_shell(command):

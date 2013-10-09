@@ -9,7 +9,7 @@ import platform
 import subprocess
 import shutil
 import sys
-from utility import cp, unpack
+from utility import cp, unpack, safe_remove
 from requirement import RequirementException
 
 
@@ -20,7 +20,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'))
         os.symlink('/usr/lib64/python2.7/site-packages/cv.py', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv.py'))
     else:
-        cwd = os.getcwd()
         cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % requirement_specifier.version)
         cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
 
@@ -28,6 +27,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             return os.path.isfile(cv2so)
 
         if not in_cache() and not ignore_index:
+            cwd = os.getcwd()
+            opencv_archive = None
+            opencv_archive_name = None
             try:
                 opencv_archive = robustus.download('OpenCV', requirement_specifier.version)
                 opencv_archive_name = unpack(opencv_archive)
@@ -57,8 +59,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     os.mkdir(cv_install_dir)
                 subprocess.call(['make', 'install'])
             finally:
-                # cleanup
-                shutil.rmtree(opencv_archive_name)
+                safe_remove(opencv_archive)
+                safe_remove(opencv_archive_name)
                 os.chdir(cwd)
 
         if in_cache():
