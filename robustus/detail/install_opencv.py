@@ -20,7 +20,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.symlink('/usr/lib64/python2.7/site-packages/cv2.so', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'))
         os.symlink('/usr/lib64/python2.7/site-packages/cv.py', os.path.join(robustus.env, 'lib/python2.7/site-packages/cv.py'))
     else:
-        cv_install_dir = os.path.join(robustus.cache, 'opencv-%s' % requirement_specifier.version)
+        cv_install_dir = os.path.join(robustus.cache, 'OpenCV-%s' % requirement_specifier.version)
         cv2so = os.path.join(cv_install_dir, 'lib/python2.7/site-packages/cv2.so')
 
         def in_cache():
@@ -41,7 +41,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 os.chdir(cv_build_dir)
                 subprocess.call(['cmake',
                                  '../',
-                                 '-DPYTHON_EXECUTABLE=%s' % sys.executable,
+                                 '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
                                  '-DBUILD_NEW_PYTHON_SUPPORT=ON',
                                  '-DBUILD_TESTS=OFF',
                                  '-DBUILD_PERF_TESTS=OFF',
@@ -65,8 +65,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         if in_cache():
             logging.info('Linking OpenCV cv2.so to virtualenv')
-            python_dir = os.path.join(os.path.dirname(sys.executable), os.path.pardir)
             cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
-               os.path.join(python_dir, 'lib/python2.7/site-packages'))
+               os.path.join(robustus.env, 'lib/python2.7/site-packages'))
         else:
-            raise RequirementException('can\'t find opencv-%s in robustus cache' % requirement_specifier.version)
+            raise RequirementException('can\'t find OpenCV-%s in robustus cache' % requirement_specifier.version)

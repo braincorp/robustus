@@ -13,9 +13,9 @@ def test_panda_installation(tmpdir):
     tmpdir.chdir()
 
     imports = ['import cv2',
-               'from cv2 import AbsDiff']
+               'from cv2 import imread']
     
-    perform_standard_test('OpenCV==2.4.4', imports)
+    perform_standard_test('OpenCV==2.4.4', imports, [], ['numpy==1.7.1'])
 
 
 if __name__ == '__main__':
