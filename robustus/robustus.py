@@ -28,6 +28,9 @@ class Robustus(object):
     default_settings = {
         'cache': 'wheelhouse'
     }
+    # FIXME: not so great to hardcode braincorp address here, but in other way
+    # we need to modify other repositories use_repo.sh which use robustus
+    default_package_locations = ['http://share.braincorporation.net/robustus/source_packages']
 
     def __init__(self, args):
         """
@@ -45,10 +48,8 @@ class Robustus(object):
             raise RobustusException('bad robustus environment ' + self.env + ': .robustus settings file not found')
         settings = eval(open(self.settings_file_path).read())
         self.settings = Robustus._override_settings(settings, args)
-        # FIXME: not so great to hardcode braincorp address here, but in other way
-        # we need to modify other repositories use_repo.sh which use robustus
         if 'find_links' not in self.settings:
-            self.settings['find_links'] = ['http://share.braincorporation.net/robustus/source_packages']
+            self.settings['find_links'] = self.default_package_locations
         logging.info('Robustus will use the following cache folder: %s' % self.settings['cache'])
 
         self.python_executable = os.path.join(self.env, 'bin/python')
@@ -301,7 +302,7 @@ class Robustus(object):
 
         logging.info('Here are all packages cached in robustus:\n' +
                      '\n'.join([r.freeze() for r in self.cached_packages]))
-        logging.info('Here are all the requirements robustus going to install:\n' +
+        logging.info('Here are all the requirements robustus is going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
