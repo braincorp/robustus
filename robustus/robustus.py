@@ -10,8 +10,9 @@ import logging
 import os
 import subprocess
 import sys
-from detail import Requirement, RequirementSpecifier, RequirementException, read_requirement_file, ln, run_shell
+from detail import Requirement, RequirementException, read_requirement_file, ln, run_shell, download
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
+import urllib2
 # for doctests
 import detail
 
@@ -27,6 +28,9 @@ class Robustus(object):
     default_settings = {
         'cache': 'wheelhouse'
     }
+    # FIXME: not so great to hardcode braincorp address here, but in other way
+    # we need to modify other repositories use_repo.sh which use robustus
+    default_package_locations = ['http://share.braincorporation.net/robustus/source_packages']
 
     def __init__(self, args):
         """
@@ -44,6 +48,8 @@ class Robustus(object):
             raise RobustusException('bad robustus environment ' + self.env + ': .robustus settings file not found')
         settings = eval(open(self.settings_file_path).read())
         self.settings = Robustus._override_settings(settings, args)
+        if 'find_links' not in self.settings:
+            self.settings['find_links'] = self.default_package_locations
         logging.info('Robustus will use the following cache folder: %s' % self.settings['cache'])
 
         self.python_executable = os.path.join(self.env, 'bin/python')
@@ -107,19 +113,10 @@ class Robustus(object):
         # wheel is binary packager for python/pip
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
 
-        # wheel needs pip 1.4, at the moment of writing it was development version
-        # and we can't reinstall pip after virtualenv activation
-        subprocess.call([pip_executable,
-                         'install',
-                         '-e',
-                         'git+https://github.com/pypa/pip.git@978662b08b118bbeaae5aba57c823090b1c3b3ee#egg=pip'])
-
-        # install requirements for wheel
-        # need to uninstall distribute, because they conflict with setuptools
-        subprocess.call([pip_executable, 'uninstall', 'distribute'])
-        subprocess.call([pip_executable, 'install', 'https://bitbucket.org/pypa/setuptools/downloads/setuptools-0.8b3.tar.gz'])
-        subprocess.call([pip_executable, 'install', 'wheel==0.16.0'])
-        subprocess.call([pip_executable, 'install', 'boto==2.11.0'])
+        # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
+        subprocess.call([pip_executable, 'install', 'pip==1.4.1', '--upgrade'])
+        subprocess.call([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'])
+        subprocess.call([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'])
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
@@ -295,6 +292,10 @@ class Robustus(object):
         return None
 
     def install(self, args):
+        # grab index locations
+        if args.find_links is not None:
+            self.settings['find_links'] += args.find_links
+
         # construct requirements list
         specifiers = args.packages
         if args.editable is not None:
@@ -309,7 +310,9 @@ class Robustus(object):
 
         requirements = remove_duplicate_requirements(requirements)
 
-        logging.info('Here are all the requirements robustus going to install:\n' +
+        logging.info('Here are all packages cached in robustus:\n' +
+                     '\n'.join([r.freeze() for r in self.cached_packages]))
+        logging.info('Here are all the requirements robustus is going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]))
         # install
         for requirement_specifier in requirements:
@@ -318,6 +321,27 @@ class Robustus(object):
     def freeze(self, args):
         for requirement in self.cached_packages:
             print requirement.freeze()
+
+    def download(self, package, version):
+        """
+        Download package archive, look for locations specified using --find-links. Store archive in current
+        working folder.
+        :param package: package name
+        :param version: package version
+        :return: path to archive
+        """
+        logging.info('Searching for package archive %s-%s' % (package, version))
+        archive_base_name = '%s-%s' % (package, version)
+        extensions = ['.tar.gz', '.tar.bz2', '.zip']
+        for index in self.settings['find_links']:
+            for archive_name in [archive_base_name + ext for ext in extensions]:
+                try:
+                    download(os.path.join(index, archive_name), archive_name)
+                    return os.path.abspath(archive_name)
+                except urllib2.URLError:
+                    pass
+
+        raise RequirementException('Failed to find package archive %s-%s' % (package, version))
 
     def download_cache_from_amazon(self, filename, bucket_name, key, secret):
         if filename is None or bucket_name is None:
@@ -346,7 +370,7 @@ class Robustus(object):
             if not os.path.exists(os.path.join(self.cache, filename)):
                 raise RobustusException('Can\'t find file %s in amazon cloud bucket %s' % (filename, bucket_name))
         except ImportError:
-            raise RobustusException('To be able to download from S3 cloud you should install boto library')
+            raise RobustusException('To use S3 cloud install boto library into robustus virtual')
         except Exception as e:
             raise RobustusException(e.message)
 
@@ -411,7 +435,7 @@ class Robustus(object):
             if public:
                 k.make_public()
         except ImportError:
-            raise RobustusException('To be able to upload to S3 cloud you should install boto library')
+            raise RobustusException('To use S3 cloud install boto library into robustus virtual')
         except Exception as e:
             raise RobustusException(e.message)
 
@@ -442,7 +466,7 @@ class Robustus(object):
 
 
 def execute(argv):
-    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
                                                  'setup necessary packages and cache them if necessary.',
                                      prog='robustus')
@@ -479,6 +503,9 @@ def execute(argv):
     install_parser.add_argument('--no-index',
                                 action='store_true',
                                 help='ignore package index (only looking in robustus cache and at --find-links URLs)')
+    install_parser.add_argument('-f', '--find-links',
+                                action='append',
+                                help='location where to find robustus packages, also is passed to pip')
     install_parser.set_defaults(func=Robustus.install)
 
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')

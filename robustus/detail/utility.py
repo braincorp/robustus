@@ -13,6 +13,7 @@ import sys
 import tarfile
 import zipfile
 import logging
+import urllib2
 
 
 def write_file(filename, mode, data):
@@ -52,13 +53,46 @@ def ln(src, dst, force=False):
     os.symlink(src, dst)
 
 
+def download(url, filename=None):
+    """
+    download file from url, store it under name
+    :param url: url to download file
+    :param filename: location to store downloaded file, if None try to extract filename from url
+    :return: filename of downloaded file
+    """
+    if filename is None:
+        filename = url.split('/')[-1]
+
+    u = urllib2.urlopen(url)
+    file_size = int(u.info().getheaders("Content-Length")[0])
+    logging.info("Downloading: %s Bytes: %s" % (file, file_size))
+
+    with open(filename, 'wb') as f:
+        file_size_dl = 0
+        block_sz = 8192
+        while True:
+            buffer = u.read(block_sz)
+            if not buffer:
+                break
+
+            file_size_dl += len(buffer)
+            f.write(buffer)
+            status = "%10d  [%3.2f%%]\r" % (file_size_dl, file_size_dl * 100. / file_size)
+            logging.info(status,)
+        f.close()
+
+    return filename
+
+
 def unpack(archive, path='.'):
     """
     unpack '.tar', '.tar.gz', '.tar.bz2' or '.zip' to path
     :param archive: archive file
     :param path: path where to unpack
-    :return: None
+    :return: archive name without extension, this is convenient as most
+    packages archives are compressed folders of the same name
     """
+    logging.info('Unpacking ' + archive)
     if tarfile.is_tarfile(archive):
         f = tarfile.open(archive)
     elif zipfile.is_zipfile(archive):
@@ -66,6 +100,23 @@ def unpack(archive, path='.'):
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)
+
+    root, ext = os.path.splitext(archive)
+    if ext in ['.gz', '.bz2']:
+        root = os.path.splitext(root)[0]
+    return os.path.abspath(root)
+
+
+def safe_remove(path):
+    """
+    Remove file or directory if it exists.
+    """
+    if path is None:
+        return
+    if os.path.isfile(path):
+        os.remove(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
 
 
 def run_shell(command):

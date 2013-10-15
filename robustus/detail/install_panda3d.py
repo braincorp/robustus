@@ -7,7 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import ln, write_file, run_shell, fix_rpath, unpack
+from utility import ln, write_file, run_shell, fix_rpath, unpack, safe_remove
 import shutil
 import subprocess
 import sys
@@ -23,21 +23,14 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         return os.path.isfile(os.path.join(panda_install_dir, 'lib/panda3d.py'))
 
     if not in_cache() and not ignore_index:
+        cwd = os.getcwd()
+        panda3d_tgz = None
+        panda3d_archive_name = None
         try:
-            logging.info('Downloading panda3d')
-            panda3d_archive_name = 'panda3d-%s' % requirement_specifier.version
-            panda3d_tgz = panda3d_archive_name + '.tar.gz'
-            if requirement_specifier.version == '1.8.1':
-                url = 'https://www.panda3d.org/download/panda3d-1.8.1/' + panda3d_tgz
-            else:
-                url = 'https://s3.amazonaws.com/thirdparty-packages.braincorporation.net/' + panda3d_tgz
-            subprocess.call(['wget', '-c', url, '-O', panda3d_tgz])
-
-            logging.info('Unpacking panda3d')
-            unpack(panda3d_tgz)
+            panda3d_tgz = robustus.download('panda3d', requirement_specifier.version)
+            panda3d_archive_name = unpack(panda3d_tgz)
 
             logging.info('Builduing panda3d')
-            cwd = os.getcwd()
             os.chdir(panda3d_archive_name)
 
             # link bullet into panda dependencies dir
@@ -95,9 +88,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             subprocess.call('cp -R built/models %s' % panda_install_dir, shell=True)
             subprocess.call('cp -R built/etc %s' % panda_install_dir, shell=True)
         finally:
-            os.chdir(os.path.pardir)
-            shutil.rmtree(panda3d_archive_name)
-            os.remove(panda3d_tgz)
+            safe_remove(panda3d_tgz)
+            safe_remove(panda3d_archive_name)
+            os.chdir(cwd)
 
     if in_cache():
         # install panda3d to virtualenv
