@@ -207,6 +207,7 @@ class Robustus(object):
             logging.info('Building wheel')
             subprocess.call([self.pip_executable,
                              'wheel',
+                             '-v',  # need verbose output, so travis won't terminate long builds with no output
                              '--no-index',
                              '--find-links=%s' % self.cache,
                              '--wheel-dir=%s' % self.cache,
