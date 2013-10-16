@@ -15,6 +15,7 @@ def test_pyside_installation(tmpdir):
     logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     imports = ['import PySide',
+               'from PySide import QtCore'
                'from PySide import QtGui']
     perform_standard_test('PySide==1.2.1', imports)
 

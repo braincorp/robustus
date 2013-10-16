@@ -6,8 +6,7 @@
 import os
 from requirement import RequirementException
 import subprocess
-import sys
-from utils import unpack
+from utility import unpack
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -26,7 +25,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if not os.path.isdir(pyside_setup_dir):
             raise RequirementException('can\'t find pyside-%s in robustus cache' % requirement_specifier.version)
         os.chdir(pyside_setup_dir)
-        retcode = subprocess.call([sys.executable, 'pyside_postinstall.py', '-install'])
+        retcode = subprocess.call([robustus.python_executable, 'pyside_postinstall.py', '-install'])
         if retcode != 0:
             raise RequirementException('failed to execute pyside postinstall script')
     finally:

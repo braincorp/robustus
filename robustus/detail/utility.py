@@ -69,7 +69,7 @@ def download(url, filename=None):
 
     with open(filename, 'wb') as f:
         file_size_dl = 0
-        block_sz = 8192
+        block_sz = 32768
         while True:
             buffer = u.read(block_sz)
             if not buffer:
@@ -96,7 +96,7 @@ def unpack(archive, path='.'):
     if tarfile.is_tarfile(archive):
         f = tarfile.open(archive)
     elif zipfile.is_zipfile(archive):
-        f = zipfile.open(archive)
+        f = zipfile.ZipFile(archive)
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)

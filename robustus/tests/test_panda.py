@@ -3,7 +3,6 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
-import os
 import pytest
 import logging
 from robustus.detail import perform_standard_test

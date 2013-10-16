@@ -14,6 +14,10 @@ import subprocess
 
 
 def test_robustus(tmpdir):
+    doctest.testmod(robustus)
+    doctest.testmod(robustus.detail.utility)
+    doctest.testmod(robustus.detail.requirement)
+
     tmpdir.chdir()
     test_env = 'test_env'
 
@@ -50,7 +54,4 @@ def test_robustus(tmpdir):
     shutil.rmtree(test_env)
 
 if __name__ == '__main__':
-    doctest.testmod(robustus)
-    doctest.testmod(robustus.detail.utility)
-    doctest.testmod(robustus.detail.requirement)
     pytest.main('-s %s -n0' % __file__)
