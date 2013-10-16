@@ -186,8 +186,6 @@ class RequirementSpecifier(Requirement):
         ('http://some_url/some_package.tar.gz', False)
         >>> RequirementSpecifier()._from_specifier('   http://some_url/some_package.tar.gz')
         ('http://some_url/some_package.tar.gz', False)
-        >>> RequirementSpecifier()._from_specifier('-e   http://some_url/some_package.tar.gz')
-        ('http://some_url/some_package.tar.gz', True)
         >>> RequirementSpecifier()._from_specifier('-e git+https://github.com/company/my_package@branch_name#egg=my_package')
         ('git+https://github.com/company/my_package@branch_name#egg=my_package', True)
         >>> RequirementSpecifier()._from_specifier('/dev')
@@ -275,6 +273,8 @@ class RequirementSpecifier(Requirement):
         Examples:
         >>> RequirementSpecifier('numpy', '1.7.2').allows(Requirement('numpy', '1.7.2'))
         True
+        >>> RequirementSpecifier('numpy', '1.7.2').allows(Requirement('scipy', '1.7.2'))
+        False
         >>> RequirementSpecifier('numpy').allows(Requirement('numpy', '1.7.2'))
         True
         >>> RequirementSpecifier('numpy', '1.7.2').allows(Requirement('numpy'))
@@ -291,7 +291,7 @@ class RequirementSpecifier(Requirement):
         elif self.name is not None and other.name is not None:
             # check if name and version match
             # TODO: check for allow_greater_version, note that version can have weird format, i.e. '1.1rc3'
-            return self.version is None or other.version == self.version
+            return self.name == other.name and (self.version is None or other.version == self.version)
         else:
             return False
 
