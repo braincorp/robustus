@@ -69,7 +69,7 @@ def download(url, filename=None):
 
     with open(filename, 'wb') as f:
         file_size_dl = 0
-        block_sz = 8192
+        block_sz = 32768
         while True:
             buffer = u.read(block_sz)
             if not buffer:
