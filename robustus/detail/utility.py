@@ -96,7 +96,7 @@ def unpack(archive, path='.'):
     if tarfile.is_tarfile(archive):
         f = tarfile.open(archive)
     elif zipfile.is_zipfile(archive):
-        f = zipfile.open(archive)
+        f = zipfile.ZipFile(archive)
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)

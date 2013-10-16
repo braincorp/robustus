@@ -6,8 +6,7 @@
 import os
 from requirement import RequirementException
 import subprocess
-import sys
-from utils import unpack
+from utility import unpack
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
