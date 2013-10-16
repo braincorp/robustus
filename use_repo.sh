@@ -26,5 +26,6 @@ fi
 
 # create virtualenv
 virtualenv $DIR/venv --python=$PYTHONEXEC --prompt "(robustus)"
+echo $DIR > $DIR/venv/lib/python2.7/site-packages/robustus.pth
 source $DIR/venv/bin/activate
 pip install -r requirements.txt
