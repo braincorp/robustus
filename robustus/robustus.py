@@ -115,6 +115,9 @@ class Robustus(object):
 
         # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
         subprocess.call([pip_executable, 'install', 'pip==1.4.1', '--upgrade'])
+        # some sloppy maintained packages (like ROS) require outdated distribute for installation
+        # and we need to install it before setuptools
+        subprocess.call([pip_executable, 'install', 'distribute==0.7.3'])
         subprocess.call([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'])
         subprocess.call([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'])
 
