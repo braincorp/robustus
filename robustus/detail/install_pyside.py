@@ -30,3 +30,33 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             raise RequirementException('failed to execute pyside postinstall script')
     finally:
         os.chdir(cwd)
+
+    try:
+        # linking PySide
+        if sys.platform.startswith('darwin'):
+            logging.info('Linking qt for MacOSX')
+            if os.path.isfile('/Library/Python/2.7/site-packages/PySide/Qt.so'):
+                ln('/Library/Python/2.7/site-packages/sip.so',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/Library/Python/2.7/site-packages/PySide',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/PySide'), force = True)
+            elif os.path.isfile('/usr/local/lib/python2.7/site-packages/PySide/Qt.so'):
+                ln('/usr/local/lib/python2.7/site-packages/sip.so',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/local/lib/python2.7/site-packages/PySide',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/PySide'), force = True)
+        else:
+            if os.path.isfile('/usr/lib64/python2.7/site-packages/PySide/QtCore.so'):
+                logging.info('Linking qt for centos matplotlib backend')
+                ln('/usr/lib64/python2.7/site-packages/sip.so',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/lib64/python2.7/site-packages/PySide',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/PySide'), force = True)
+            elif os.path.isfile('/usr/lib/python2.7/dist-packages/PySide/QtCore.so'):
+                logging.info('Linking qt for ubuntu matplotlib backend')
+                ln('/usr/lib/python2.7/dist-packages/sip.so',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/lib/python2.7/dist-packages/PySide',
+                    os.path.join(args.env, 'lib/python2.7/site-packages/PySide'), force = True)
+    except:
+        pass
