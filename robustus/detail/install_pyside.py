@@ -12,6 +12,7 @@ import sys
 import logging
 from utility import ln
 
+
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     # If we are not on Travis, we only link to system-wide PySide (for now), and return
     # The reason we do this hack for now is to avoid installing qt sdk on bstem
@@ -24,7 +25,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 logging.info('Linking pyside for MacOSX')
                 print 'On MacBook we are testing a solution. To be added soon...'
                 raise
-           else:
+            else:
                 if os.path.isfile('/usr/lib64/python2.7/site-packages/PySide/QtCore.so'):
                     logging.info('Linking pyside for centos matplotlib backend')
                     ln('/usr/lib64/python2.7/site-packages/sip.so',
