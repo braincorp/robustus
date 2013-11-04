@@ -42,7 +42,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         logging.info('Builduing boost')
         os.chdir(boost_archive_name)
         
-        subprocess.call('./bootstrap.sh', '--help')
+        subprocess.call('bootstrap.sh', '--help')
         #./bootstrap.sh --help
         
     # get boost
