@@ -18,6 +18,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     print 'HELLO I AM INSTALLING BOOST FROM THIS FILE!'
     
     boost_install_dir = os.path.join(robustus.cache, 'boost-python-%s' % requirement_specifier.version)
+    print 'INSTALL DIR'
+    print boost_install_dir
     
     def in_cache():
         return False
