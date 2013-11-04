@@ -15,20 +15,6 @@ scripts and ability to cache binary versions of packages to reuse them in future
 * rsync (to download/upload cache to samba/ftp/http servers)
 * pytest (for testing)
 
-### Installation
-
-* pip install -U git+https://github.com/braincorp/robustus.git
-
-You may get an error like:
-```
-error: could not create '/usr/local/lib/python2.7/dist-packages/robustus': Permission denied
-```
-
-If you get this error, make the directory world-writeable:
-```
-sudo chmod -R a+wrx /usr/local/lib/python2.7/dist-packages/
-```
-
 
 ### Usage
 First you need to create virtual environment.
