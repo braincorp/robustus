@@ -30,14 +30,21 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         #if requirement_specifier.version == '1.9.1':
             #pygame_archive_name = 'pygame-1.9.1release'
             #pygame_tgz = pygame_archive_name + '.tar.gz'
-        boost_tgz = 'boost_1_55_0b1.tar.bz2'
+        boost_archive_name = 'boost_1_55_0b1'
+        boost_tgz = boost_archive_name + '.tar.bz2'
         url = 'http://downloads.sourceforge.net/project/boost/boost/1.55.0.beta.1/' + boost_tgz
         
         subprocess.call(['wget', '-c', url, '-O', boost_tgz])
         
         logging.info('Unpacking boost')
         unpack(boost_tgz)
-    
+        
+        logging.info('Builduing boost')
+        os.chdir(boost_archive_name)
+        
+        subprocess.call('./bootstrap.sh', '--help')
+        #./bootstrap.sh --help
+        
     # get boost
     #Download boost_1_54_0.tar.bz2.
     #In the directory where you want to put the Boost installation, execute
