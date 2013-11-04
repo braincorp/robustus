@@ -21,7 +21,14 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if 'TRAVIS' not in os.environ: 
         # Create links to system-wide PySide
         if sys.platform.startswith('darwin'):
-            raise RequirementException('On MacBook we are testing a solution. To be added soon...')
+            if os.path.isfile('/usr/local/lib/python2.7/site-packages/PySide/QtCore.so'):
+                logging.info('Linking pyside on macos')
+                ln('/usr/local/lib/python2.7/site-packages/sip.so',
+                    os.path.join(robustus.env, 'lib/python2.7/site-packages/sip.so'), force = True)
+                ln('/usr/local/lib/python2.7/site-packages/PySide',
+                    os.path.join(robustus.env, 'lib/python2.7/site-packages/PySide'), force = True)
+            else:
+                raise RequirementException('System-wide PySide is missing, run: brew install pyside')   
         else:
             if os.path.isfile('/usr/lib64/python2.7/site-packages/PySide/QtCore.so'):
                 logging.info('Linking pyside on centos')
