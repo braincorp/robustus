@@ -35,6 +35,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         
         subprocess.call(['wget', '-c', url, '-O', boost_tgz])
         
+        logging.info('Unpacking boost')
+        unpack(boost_tgz)
+    
     # get boost
     #Download boost_1_54_0.tar.bz2.
     #In the directory where you want to put the Boost installation, execute
