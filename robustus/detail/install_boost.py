@@ -27,13 +27,13 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         # http://downloads.sourceforge.net/project/boost/boost/1.55.0.beta.1/boost_1_55_0b1.tar.bz2
         # PYPI index is broken for pygame, download manually
         logging.info('Downloading boost')
-        if requirement_specifier.version == '1.9.1':
+        #if requirement_specifier.version == '1.9.1':
             #pygame_archive_name = 'pygame-1.9.1release'
             #pygame_tgz = pygame_archive_name + '.tar.gz'
-            boost_tgz = 'boost_1_55_0b1.tar.bz2'
-            url = 'http://downloads.sourceforge.net/project/boost/boost/1.55.0.beta.1/' + boost_tgz
+        boost_tgz = 'boost_1_55_0b1.tar.bz2'
+        url = 'http://downloads.sourceforge.net/project/boost/boost/1.55.0.beta.1/' + boost_tgz
         
-        subprocess.call(['wget', '-c', url, '-O', pygame_tgz])
+        subprocess.call(['wget', '-c', url, '-O', boost_tgz])
         
     # get boost
     #Download boost_1_54_0.tar.bz2.
