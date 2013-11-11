@@ -67,5 +67,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             logging.info('Linking OpenCV cv2.so to virtualenv')
             cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
                os.path.join(robustus.env, 'lib/python2.7/site-packages'))
+            if requirement_specifier.version == '2.4.7':
+                raise Exception()
         else:
             raise RequirementException('can\'t find OpenCV-%s in robustus cache' % requirement_specifier.version)
