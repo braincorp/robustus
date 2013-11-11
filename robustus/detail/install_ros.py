@@ -5,6 +5,7 @@
 
 import os
 from requirement import RequirementException
+import shutil
 import subprocess
 
 
@@ -22,20 +23,52 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                    '    rosinstall_generator==0.1.4\n'
                                    '    wstool==0.0.4')
 
-    # rosdep may also be initialized resulting into failure, that's ok
-    subprocess.call(rosdep + ' init', shell=True)
+    def in_cache():
+        devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
+        return os.path.isdir(devel_dir)
 
-    # update ros dependencies
-    retcode = subprocess.call(rosdep + ' update', shell=True)
-    if retcode != 0:
-        raise RequirementException('Failed to update ROS dependencies')
+    try:
+        cwd = os.getcwd()
 
-    # install bare bones ROS
-    v = requirement_specifier.version
-    retcode = subprocess.call([rosinstall_generator + ' ros_comm --rosdistro %s'
-                               ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % (v, v)])
-    if retcode != 0:
-        raise RequirementException('Failed to generate rosinstall file')
-    retcode = subprocess.call([wstool +' init -j8 src %s-ros_comm-wet.rosinstall' % v])
-    if retcode != 0:
-        raise RequirementException('Failed to generate rosinstall file')
+        # create ros cache
+        v = requirement_specifier.version
+        ros_cache = os.path.join(robustus.cache, 'ros-%s' % v)
+        if not os.path.isdir(ros_cache):
+            os.mkdir(ros_cache)
+        os.chdir(ros_cache)
+
+        # build ros if necessary
+        if not in_cache() and not ignore_index:
+            # rosdep may also be initialized resulting into failure, that's ok
+            subprocess.call(rosdep + ' init', shell=True)
+
+            # update ros dependencies
+            retcode = subprocess.call(rosdep + ' update', shell=True)
+            if retcode != 0:
+                raise RequirementException('Failed to update ROS dependencies')
+
+            # install bare bones ROS
+            retcode = subprocess.call(rosinstall_generator + ' ros_comm --rosdistro %s' % v
+                                      + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v, shell=True)
+            if retcode != 0:
+                raise RequirementException('Failed to generate rosinstall file')
+
+            retcode = subprocess.call(wstool + ' init -j8 src %s-ros_comm-wet.rosinstall' % v, shell=True)
+            if retcode != 0:
+                raise RequirementException('Failed to build ROS')
+
+            # resolve dependencies
+            retcode = subprocess.call(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % v, shell=True)
+            if retcode != 0:
+                raise RequirementException('Failed to resolve ROS dependencies')
+
+        # create catkin workspace
+        rosdir = os.path.join(robustus.env, 'ros')
+        catkin_make_isolated = os.path.join(ros_cache, 'src/catkin/bin/catkin_make_isolated')
+        retcode = subprocess.call(catkin_make_isolated + ' --install-space %s --install' % rosdir, shell=True)
+        if retcode != 0:
+            raise RequirementException('Failed to create catkin workspace for ROS')
+    finally:
+        os.chdir(cwd)
+        shutil.rmtree(ros_cache)
+
