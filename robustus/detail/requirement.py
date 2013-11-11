@@ -221,8 +221,13 @@ class RequirementSpecifier(Requirement):
         url = urlparse.urlparse(specifier)
         if len(url.scheme) > 0:
             self.url = url
-            if self.editable:
+            # try to extract name from egg, demand name if requirement is editable
+            try:
                 actual_url, self.name = _split_egg_and_url(self.url.geturl())
+            except RequirementException:
+                if self.editable:
+                    raise
+
             return self.url.geturl(), self.editable
 
         path_specifier = self._extract_path_specifier(specifier)
@@ -294,6 +299,39 @@ class RequirementSpecifier(Requirement):
             return self.name == other.name and (self.version is None or other.version == self.version)
         else:
             return False
+
+    def base_name(self):
+        """
+        @return: string representing base name of the requirement
+        Examples:
+        >>> RequirementSpecifier(specifier='numpy==1.7.2').base_name()
+        'numpy'
+        >>> RequirementSpecifier(specifier='-e numpy==1.7.2').base_name()
+        'numpy'
+        >>> RequirementSpecifier(specifier='numpy').base_name()
+        'numpy'
+        >>> RequirementSpecifier(specifier='theano==0.6rc3').base_name()
+        'theano'
+        >>> RequirementSpecifier(specifier='http://some_url/some_package.tar.gz').base_name()
+        'http://some_url/some_package.tar.gz'
+        >>> RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package').base_name()
+        'my_package'
+        >>> RequirementSpecifier(specifier='git+https://github.com/company/my_package@branch_name#egg=my_package').base_name()
+        'my_package'
+        >>> RequirementSpecifier(specifier='git+https://github.com/company/my_package').base_name()
+        'git+https://github.com/company/my_package'
+        >>> RequirementSpecifier(specifier='/dev').base_name()
+        '/dev'
+        >>> RequirementSpecifier(specifier='-e /dev').base_name()
+        '/dev'
+        """
+        if self.name is not None:
+            return self.name
+        if self.path is not None:
+            return self.path
+        if self.url is not None:
+            return self.url.geturl()
+        raise Exception('Can not compute base name for %s' % self.freeze())
 
 
 def _split_egg_and_url(url):
@@ -396,10 +434,11 @@ def read_requirement_file(requirement_file):
 def remove_duplicate_requirements(requirements_list):
     '''
     Given list of requirements, removes all duplicates of requirements comparing
-    then using freeze() strings.
+    then using base_name() strings. base_name() returns the main name of the package
+    without version or branch, therefore we will keep only the most latest entry with
+    version.
     '''
     result = OrderedDict()
     for r in requirements_list:
-        if r.freeze() not in result:
-            result[r.freeze()] = r
+        result[r.base_name()] = r
     return result.values()
