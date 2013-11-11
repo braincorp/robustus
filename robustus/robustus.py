@@ -30,8 +30,7 @@ class Robustus(object):
     }
     # FIXME: not so great to hardcode braincorp address here, but in other way
     # we need to modify other repositories use_repo.sh which use robustus
-    default_package_locations = ['http://share.braincorporation.net/robustus/source_packages',
-                                 'http://thirdparty-packages.braincorporation.net']
+    default_package_locations = ['http://thirdparty-packages.braincorporation.net']
 
     def __init__(self, args):
         """

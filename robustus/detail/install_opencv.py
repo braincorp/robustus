@@ -65,7 +65,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
             if in_cache() and requirement_specifier.version == '2.4.7':
                 # fix rpath for all dynamic libraries of cv2
-                all_cv_dlibs =  os.path.abspath(os.path.join(cv_install_dir, 'lib'))
+                all_cv_dlibs = os.path.abspath(os.path.join(cv_install_dir, 'lib'))
                 if sys.platform.startswith('darwin'):
                     libs = glob.glob(os.path.join(all_cv_dlibs, '*.dylib'))
                 else:
