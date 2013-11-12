@@ -8,7 +8,7 @@ import logging
 from robustus.detail import perform_standard_test
 
 
-@pytest.mark.parametrize("requirement", ['OpenCV==2.4.4', 'OpenCV==2.4.7'])
+@pytest.mark.parametrize("requirement", ['OpenCV==2.4.7'])
 def test_opencv_installation(tmpdir, requirement):
     logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
