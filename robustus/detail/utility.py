@@ -95,14 +95,16 @@ def unpack(archive, path='.'):
     logging.info('Unpacking ' + archive)
     if tarfile.is_tarfile(archive):
         f = tarfile.open(archive)
-        folder_name = f.getnames()[0]
     elif zipfile.is_zipfile(archive):
         f = zipfile.ZipFile(archive)
-        folder_name = f.namelist()[0]
     else:
         raise RuntimeError('unknown archive type %s' % archive)
     f.extractall(path)
-    return os.path.abspath(os.path.join(path, folder_name))
+
+    root, ext = os.path.splitext(archive)
+    if ext in ['.gz', '.bz2']:
+        root = os.path.splitext(root)[0]
+    return os.path.abspath(root)
 
 
 def safe_remove(path):
