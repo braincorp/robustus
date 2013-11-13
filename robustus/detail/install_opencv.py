@@ -39,6 +39,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 if not os.path.isdir(cv_build_dir):
                     os.mkdir(cv_build_dir)
                 os.chdir(cv_build_dir)
+                # TODO: check that PYTHON_LIBRARY variable is set up correctly
                 subprocess.call(['cmake',
                                  '../',
                                  '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
