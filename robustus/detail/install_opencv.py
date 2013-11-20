@@ -7,9 +7,9 @@ import logging
 import os
 import platform
 import subprocess
-import shutil
+import glob
 import sys
-from utility import cp, unpack, safe_remove
+from utility import cp, unpack, safe_remove, fix_rpath
 from requirement import RequirementException
 
 
@@ -39,6 +39,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 if not os.path.isdir(cv_build_dir):
                     os.mkdir(cv_build_dir)
                 os.chdir(cv_build_dir)
+                # TODO: check that PYTHON_LIBRARY variable is set up correctly
                 subprocess.call(['cmake',
                                  '../',
                                  '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
@@ -63,9 +64,23 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 safe_remove(opencv_archive_name)
                 os.chdir(cwd)
 
+            if in_cache() and requirement_specifier.version == '2.4.7':
+                # fix rpath for all dynamic libraries of cv2
+                all_cv_dlibs = os.path.abspath(os.path.join(cv_install_dir, 'lib'))
+                if sys.platform.startswith('darwin'):
+                    libs = glob.glob(os.path.join(all_cv_dlibs, '*.dylib'))
+                else:
+                    libs = glob.glob(os.path.join(all_cv_dlibs, '*.so'))
+                for lib in libs:
+                    fix_rpath(robustus.env, lib, cv_install_dir)
+
         if in_cache():
-            logging.info('Linking OpenCV cv2.so to virtualenv')
+            logging.info('Copying OpenCV cv2.so to virtualenv')
             cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
                os.path.join(robustus.env, 'lib/python2.7/site-packages'))
+            if requirement_specifier.version == '2.4.7':
+                # fix rpath for cv2
+                cv2lib = os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so')
+                fix_rpath(robustus.env, cv2lib, cv_install_dir)  
         else:
             raise RequirementException('can\'t find OpenCV-%s in robustus cache' % requirement_specifier.version)

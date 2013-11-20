@@ -80,7 +80,7 @@ def test_remove_requirements_duplicates():
     req_list = [RequirementSpecifier(specifier='numpy == 1.7.2  # comment'),
                 RequirementSpecifier(specifier='pytest==2'),
                 RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'),
-                RequirementSpecifier(specifier='pytest==2'),
+                RequirementSpecifier(specifier='pytest==3'),
                 RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'),
                 RequirementSpecifier(specifier='pytest==2'),
                 RequirementSpecifier(specifier='numpy == 1.7.2  # comment'),
@@ -89,16 +89,15 @@ def test_remove_requirements_duplicates():
                 RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package'),
                 RequirementSpecifier(specifier='pytest==2'),
                 RequirementSpecifier(specifier='numpy==1.7.2'),
+                RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@master#egg=my_package'),
                 RequirementSpecifier(specifier='numpy==1.7.3')]
                 
     sparse_list = remove_duplicate_requirements(req_list)
-    assert(len(sparse_list) == 5)
+    assert(len(sparse_list) == 3)
 
-    assert(sparse_list[0].freeze() == 'numpy==1.7.2')
+    assert(sparse_list[0].freeze() == 'numpy==1.7.3')
     assert(sparse_list[1].freeze() == 'pytest==2')
-    assert(sparse_list[2].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
-    assert(sparse_list[3].freeze() == 'git+https://github.com/company/my_package@branch_name#egg=my_package')
-    assert(sparse_list[4].freeze() == 'numpy==1.7.3')
+    assert(sparse_list[2].freeze() == '-e git+https://github.com/company/my_package@master#egg=my_package')
 
 
 def test_requirement_recursion_starting_with_local_non_editable(tmpdir):
