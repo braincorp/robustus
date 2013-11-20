@@ -379,25 +379,26 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None):
     @return: list
     '''
     if visited_sites is None:
-        visited_sites = []
+        visited_sites = {}
 
     if not original_req.editable or \
             (original_req.url is None and original_req.path is None):
         return [original_req]
 
     if original_req.freeze() in visited_sites:
-        return [original_req]
-
-    if original_req.url is not None:
-        if not original_req.url.geturl().startswith('git+'):
-            return [original_req]
-        else:
-            req_file_content = _obtain_requirements_from_remote_package(
-                git_accessor, original_req)
+        req_file_content = visited_sites[original_req.freeze()]
     else:
-        req_file_content = _obtain_requirements_from_local_package(original_req)
+        if original_req.url is not None:
+            if not original_req.url.geturl().startswith('git+'):
+                return [original_req]
+            else:
+                req_file_content = _obtain_requirements_from_remote_package(
+                    git_accessor, original_req)
+        else:
+            req_file_content = _obtain_requirements_from_local_package(original_req)
+    
+        visited_sites[original_req.freeze()] = req_file_content
 
-    visited_sites.append(original_req.freeze())
     if req_file_content is None:
         raise RequirementException('Editable requirement %s does not have a requirements.txt file'
                                    % original_req.freeze())
@@ -418,7 +419,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
     back if pip started to process dependencies from egg_info.
     '''
     if visited_sites is None:
-        visited_sites = []
+        visited_sites = {}
 
     assert(isinstance(specifiers_list, (list, tuple)))
     requirements = []
