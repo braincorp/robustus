@@ -14,15 +14,15 @@ from requirement import RequirementException
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    if requirement_specifier.version == 'system':
+    if os.uname()[4] == 'armv7l':
         candidates = ['/usr/lib/pymodules/python2.7/']
         for c in candidates:
             if os.path.isfile(os.path.join(c, 'cv2.so')):
-                logging.info('Linking opencv from %s' % os.path.join(c, 'cv2.so'))
+                logging.info('Linking opencv from %s on arm architecture' % os.path.join(c, 'cv2.so'))
                 ln(c + 'cv2.so',
                     os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'), force = True)
                 return
-        raise RequirementException('can\'t find system-wide opencv here: %s' % candidates)
+        raise RequirementException('can\'t find system-wide opencv on arm here: %s' % candidates)
 
     if platform.linux_distribution()[0] == 'CentOS':
         # linking opencv for CentOs
