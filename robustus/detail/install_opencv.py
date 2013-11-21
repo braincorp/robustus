@@ -14,6 +14,8 @@ from requirement import RequirementException
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+
+    # temporary hack for bstems, otherwise opencv segfaults 
     if os.uname()[4] == 'armv7l':
         candidates = ['/usr/lib/pymodules/python2.7/']
         for c in candidates:
