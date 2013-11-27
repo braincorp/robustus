@@ -221,8 +221,13 @@ class RequirementSpecifier(Requirement):
         url = urlparse.urlparse(specifier)
         if len(url.scheme) > 0:
             self.url = url
-            if self.editable:
+            # try to extract name from egg, demand name if requirement is editable
+            try:
                 actual_url, self.name = _split_egg_and_url(self.url.geturl())
+            except RequirementException:
+                if self.editable:
+                    raise
+
             return self.url.geturl(), self.editable
 
         path_specifier = self._extract_path_specifier(specifier)
@@ -295,6 +300,39 @@ class RequirementSpecifier(Requirement):
         else:
             return False
 
+    def base_name(self):
+        """
+        @return: string representing base name of the requirement
+        Examples:
+        >>> RequirementSpecifier(specifier='numpy==1.7.2').base_name()
+        'numpy'
+        >>> RequirementSpecifier(specifier='-e numpy==1.7.2').base_name()
+        'numpy'
+        >>> RequirementSpecifier(specifier='numpy').base_name()
+        'numpy'
+        >>> RequirementSpecifier(specifier='theano==0.6rc3').base_name()
+        'theano'
+        >>> RequirementSpecifier(specifier='http://some_url/some_package.tar.gz').base_name()
+        'http://some_url/some_package.tar.gz'
+        >>> RequirementSpecifier(specifier='-e git+https://github.com/company/my_package@branch_name#egg=my_package').base_name()
+        'my_package'
+        >>> RequirementSpecifier(specifier='git+https://github.com/company/my_package@branch_name#egg=my_package').base_name()
+        'my_package'
+        >>> RequirementSpecifier(specifier='git+https://github.com/company/my_package').base_name()
+        'git+https://github.com/company/my_package'
+        >>> RequirementSpecifier(specifier='/dev').base_name()
+        '/dev'
+        >>> RequirementSpecifier(specifier='-e /dev').base_name()
+        '/dev'
+        """
+        if self.name is not None:
+            return self.name
+        if self.path is not None:
+            return self.path
+        if self.url is not None:
+            return self.url.geturl()
+        raise Exception('Can not compute base name for %s' % self.freeze())
+
 
 def _split_egg_and_url(url):
     egg_position = url.find('#egg')
@@ -335,32 +373,40 @@ def _obtain_requirements_from_local_package(original_req):
         return None
 
 
-def do_requirement_recursion(git_accessor, original_req):
+def do_requirement_recursion(git_accessor, original_req, visited_sites = None):
     '''
     Recursive extraction of requirements from -e git+.. pip links.
     @return: list
     '''
+    if visited_sites is None:
+        visited_sites = {}
+
     if not original_req.editable or \
             (original_req.url is None and original_req.path is None):
         return [original_req]
 
-    if original_req.url is not None:
-        if not original_req.url.geturl().startswith('git+'):
-            return [original_req]
-        else:
-            req_file_content = _obtain_requirements_from_remote_package(
-                git_accessor, original_req)
+    if original_req.freeze() in visited_sites:
+        req_file_content = visited_sites[original_req.freeze()]
     else:
-        req_file_content = _obtain_requirements_from_local_package(original_req)
+        if original_req.url is not None:
+            if not original_req.url.geturl().startswith('git+'):
+                return [original_req]
+            else:
+                req_file_content = _obtain_requirements_from_remote_package(
+                    git_accessor, original_req)
+        else:
+            req_file_content = _obtain_requirements_from_local_package(original_req)
+    
+        visited_sites[original_req.freeze()] = req_file_content
 
     if req_file_content is None:
         raise RequirementException('Editable requirement %s does not have a requirements.txt file'
                                    % original_req.freeze())
 
-    return expand_requirements_specifiers(req_file_content, git_accessor) + [original_req]
+    return expand_requirements_specifiers(req_file_content, git_accessor, visited_sites) + [original_req]
 
 
-def expand_requirements_specifiers(specifiers_list, git_accessor = None):
+def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None):
     '''
     Nice dirty hack to have a clean workflow:)
     In order to process hierarchical dependencies, we assume that -e git+ links
@@ -372,6 +418,9 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None):
     However we loosing wheeling capability - robustus will never get control
     back if pip started to process dependencies from egg_info.
     '''
+    if visited_sites is None:
+        visited_sites = {}
+
     assert(isinstance(specifiers_list, (list, tuple)))
     requirements = []
     if git_accessor is None:
@@ -381,7 +430,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None):
             continue
         r = RequirementSpecifier(specifier=line)
         if r.freeze() not in [ritem.freeze() for ritem in requirements]:
-            requirements += do_requirement_recursion(git_accessor, r)
+            requirements += do_requirement_recursion(git_accessor, r, visited_sites)
             requirements = remove_duplicate_requirements(requirements)
 
     return requirements
@@ -396,10 +445,11 @@ def read_requirement_file(requirement_file):
 def remove_duplicate_requirements(requirements_list):
     '''
     Given list of requirements, removes all duplicates of requirements comparing
-    then using freeze() strings.
+    then using base_name() strings. base_name() returns the main name of the package
+    without version or branch, therefore we will keep only the most latest entry with
+    version.
     '''
     result = OrderedDict()
     for r in requirements_list:
-        if r.freeze() not in result:
-            result[r.freeze()] = r
+        result[r.base_name()] = r
     return result.values()
