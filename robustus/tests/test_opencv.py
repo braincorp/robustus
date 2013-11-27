@@ -12,8 +12,6 @@ def test_opencv_installation_244(tmpdir):
     _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.4')
 
 
-@pytest.mark.skipif("'TRAVIS' in os.environ",
-                    reason="https://braincorporation.atlassian.net/browse/ROB-21")
 def test_opencv_installation_247(tmpdir):
     _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.7')
 
