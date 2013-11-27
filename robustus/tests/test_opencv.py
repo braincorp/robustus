@@ -23,7 +23,7 @@ def _do_test_opencv_installation(tmpdir, requirement):
     imports = ['import cv2',
                'from cv2 import imread']
     
-    perform_standard_test(requirement, imports, [], ['numpy==1.7.1'])
+    perform_standard_test(requirement, imports, [], ['patchelf==6fb4cdb', 'numpy==1.7.1'])
 
 
 if __name__ == '__main__':
