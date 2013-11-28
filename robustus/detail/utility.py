@@ -165,6 +165,10 @@ def fix_rpath(env, executable, rpath):
             lib = line.split()[0]
             if not os.path.isabs(lib) and lib != os.path.basename(executable) and not lib.startswith('@rpath'):
                 run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable))
+        try:
+            run_shell('install_name_tool -delete_rpath "%s" "%s"' % (rpath, executable))
+        except:
+            pass
         return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
     else:
         patchelf_executable = os.path.join(env, 'bin/patchelf')

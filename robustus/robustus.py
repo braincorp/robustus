@@ -30,7 +30,7 @@ class Robustus(object):
     }
     # FIXME: not so great to hardcode braincorp address here, but in other way
     # we need to modify other repositories use_repo.sh which use robustus
-    default_package_locations = ['http://share.braincorporation.net/robustus/source_packages']
+    default_package_locations = ['http://thirdparty-packages.braincorporation.net']
 
     def __init__(self, args):
         """
@@ -217,9 +217,9 @@ class Robustus(object):
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
 
-            # here we have to run via shell because requirement can be editable and then it will require
-            # extra parsing to extract -e flag into separate argument.
-            if requirement_specifier.url is not None and requirement_specifier.editable:
+            if not self.settings['update_editables'] and \
+                    requirement_specifier.url is not None and \
+                    requirement_specifier.editable:
                 editable_requirement_path = os.path.join(self.env, 'src', requirement_specifier.name)
                 logging.info('Got url-based requirement. Checking if exists %s ' % (editable_requirement_path,))
                 if os.path.exists(editable_requirement_path):
@@ -229,6 +229,9 @@ class Robustus(object):
                                  (requirement_specifier.freeze(),
                                   os.path.join(self.env, 'src', requirement_specifier.name)))
                     return
+
+            # here we have to run via shell because requirement can be editable and then it will require
+            # extra parsing to extract -e flag into separate argument.
             command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '
                          'Fall back to pip shell command:%s' % (command,))
@@ -272,6 +275,9 @@ class Robustus(object):
         # grab index locations
         if args.find_links is not None:
             self.settings['find_links'] += args.find_links
+
+        # determine whether to do cloning of editable non-versioned requirements
+        self.settings['update_editables'] = args.update_editables
 
         # construct requirements list
         specifiers = args.packages
@@ -483,6 +489,10 @@ def execute(argv):
     install_parser.add_argument('-f', '--find-links',
                                 action='append',
                                 help='location where to find robustus packages, also is passed to pip')
+    install_parser.add_argument('--update-editables',
+                                action='store_true',
+                                help='clone all editable non-versioned requirements inside venv '
+                                     '(by default robustus skips editable requiterements)')
     install_parser.set_defaults(func=Robustus.install)
 
     freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
