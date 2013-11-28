@@ -128,7 +128,7 @@ def run_shell(command):
     return output
 
 
-def execute_python_expr(env, expr):
+def execute_python_expr(env, expr, shell_script=None):
     """
     Execute expression using env python interpreter.
     :param env: path to python environment
@@ -140,7 +140,10 @@ def execute_python_expr(env, expr):
         python_executable = os.path.join(env, 'bin/python27')
     if not os.path.isfile(python_executable):
         raise RuntimeError('can\'t find python executable in %s' % env)
-    return subprocess.call([python_executable, '-c', expr])
+    cmd = python_executable + ' -c "' + expr + '"'
+    if shell_script is not None:
+        cmd = shell_script + ' && ' + cmd
+    return subprocess.call(cmd, shell=True)
 
 
 def check_module_available(env, module):
@@ -183,10 +186,23 @@ def fix_rpath(env, executable, rpath):
         return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable))
 
 
+def check_module(test_env, python_imports, package_files, postinstall_script):
+    for imp in python_imports:
+        assert execute_python_expr(test_env, imp, postinstall_script) == 0
+    for file in package_files:
+        assert os.path.isfile(os.path.join(test_env, file))
+
+
+def install_dependencies(test_env, dependencies):
+    for dep in dependencies:
+        robustus.execute(['--env', test_env, 'install', dep])
+
+
 def perform_standard_test(package,
                           python_imports=[],
                           package_files=[],
                           dependencies=[],
+                          postinstall_script=None,
                           test_env='test_env',
                           test_cache='test_wheelhouse'):
     """
@@ -198,26 +214,16 @@ def perform_standard_test(package,
     test_env = os.path.abspath(test_env)
     test_cache = os.path.abspath(test_cache)
 
-    def check_module():
-        for imp in python_imports:
-            assert execute_python_expr(test_env, imp) == 0
-        for file in package_files:
-            assert os.path.isfile(os.path.join(test_env, file))
-
-    def install_dependencies():
-        for dep in dependencies:
-            robustus.execute(['--env', test_env, 'install', dep])
-
     robustus.execute(['--cache', test_cache, 'env', test_env])
-    install_dependencies()
+    install_dependencies(test_env, dependencies)
     robustus.execute(['--env', test_env, 'install', package])
-    check_module()
+    check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
 
     # install again, but using only cache
     robustus.execute(['--cache', test_cache, 'env', test_env])
-    install_dependencies()
+    install_dependencies(test_env, dependencies)
     robustus.execute(['--env', test_env, 'install', package, '--no-index'])
-    check_module()
+    check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
     shutil.rmtree(test_cache)

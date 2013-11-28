@@ -48,7 +48,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to update ROS dependencies')
 
             # install bare bones ROS
-            retcode = subprocess.call(rosinstall_generator + ' ros_comm --rosdistro %s' % v
+            retcode = subprocess.call(rosinstall_generator + ' desktop --rosdistro %s' % v
                                       + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v, shell=True)
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
