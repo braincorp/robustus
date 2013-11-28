@@ -12,8 +12,6 @@ def test_opencv_installation_244(tmpdir):
     _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.4')
 
 
-@pytest.mark.skipif("'TRAVIS' in os.environ",
-                    reason="https://braincorporation.atlassian.net/browse/ROB-21")
 def test_opencv_installation_247(tmpdir):
     _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.7')
 
@@ -25,7 +23,7 @@ def _do_test_opencv_installation(tmpdir, requirement):
     imports = ['import cv2',
                'from cv2 import imread']
     
-    perform_standard_test(requirement, imports, [], ['numpy==1.7.1'])
+    perform_standard_test(requirement, imports, [], ['patchelf==6fb4cdb', 'numpy==1.7.1'])
 
 
 if __name__ == '__main__':
