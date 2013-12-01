@@ -68,7 +68,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         retcode = subprocess.call(catkin_make_isolated + ' --install-space %s --install' % rosdir, shell=True)
         if retcode != 0:
             raise RequirementException('Failed to create catkin workspace for ROS')
-    finally:
+        os.chdir(cwd)
+    except RequirementException:
         os.chdir(cwd)
         shutil.rmtree(ros_cache)
 
