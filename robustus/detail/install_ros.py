@@ -10,6 +10,7 @@ import subprocess
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+    rosdep = os.path.join(robustus.env, 'bin/rosdep')
     rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
     wstool = os.path.join(robustus.env, 'bin/wstool')
     if not os.path.isfile(rosinstall_generator)\
