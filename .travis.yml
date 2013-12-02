@@ -2,8 +2,9 @@ language: python
 python:
   - "2.7"
 install:
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
   - sudo apt-get update
-  - sudo apt-get install libsdl-dev python-rosdep
+  - sudo apt-get install -y libsdl-dev python-rosdep
   - sudo rosdep init
   - source use_repo.sh
 script:
