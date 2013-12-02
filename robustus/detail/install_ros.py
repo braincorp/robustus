@@ -3,10 +3,12 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
+import logging
 import os
 from requirement import RequirementException
 import shutil
 import subprocess
+import sys
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -26,6 +28,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
         return os.path.isdir(devel_dir)
 
+    # ROS installation bloats command log and TRAVIS terminates build
+    def exec_silent(cmd):
+        out = open(os.devnull, 'wb') if 'TRAVIS' in os.environ else sys.stdout
+        logging.info('executing: ' + cmd)
+        return subprocess.call(cmd, shell=True, stdout=out)
+
     try:
         cwd = os.getcwd()
 
@@ -38,33 +46,38 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
-            # rosdep initialization requires sudo, so should be installed and iniailized separately
-            # subprocess.call(rosdep + ' init', shell=True)
+            # rosdep initialization requires sudo, please install and initialize manually:
+            # http://wiki.ros.org/hydro/Installation/Source
+            # sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" >
+            #   /etc/apt/sources.list.d/ros-latest.list'
+            # wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+            # sudo apt-get install python-rosdep
+            # sudo rosdep init
 
             # update ros dependencies
-            retcode = subprocess.call(rosdep + ' update', shell=True)
+            retcode = exec_silent(rosdep + ' update')
             if retcode != 0:
                 raise RequirementException('Failed to update ROS dependencies')
 
             # install bare bones ROS
-            retcode = subprocess.call(rosinstall_generator + ' desktop --rosdistro %s' % v
-                                      + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v, shell=True)
+            retcode = exec_silent(rosinstall_generator + ' desktop --rosdistro %s' % v
+                                  + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v)
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
 
-            retcode = subprocess.call(wstool + ' init -j8 src %s-ros_comm-wet.rosinstall' % v, shell=True)
+            retcode = exec_silent(wstool + ' init -j8 src %s-ros_comm-wet.rosinstall' % v)
             if retcode != 0:
                 raise RequirementException('Failed to build ROS')
 
             # resolve dependencies
-            retcode = subprocess.call(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % v, shell=True)
+            retcode = exec_silent(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % v)
             if retcode != 0:
                 raise RequirementException('Failed to resolve ROS dependencies')
 
         # create catkin workspace
         rosdir = os.path.join(robustus.env, 'ros')
         catkin_make_isolated = os.path.join(ros_cache, 'src/catkin/bin/catkin_make_isolated')
-        retcode = subprocess.call(catkin_make_isolated + ' --install-space %s --install' % rosdir, shell=True)
+        retcode = exec_silent(catkin_make_isolated + ' --install-space %s --install' % rosdir)
         if retcode != 0:
             raise RequirementException('Failed to create catkin workspace for ROS')
         os.chdir(cwd)
