@@ -10,16 +10,14 @@ import subprocess
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    rosdep = os.path.join(robustus.env, 'bin/rosdep')
     rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
     wstool = os.path.join(robustus.env, 'bin/wstool')
     if not os.path.isfile(rosinstall_generator)\
-        or not os.path.isfile(rosdep)\
-        or not os.path.isfile(wstool):
+       or not os.path.isfile(rosdep)\
+       or not os.path.isfile(wstool):
         raise RequirementException('To install ros you need rosinstall_generator, rosdep, etc.\n'
                                    'Here is the full list of dependencies ROS requires:\n'
                                    '    rosinstall==0.6.30\n'
-                                   '    rosdep==0.10.23\n'
                                    '    rosinstall_generator==0.1.4\n'
                                    '    wstool==0.0.4')
 
@@ -39,8 +37,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
-            # rosdep may also be initialized resulting into failure, that's ok
-            subprocess.call(rosdep + ' init', shell=True)
+            # rosdep initialization requires sudo, so should be installed and iniailized separately
+            # subprocess.call(rosdep + ' init', shell=True)
 
             # update ros dependencies
             retcode = subprocess.call(rosdep + ' update', shell=True)
@@ -72,4 +70,3 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     except RequirementException:
         os.chdir(cwd)
         shutil.rmtree(ros_cache)
-
