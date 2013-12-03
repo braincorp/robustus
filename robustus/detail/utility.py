@@ -69,7 +69,8 @@ def download(url, filename=None):
 
     with open(filename, 'wb') as f:
         file_size_dl = 0
-        block_sz = 32768
+        prev_percent = 0
+        block_sz = 131072
         while True:
             buffer = u.read(block_sz)
             if not buffer:
@@ -77,8 +78,11 @@ def download(url, filename=None):
 
             file_size_dl += len(buffer)
             f.write(buffer)
-            status = "%10d  [%3.2f%%]\r" % (file_size_dl, file_size_dl * 100. / file_size)
-            logging.info(status,)
+            percent_downloaded = file_size_dl * 100. / file_size
+            if percent_downloaded > prev_percent + 1:
+                status = "%10d  [%3.2f%%]\r" % (file_size_dl, percent_downloaded)
+                logging.info(status,)
+                prev_percent = percent_downloaded
         f.close()
 
     return filename
