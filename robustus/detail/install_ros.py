@@ -32,7 +32,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     def exec_silent(cmd):
         out = open(os.devnull, 'wb') if 'TRAVIS' in os.environ else sys.stdout
         logging.info('executing: ' + cmd)
-        return subprocess.call(cmd, shell=True, stdout=out)
+        return subprocess.call(cmd, shell=True, stdout=out, stderr=out)
 
     try:
         cwd = os.getcwd()
