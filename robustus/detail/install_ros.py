@@ -60,7 +60,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to update ROS dependencies')
 
             # install bare bones ROS
-            retcode = exec_silent(rosinstall_generator + ' desktop --rosdistro %s' % v
+            # FIXME: desktop version takes too long to build on TRAVIS
+            dist = 'ros_comm' if 'TRAVIS' in os.environ else 'desktop'
+            retcode = exec_silent(rosinstall_generator + ' %s --rosdistro %s' % (dist, v)
                                   + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v)
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
