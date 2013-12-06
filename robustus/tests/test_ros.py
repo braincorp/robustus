@@ -16,7 +16,6 @@ def test_ros_installation(tmpdir):
     tmpdir.chdir()
 
     imports = ['import rospy',
-               'from geometry_msgs.msg import Twist',
                'import cv2',
                'from cv2 import imread',
                'import boto']
