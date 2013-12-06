@@ -24,6 +24,7 @@ def test_ros_installation(tmpdir):
                     'rosinstall_generator==0.1.4',
                     'wstool==0.0.4',
                     'patchelf==6fb4cdb',
+                    'catkin_pkg',
                     'numpy==1.7.1',
                     'OpenCV==2.4.7',  # OpenCV and boto are just to ensure that non-ROS requirements are also in venv
                     'boto==2.19.0']

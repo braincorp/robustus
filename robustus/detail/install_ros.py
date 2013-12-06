@@ -22,7 +22,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                    'Here is the full list of dependencies ROS requires:\n'
                                    '    rosinstall==0.6.30\n'
                                    '    rosinstall_generator==0.1.4\n'
-                                   '    wstool==0.0.4')
+                                   '    wstool==0.0.4\n'
+                                   '    catkin_pkg')
 
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
