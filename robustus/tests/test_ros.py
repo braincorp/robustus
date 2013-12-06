@@ -16,8 +16,6 @@ def test_ros_installation(tmpdir):
     tmpdir.chdir()
 
     imports = ['import rospy',
-               'import cv2',
-               'from cv2 import imread',
                'import boto']
     dependencies = ['rosinstall==0.6.30',
                     'rosdep==0.10.23',
@@ -26,8 +24,7 @@ def test_ros_installation(tmpdir):
                     'patchelf==6fb4cdb',
                     'catkin_pkg',
                     'numpy==1.7.1',
-                    'OpenCV==2.4.7',  # OpenCV and boto are just to ensure that non-ROS requirements are also in venv
-                    'boto==2.19.0']
+                    'boto==2.19.0']  # boto is just to ensure that non-ROS requirements are also in venv
     
     perform_standard_test('ros==hydro',
                           imports,
