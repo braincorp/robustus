@@ -6,6 +6,7 @@
 import logging
 import os
 
+
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     # First install it through the wheeling
     robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
