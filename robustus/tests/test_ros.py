@@ -9,7 +9,7 @@ import logging
 from robustus.detail import perform_standard_test
 
 
-@pytest.mark.skipif('TRAVIS' in os.environ)
+@pytest.mark.skipif("'TRAVIS' in os.environ")
 def test_ros_installation(tmpdir):
     """
     Install OpenCV and ROS. Check that OpenCV available after ROS activation.
