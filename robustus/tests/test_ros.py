@@ -3,11 +3,13 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
+import os
 import pytest
 import logging
 from robustus.detail import perform_standard_test
 
 
+@pytest.mark.skipif('TRAVIS' in os.environ)
 def test_ros_installation(tmpdir):
     """
     Install OpenCV and ROS. Check that OpenCV available after ROS activation.
@@ -30,7 +32,7 @@ def test_ros_installation(tmpdir):
                           imports,
                           [],
                           dependencies,
-                          postinstall_script='source test_env/bin/activate && source test_env/ros/setup.bash')
+                          postinstall_script='source test_env/bin/activate && source test_env/ros/setup.sh')
 
 
 if __name__ == '__main__':

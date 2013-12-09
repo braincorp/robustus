@@ -30,11 +30,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         return os.path.isdir(devel_dir)
 
     # ROS installation bloats command log and TRAVIS terminates build
+    # FIXME: regular execution for now, change stdout to open('/dev/null') to get rid of log
     def exec_silent(cmd):
-        #out = open(os.devnull, 'wb') if 'TRAVIS' in os.environ else sys.stdout
-        out = sys.stdout
         logging.info('executing: ' + cmd)
-        return subprocess.call(cmd, shell=True, stdout=out, stderr=out)
+        return subprocess.call(cmd, shell=True, stdout=sys.stdout, stderr=sys.stdout)
 
     try:
         cwd = os.getcwd()
@@ -63,7 +62,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
             # install bare bones ROS
             # FIXME: desktop version takes too long to build on TRAVIS
-            dist = 'ros_comm' if 'TRAVIS' in os.environ else 'desktop'
+            # 'ros_comm' if 'TRAVIS' in os.environ else 'desktop'
+            dist = 'desktop'
             retcode = exec_silent(rosinstall_generator + ' %s --rosdistro %s' % (dist, v)
                                   + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v)
             if retcode != 0:
