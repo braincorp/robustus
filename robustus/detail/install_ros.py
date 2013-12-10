@@ -12,17 +12,15 @@ import sys
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    rosdep = 'rosdep'
-    rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
-    wstool = os.path.join(robustus.env, 'bin/wstool')
-    if not os.path.isfile(rosinstall_generator)\
-       or not os.path.isfile(wstool):
-        raise RequirementException('To install ros you need rosinstall_generator, rosdep, etc.\n'
-                                   'Here is the full list of dependencies ROS requires:\n'
-                                   '    rosinstall==0.6.30\n'
-                                   '    rosinstall_generator==0.1.4\n'
-                                   '    wstool==0.0.4\n'
-                                   '    catkin_pkg')
+    # check distro
+    if requirement_specifier.version != 'hydro':
+        logging.warn('Robustus is only tested to install ROS hydro.\n'
+                     'Still, it will try to install required distribution "%s"' % requirement_specifier.version)
+
+    # install dependencies
+    retcode = robustus.execute('install rosinstall==0.6.30 rosinstall_generator==0.1.4 wstool==0.0.4 catkin_pkg')
+    if retcode != 0:
+        raise RequirementException('Failed to install ROS dependencies')
 
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
@@ -46,13 +44,21 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
-            # rosdep initialization requires sudo, please install and initialize manually:
-            # http://wiki.ros.org/hydro/Installation/Source
-            # sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" >
-            #   /etc/apt/sources.list.d/ros-latest.list'
-            # wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-            # sudo apt-get install python-rosdep
-            # sudo rosdep init
+            # add ros sources to packages list
+            if 'packages.ros.org' not in open('/etc/apt/sources.list.d/ros-latest.list'):
+                exec_silent('sudo sh -c echo "deb http://packages.ros.org/ros/ubuntu precise main" > ' \
+                            '/etc/apt/sources.list.d/ros-latest.list')
+                exec_silent('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
+
+            # install rosdep
+            rosdep = shutil.which('rosdep')
+            if rosdep is None:
+                exec_silent('sudo apt-get install python-rosdep')
+                retcode = exec_silent('sudo rosdep init')
+                if retcode != 0:
+                    raise RequirementException('Failed to install rosdep')
+                rosdep = shutil.which('rosdep')
+            rosdep = 'sudo ' + rosdep
 
             # update ros dependencies
             retcode = exec_silent(rosdep + ' update')
@@ -62,12 +68,14 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             # install bare bones ROS
             # FIXME: desktop version takes too long to build on TRAVIS
             # 'ros_comm' if 'TRAVIS' in os.environ else 'desktop'
+            rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             dist = 'desktop'
             retcode = exec_silent(rosinstall_generator + ' %s --rosdistro %s' % (dist, v)
                                   + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v)
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
 
+            wstool = os.path.join(robustus.env, 'bin/wstool')
             retcode = exec_silent(wstool + ' init -j8 src %s-ros_comm-wet.rosinstall' % v)
             if retcode != 0:
                 raise RequirementException('Failed to build ROS')
