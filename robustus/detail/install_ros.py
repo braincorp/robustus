@@ -9,6 +9,7 @@ from requirement import RequirementException
 import shutil
 import subprocess
 import sys
+from utility import which
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -17,20 +18,22 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         logging.warn('Robustus is only tested to install ROS hydro.\n'
                      'Still, it will try to install required distribution "%s"' % requirement_specifier.version)
 
-    # install dependencies
-    retcode = robustus.execute('install rosinstall==0.6.30 rosinstall_generator==0.1.4 wstool==0.0.4 catkin_pkg')
-    if retcode != 0:
-        raise RequirementException('Failed to install ROS dependencies')
+    # install dependencies, may throw
+    robustus.execute(['install',
+                      'rosinstall==0.6.30',
+                      'rosinstall_generator==0.1.4',
+                      'wstool==0.0.4',
+                      'catkin_pkg'])
 
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
         return os.path.isdir(devel_dir)
 
     # ROS installation bloats command log and TRAVIS terminates build
-    # FIXME: regular execution for now, change stdout to open('/dev/null') to get rid of log
+    # FIXME: regular execution for now, change to avoid log bloating
     def exec_silent(cmd):
-        logging.info('executing: ' + cmd)
-        return subprocess.call(cmd, shell=True, stdout=sys.stdout, stderr=sys.stdout)
+        # logging.info('executing: ' + cmd)
+        return subprocess.call(cmd, shell=True)
 
     try:
         cwd = os.getcwd()
@@ -45,30 +48,28 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         # build ros if necessary
         if not in_cache() and not ignore_index:
             # install rosdep
-            rosdep = shutil.which('rosdep')
+            rosdep = which('rosdep')
             if rosdep is None:
                 if sys.platform.startswith('linux'):
                     # use system package manager
                     if not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
-                        exec_silent('sudo sh -c echo "deb http://packages.ros.org/ros/ubuntu precise main" > ' \
-                                    '/etc/apt/sources.list.d/ros-latest.list')
-                        exec_silent('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
-                        exec_silent('sudo apt-get install python-rosdep')
+                        os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu precise main"' \
+                                               ' > /etc/apt/sources.list.d/ros-latest.list\'')
+                        os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
+                        os.system('sudo apt-get update')
+                        os.system('sudo apt-get install python-rosdep')
                 else:
                     # on mac use pip
-                    exec_silent('sudo pip install python-rosdep')
-            rosdep = shutil.which('rosdep')
+                    os.system('sudo pip install python-rosdep')
+            rosdep = which('rosdep')
             if rosdep is None:
                 raise RequirementException('Failed to install/find rosdep')
-            rosdep = 'sudo ' + rosdep
 
-            # init rosdep
-            retcode = exec_silent(rosdep + ' init')
-            if retcode != 0:
-                raise RequirementException('Failed to initialize rosdep')
+            # init rosdep, rosdep can already be initialized resulting in error, that's ok
+            retcode = os.system('sudo ' + rosdep + ' init')
 
             # update ros dependencies
-            retcode = exec_silent(rosdep + ' update')
+            retcode = os.system(rosdep + ' update')
             if retcode != 0:
                 raise RequirementException('Failed to update ROS dependencies')
 
@@ -86,7 +87,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to build ROS')
 
             # resolve dependencies
-            retcode = exec_silent(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % v)
+            retcode = os.system(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % v)
             if retcode != 0:
                 raise RequirementException('Failed to resolve ROS dependencies')
 
