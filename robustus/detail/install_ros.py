@@ -12,11 +12,10 @@ import sys
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    rosdep = os.path.join(robustus.env, 'bin/rosdep')
+    rosdep = 'rosdep'
     rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
     wstool = os.path.join(robustus.env, 'bin/wstool')
     if not os.path.isfile(rosinstall_generator)\
-       or not os.path.isfile(rosdep)\
        or not os.path.isfile(wstool):
         raise RequirementException('To install ros you need rosinstall_generator, rosdep, etc.\n'
                                    'Here is the full list of dependencies ROS requires:\n'
