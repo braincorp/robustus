@@ -44,30 +44,35 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
-            # add ros sources to packages list
-            if 'packages.ros.org' not in open('/etc/apt/sources.list.d/ros-latest.list'):
-                exec_silent('sudo sh -c echo "deb http://packages.ros.org/ros/ubuntu precise main" > ' \
-                            '/etc/apt/sources.list.d/ros-latest.list')
-                exec_silent('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
-
             # install rosdep
             rosdep = shutil.which('rosdep')
             if rosdep is None:
-                exec_silent('sudo apt-get install python-rosdep')
-                retcode = exec_silent('sudo rosdep init')
-                if retcode != 0:
-                    raise RequirementException('Failed to install rosdep')
-                rosdep = shutil.which('rosdep')
+                if sys.platform.startswith('linux'):
+                    # use system package manager
+                    if not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
+                        exec_silent('sudo sh -c echo "deb http://packages.ros.org/ros/ubuntu precise main" > ' \
+                                    '/etc/apt/sources.list.d/ros-latest.list')
+                        exec_silent('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
+                        exec_silent('sudo apt-get install python-rosdep')
+                else:
+                    # on mac use pip
+                    exec_silent('sudo pip install python-rosdep')
+            rosdep = shutil.which('rosdep')
+            if rosdep is None:
+                raise RequirementException('Failed to install/find rosdep')
             rosdep = 'sudo ' + rosdep
+
+            # init rosdep
+            retcode = exec_silent(rosdep + ' init')
+            if retcode != 0:
+                raise RequirementException('Failed to initialize rosdep')
 
             # update ros dependencies
             retcode = exec_silent(rosdep + ' update')
             if retcode != 0:
                 raise RequirementException('Failed to update ROS dependencies')
 
-            # install bare bones ROS
-            # FIXME: desktop version takes too long to build on TRAVIS
-            # 'ros_comm' if 'TRAVIS' in os.environ else 'desktop'
+            # install desktop version of ROS
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             dist = 'desktop'
             retcode = exec_silent(rosinstall_generator + ' %s --rosdistro %s' % (dist, v)
