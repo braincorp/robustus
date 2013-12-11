@@ -15,6 +15,8 @@ from detail.requirement import remove_duplicate_requirements, expand_requirement
 import urllib2
 # for doctests
 import detail
+import threading
+import time
 
 
 class RobustusException(Exception):
@@ -160,6 +162,24 @@ class Robustus(object):
         os.chdir(cwd)
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
+    def _print_dot_thread(self):
+        while not self._exit_dot_thread:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            time.sleep(0.5)
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+
+    def _run_cmd_quiet(self, cmd):
+        logging.info('Running %s' % cmd)
+        self._exit_dot_thread = False
+        dot_thread = threading.Thread(target=self._print_dot_thread)
+        dot_thread.start()
+        ret = subprocess.call(cmd)
+        self._exit_dot_thread = True
+        dot_thread.join()
+        return ret
+
     def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
         Check if package cache already contains package of specified version, if so install it.
@@ -172,29 +192,31 @@ class Robustus(object):
         # if wheelhouse doesn't contain necessary requirement - make a wheel
         if self.find_satisfactory_requirement(requirement_specifier) is None:
             logging.info('Wheel not found, downloading package')
-            subprocess.call([self.pip_executable,
-                             'install',
-                             '--download',
-                             self.cache,
-                             requirement_specifier.freeze()])
+            self._run_cmd_quiet([self.pip_executable,
+                                 'install',
+                                 '-q',
+                                 '--download',
+                                 self.cache,
+                                 requirement_specifier.freeze()])
             logging.info('Building wheel')
-            subprocess.call([self.pip_executable,
-                             'wheel',
-                             '-v',  # need verbose output, so travis won't terminate long builds with no output
-                             '--no-index',
-                             '--find-links=%s' % self.cache,
-                             '--wheel-dir=%s' % self.cache,
-                             requirement_specifier.freeze()])
+            self._run_cmd_quiet([self.pip_executable,
+                                 'wheel',
+                                 '-q',
+                                 '--no-index',
+                                 '--find-links=%s' % self.cache,
+                                 '--wheel-dir=%s' % self.cache,
+                                 requirement_specifier.freeze()])
             logging.info('Done')
 
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
-        return_code = subprocess.call([self.pip_executable,
-                                       'install',
-                                       '--no-index',
-                                       '--use-wheel',
-                                       '--find-links=%s' % self.cache,
-                                       requirement_specifier.freeze()])
+        return_code = self._run_cmd_quiet([self.pip_executable,
+                                           'install',
+                                           '-q',
+                                           '--no-index',
+                                           '--use-wheel',
+                                           '--find-links=%s' % self.cache,
+                                           requirement_specifier.freeze()])
         if return_code > 0:
             logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
                          (requirement_specifier.freeze(), self.cache, return_code))
