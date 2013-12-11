@@ -57,7 +57,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                                ' > /etc/apt/sources.list.d/ros-latest.list\'')
                         os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
                         os.system('sudo apt-get update')
-                        os.system('sudo apt-get install python-rosdep')
+
+                    rosdep = which('rosdep')
+                    if rosdep is None:
+                        os.system('sudo apt-get install python-rosdep -y')
                 else:
                     # on mac use pip
                     os.system('sudo pip install python-rosdep')
@@ -77,12 +80,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             dist = 'desktop'
             retcode = exec_silent(rosinstall_generator + ' %s --rosdistro %s' % (dist, v)
-                                  + ' --deps --wet-only > %s-ros_comm-wet.rosinstall' % v)
+                                  + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, v))
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
 
             wstool = os.path.join(robustus.env, 'bin/wstool')
-            retcode = exec_silent(wstool + ' init -j8 src %s-ros_comm-wet.rosinstall' % v)
+            retcode = exec_silent(wstool + ' init -j8 src %s-%s-wet.rosinstall' % (dist, v))
             if retcode != 0:
                 raise RequirementException('Failed to build ROS')
 
@@ -101,3 +104,4 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     except RequirementException:
         os.chdir(cwd)
         shutil.rmtree(ros_cache)
+        raise
