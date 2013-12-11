@@ -18,6 +18,7 @@ import detail
 import threading
 import time
 
+
 class RobustusException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
@@ -192,30 +193,30 @@ class Robustus(object):
         if self.find_satisfactory_requirement(requirement_specifier) is None:
             logging.info('Wheel not found, downloading package')
             self._run_cmd_quiet([self.pip_executable,
-                             'install',
-                             '-q',
-                             '--download',
-                             self.cache,
-                             requirement_specifier.freeze()])
+                                 'install',
+                                 '-q',
+                                 '--download',
+                                 self.cache,
+                                 requirement_specifier.freeze()])
             logging.info('Building wheel')
             self._run_cmd_quiet([self.pip_executable,
-                             'wheel',
-                             '-q',  # need verbose output, so travis won't terminate long builds with no output
-                             '--no-index',
-                             '--find-links=%s' % self.cache,
-                             '--wheel-dir=%s' % self.cache,
-                             requirement_specifier.freeze()])
+                                 'wheel',
+                                 '-q',
+                                 '--no-index',
+                                 '--find-links=%s' % self.cache,
+                                 '--wheel-dir=%s' % self.cache,
+                                 requirement_specifier.freeze()])
             logging.info('Done')
 
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
         return_code = self._run_cmd_quiet([self.pip_executable,
-                                       'install',
-                                       '-q',
-                                       '--no-index',
-                                       '--use-wheel',
-                                       '--find-links=%s' % self.cache,
-                                       requirement_specifier.freeze()])
+                                           'install',
+                                           '-q',
+                                           '--no-index',
+                                           '--use-wheel',
+                                           '--find-links=%s' % self.cache,
+                                           requirement_specifier.freeze()])
         if return_code > 0:
             logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
                          (requirement_specifier.freeze(), self.cache, return_code))
