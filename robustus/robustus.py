@@ -176,7 +176,6 @@ class Robustus(object):
             logging.info('Wheel not found, downloading package')
             return_code = run_shell([self.pip_executable,
                                      'install',
-                                     '-q',
                                      '--download',
                                      self.cache,
                                      requirement_specifier.freeze()],
@@ -189,11 +188,11 @@ class Robustus(object):
             logging.info('Building wheel')
             wheel_cmd = [self.pip_executable,
                          'wheel',
-                         '-q',
                          '--no-index',
                          '--find-links=%s' % self.cache,
                          '--wheel-dir=%s' % self.cache,
                          requirement_specifier.freeze()]
+            # we probably sometimes will want to see build log
             for i in xrange(self.settings['verbosity']):
                 wheel_cmd.append('-v')
             return_code = run_shell(wheel_cmd,
@@ -208,7 +207,6 @@ class Robustus(object):
         logging.info('Installing package from wheel')
         return_code = run_shell([self.pip_executable,
                                  'install',
-                                 '-q',
                                  '--no-index',
                                  '--use-wheel',
                                  '--find-links=%s' % self.cache,
