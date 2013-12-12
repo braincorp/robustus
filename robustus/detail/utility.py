@@ -6,11 +6,11 @@
 import glob
 import os
 from requirement import RequirementException
-import robustus
 import shutil
 import subprocess
 import sys
 import tarfile
+import time
 import zipfile
 import logging
 import urllib2
@@ -119,13 +119,29 @@ def safe_remove(path):
         shutil.rmtree(path)
 
 
-def run_shell(command):
+def run_shell(command, shell=True, verbose=False):
+    """
+    Run command logging accordingly to the verbosity level.
+    """
     logging.info('Running shell command: %s' % command)
-    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    output = p.communicate()[0]
-    if p.returncode != 0:
-        raise Exception('Error running %s, code=%s' % (command, p.returncode))
-    return output
+    p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    # Poll process for new output until finished
+    if verbose:
+        while p.poll() is None:
+            print p.stdout.readline(),
+    else:
+        # print dots to wake TRAVIS
+        num_dots = 0
+        max_num_dots = 3
+        while p.poll() is None:
+            sys.stdout.write('Working' + '.' * num_dots + ' ' * (max_num_dots - num_dots) + '\r')
+            sys.stdout.flush()
+            time.sleep(1)
+            num_dots = (num_dots + 1) % (max_num_dots + 1)
+        sys.stdout.write('\n')
+
+    return p.returncode
 
 
 def execute_python_expr(env, expr):
@@ -181,43 +197,3 @@ def fix_rpath(env, executable, rpath):
         else:
             new_rpath = rpath
         return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable))
-
-
-def perform_standard_test(package,
-                          python_imports=[],
-                          package_files=[],
-                          dependencies=[],
-                          test_env='test_env',
-                          test_cache='test_wheelhouse'):
-    """
-    create env, install package, check package is available,
-    remove env, install package without index, check package is available
-    :return: None
-    """
-    # create env and install bullet into it
-    test_env = os.path.abspath(test_env)
-    test_cache = os.path.abspath(test_cache)
-
-    def check_module():
-        for imp in python_imports:
-            assert execute_python_expr(test_env, imp) == 0
-        for file in package_files:
-            assert os.path.isfile(os.path.join(test_env, file))
-
-    def install_dependencies():
-        for dep in dependencies:
-            robustus.execute(['--env', test_env, 'install', dep])
-
-    robustus.execute(['--cache', test_cache, 'env', test_env])
-    install_dependencies()
-    robustus.execute(['--env', test_env, 'install', package])
-    check_module()
-    shutil.rmtree(test_env)
-
-    # install again, but using only cache
-    robustus.execute(['--cache', test_cache, 'env', test_env])
-    install_dependencies()
-    robustus.execute(['--env', test_env, 'install', package, '--no-index'])
-    check_module()
-    shutil.rmtree(test_env)
-    shutil.rmtree(test_cache)
