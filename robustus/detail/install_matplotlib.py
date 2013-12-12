@@ -10,7 +10,8 @@ import os
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     # First install it through the wheeling
     robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
-    rcfile = os.path.join(robustus.env, 'lib/python2.7/site-packages/matplotlib/mpl-data/matplotlibrc')
+    import matplotlib
+    rcfile = matplotlib.matplotlib_fname()
     # Writing the settings to the file --- we may add more is needed
     logging.info('Writing the configuration file %s' % rcfile)
     with open(rcfile, 'w') as f:
