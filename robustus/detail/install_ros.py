@@ -53,8 +53,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 if sys.platform.startswith('linux'):
                     # use system package manager
                     if not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
-                        os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu precise main"' \
-                                               ' > /etc/apt/sources.list.d/ros-latest.list\'')
+                        os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu precise main"'
+                                  ' > /etc/apt/sources.list.d/ros-latest.list\'')
                         os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
                         os.system('sudo apt-get update')
 

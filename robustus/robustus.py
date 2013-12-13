@@ -21,6 +21,7 @@ class RobustusException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+
 class Robustus(object):
     settings_file_path = '.robustus'
     cached_requirements_file_path = 'cached_requirements.txt'
