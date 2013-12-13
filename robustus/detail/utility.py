@@ -124,7 +124,10 @@ def run_shell(command, shell=True, verbose=False):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p = subprocess.Popen(command,
+                         shell=shell,
+                         stdout=subprocess.PIPE if verbose else open(os.devnull, 'w'),
+                         stderr=subprocess.STDOUT)
 
     # Poll process for new output until finished
     if verbose:
