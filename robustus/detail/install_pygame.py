@@ -75,7 +75,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         glob_res = glob.glob('build/lib*')
         if len(glob_res) == 0:
             raise RequirementException('failed to build pygame-%s' % requirement_specifier.version)
-        pygame_dir = os.path.join(glob_res[0], 'pygame')
+        pygame_dir = os.path.join(os.getcwd(), glob_res[0], 'pygame')
         if os.path.isdir(pygame_cache_dir):
             shutil.rmtree(pygame_cache_dir)
         os.mkdir(pygame_cache_dir)

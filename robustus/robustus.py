@@ -10,8 +10,9 @@ import logging
 import os
 import subprocess
 import sys
-from detail import Requirement, RequirementException, read_requirement_file, ln, run_shell, download
+from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
+from detail.utility import ln, run_shell, download
 import urllib2
 # for doctests
 import detail
@@ -81,6 +82,7 @@ class Robustus(object):
         # override settings with command line arguments
         if args.cache is not None:
             settings['cache'] = args.cache
+        settings['verbosity'] = args.verbosity
         return settings
 
     @staticmethod
@@ -175,39 +177,49 @@ class Robustus(object):
         # if wheelhouse doesn't contain necessary requirement - make a wheel
         if self.find_satisfactory_requirement(requirement_specifier) is None:
             logging.info('Wheel not found, downloading package')
-            subprocess.call([self.pip_executable,
-                             'install',
-                             '--download',
-                             self.cache,
-                             requirement_specifier.freeze()])
+            return_code = run_shell([self.pip_executable,
+                                     'install',
+                                     '--download',
+                                     self.cache,
+                                     requirement_specifier.freeze()],
+                                    shell=False,
+                                    verbose=self.settings['verbosity'] >= 2)
+            if return_code != 0:
+                raise RequirementException('pip failed to download requirement %s' % requirement_specifier.freeze())
+            logging.info('Done')
+
             logging.info('Building wheel')
-            subprocess.call([self.pip_executable,
-                             'wheel',
-                             '-v',  # need verbose output, so travis won't terminate long builds with no output
-                             '--no-index',
-                             '--find-links=%s' % self.cache,
-                             '--wheel-dir=%s' % self.cache,
-                             requirement_specifier.freeze()])
+            wheel_cmd = [self.pip_executable,
+                         'wheel',
+                         '--no-index',
+                         '--find-links=%s' % self.cache,
+                         '--wheel-dir=%s' % self.cache,
+                         requirement_specifier.freeze()]
+            # we probably sometimes will want to see build log
+            for i in xrange(self.settings['verbosity']):
+                wheel_cmd.append('-v')
+            return_code = run_shell(wheel_cmd,
+                                    shell=False,
+                                    verbose=self.settings['verbosity'] >= 1)
+            if return_code != 0:
+                raise RequirementException('pip failed to build wheel for requirement %s'
+                                           % requirement_specifier.freeze())
             logging.info('Done')
 
         # install from prebuilt wheel
         logging.info('Installing package from wheel')
-        return_code = subprocess.call([self.pip_executable,
-                                       'install',
-                                       '--no-index',
-                                       '--use-wheel',
-                                       '--find-links=%s' % self.cache,
-                                       requirement_specifier.freeze()])
-        if return_code > 0:
-            logging.info('pip failed to install requirment %s from wheels cache %s (error code %s). ' %
-                         (requirement_specifier.freeze(), self.cache, return_code))
-            rob = os.path.join(self.cache, requirement_specifier.rob_filename())
-            if os.path.exists(rob):
-                logging.info('Robustus will delete the coresponding %s file in order '
-                             'to recreate the wheel in the future. Please run again.' % str(rob))
-                os.remove(rob)
-
-        return True
+        return_code = run_shell([self.pip_executable,
+                                 'install',
+                                 '--no-index',
+                                 '--use-wheel',
+                                 '--find-links=%s' % self.cache,
+                                 requirement_specifier.freeze()],
+                                shell=False,
+                                verbose=self.settings['verbosity'] >= 2)
+        if return_code != 0:
+            raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
+                                       % (requirement_specifier.freeze(), self.cache))
+        logging.info('Done')
 
     def install_requirement(self, requirement_specifier, ignore_index):
         logging.info('Installing ' + requirement_specifier.freeze())
@@ -224,8 +236,8 @@ class Robustus(object):
                 logging.info('Got url-based requirement. Checking if exists %s ' % (editable_requirement_path,))
                 if os.path.exists(editable_requirement_path):
                     logging.info('For safety reasons robustus will not proceed with requirement %s, '
-                                 'because directors for installing this package already exists (%s). '
-                                 'To update editable dependecy, please remove folder and run again.' %
+                                 'because directories for installing this package already exists (%s). '
+                                 'To update editable dependency, please remove folder and run again.' %
                                  (requirement_specifier.freeze(),
                                   os.path.join(self.env, 'src', requirement_specifier.name)))
                     return
@@ -256,6 +268,8 @@ class Robustus(object):
             except RequirementException as exc:
                 logging.error(exc.message)
                 rob_file.close()
+                logging.warn('Robustus will delete the corresponding %s file in order '
+                             'to recreate the wheel in the future. Please run again.' % str(rob))
                 os.remove(rob)
                 return
 
@@ -454,6 +468,13 @@ class Robustus(object):
                                          prog='robustus')
         parser.add_argument('--env', help='virtualenv to use')
         parser.add_argument('--cache', help='binary package cache directory')
+        parser.add_argument('-v',
+                            '--verbose',
+                            default=0,
+                            action='count',
+                            dest="verbosity",
+                            help='give more output, option is additive, and can be used up to 3 times')
+
         subparsers = parser.add_subparsers(help='robustus commands')
 
         env_parser = subparsers.add_parser('env', help='make robustus')

@@ -6,11 +6,11 @@
 import glob
 import os
 from requirement import RequirementException
-import robustus
 import shutil
 import subprocess
 import sys
 import tarfile
+import time
 import zipfile
 import logging
 import urllib2
@@ -143,13 +143,32 @@ def safe_remove(path):
         shutil.rmtree(path)
 
 
-def run_shell(command):
+def run_shell(command, shell=True, verbose=False):
+    """
+    Run command logging accordingly to the verbosity level.
+    """
     logging.info('Running shell command: %s' % command)
-    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    output = p.communicate()[0]
-    if p.returncode != 0:
-        raise Exception('Error running %s, code=%s' % (command, p.returncode))
-    return output
+    p = subprocess.Popen(command,
+                         shell=shell,
+                         stdout=subprocess.PIPE if verbose else open(os.devnull, 'w'),
+                         stderr=subprocess.STDOUT)
+
+    # Poll process for new output until finished
+    if verbose:
+        while p.poll() is None:
+            print p.stdout.readline(),
+    else:
+        # print dots to wake TRAVIS
+        num_dots = 0
+        max_num_dots = 3
+        while p.poll() is None:
+            sys.stdout.write('Working' + '.' * num_dots + ' ' * (max_num_dots - num_dots) + '\r')
+            sys.stdout.flush()
+            time.sleep(1)
+            num_dots = (num_dots + 1) % (max_num_dots + 1)
+        sys.stdout.write('\n')
+
+    return p.returncode
 
 
 def execute_python_expr(env, expr, shell_script=None):
