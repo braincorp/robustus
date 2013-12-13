@@ -135,13 +135,17 @@ def run_shell(command, shell=True, verbose=False):
             print p.stdout.readline(),
     else:
         # print dots to wake TRAVIS
-        num_dots = 0
-        max_num_dots = 3
+        secs = 0
+        secs_between_dots = 10
+        sys.stdout.write('Working')
         while p.poll() is None:
-            sys.stdout.write('Working' + '.' * num_dots + ' ' * (max_num_dots - num_dots) + '\r')
-            sys.stdout.flush()
+            # poll more frequently than print dots to stop as soon as process finished
             time.sleep(1)
-            num_dots = (num_dots + 1) % (max_num_dots + 1)
+            secs += 1
+            if secs >= secs_between_dots:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                secs = 0
         sys.stdout.write('\n')
 
     return p.returncode
