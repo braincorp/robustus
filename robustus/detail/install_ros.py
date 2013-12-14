@@ -7,14 +7,15 @@ import logging
 import os
 from requirement import RequirementException
 import shutil
-import subprocess
 import sys
-from utility import which
+from utility import run_shell, which
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+    ver, dist = requirement_specifier.version.split('.')
+
     # check distro
-    if requirement_specifier.version != 'hydro':
+    if ver != 'hydro':
         logging.warn('Robustus is only tested to install ROS hydro.\n'
                      'Still, it will try to install required distribution "%s"' % requirement_specifier.version)
 
@@ -29,18 +30,11 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
         return os.path.isdir(devel_dir)
 
-    # ROS installation bloats command log and TRAVIS terminates build
-    # FIXME: regular execution for now, change to avoid log bloating
-    def exec_silent(cmd):
-        # logging.info('executing: ' + cmd)
-        return subprocess.call(cmd, shell=True)
-
     try:
         cwd = os.getcwd()
 
         # create ros cache
-        v = requirement_specifier.version
-        ros_cache = os.path.join(robustus.cache, 'ros-%s' % v)
+        ros_cache = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version)
         if not os.path.isdir(ros_cache):
             os.mkdir(ros_cache)
         os.chdir(ros_cache)
@@ -69,35 +63,41 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to install/find rosdep')
 
             # init rosdep, rosdep can already be initialized resulting in error, that's ok
-            retcode = os.system('sudo ' + rosdep + ' init')
+            run_shell('sudo ' + rosdep + ' init',
+                      verbose=robustus.settings['verbosity'] >= 1)
 
             # update ros dependencies
-            retcode = os.system(rosdep + ' update')
+            retcode = run_shell(rosdep + ' update',
+                                verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to update ROS dependencies')
 
             # install desktop version of ROS
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             dist = 'desktop'
-            retcode = exec_silent(rosinstall_generator + ' %s --rosdistro %s' % (dist, v)
-                                  + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, v))
+            retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
+                                + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
+                                verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
 
             wstool = os.path.join(robustus.env, 'bin/wstool')
-            retcode = exec_silent(wstool + ' init -j8 src %s-%s-wet.rosinstall' % (dist, v))
+            retcode = run_shell(wstool + ' init -j8 src %s-%s-wet.rosinstall' % (dist, ver),
+                                verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to build ROS')
 
             # resolve dependencies
-            retcode = os.system(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % v)
+            retcode = run_shell(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % ver,
+                                verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to resolve ROS dependencies')
 
         # create catkin workspace
         rosdir = os.path.join(robustus.env, 'ros')
         catkin_make_isolated = os.path.join(ros_cache, 'src/catkin/bin/catkin_make_isolated')
-        retcode = exec_silent(catkin_make_isolated + ' --install-space %s --install' % rosdir)
+        retcode = run_shell(catkin_make_isolated + ' --install-space %s --install' % rosdir,
+                            verbose=robustus.settings['verbosity'] >= 1)
         if retcode != 0:
             raise RequirementException('Failed to create catkin workspace for ROS')
         os.chdir(cwd)
