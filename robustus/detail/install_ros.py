@@ -73,7 +73,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
             # install desktop version of ROS
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
-            dist = 'desktop'
             retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
                                 + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
                                 verbose=robustus.settings['verbosity'] >= 1)
