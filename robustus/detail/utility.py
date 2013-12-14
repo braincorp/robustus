@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 import zipfile
 import logging
@@ -124,25 +125,42 @@ def run_shell(command, shell=True, verbose=False):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    p = subprocess.Popen(command,
-                         shell=shell,
-                         stdout=subprocess.PIPE if verbose else open(os.devnull, 'w'),
-                         stderr=subprocess.STDOUT)
-
-    # Poll process for new output until finished
     if verbose:
+        # poll process for new output until finished
+        p = subprocess.Popen(command,
+                             shell=shell,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
         while p.poll() is None:
             print p.stdout.readline(),
     else:
-        # print dots to wake TRAVIS
-        num_dots = 0
-        max_num_dots = 3
-        while p.poll() is None:
-            sys.stdout.write('Working' + '.' * num_dots + ' ' * (max_num_dots - num_dots) + '\r')
+        # redirect log to temporary file
+        with tempfile.TemporaryFile() as logfile:
+            p = subprocess.Popen(command,
+                                 shell=shell,
+                                 stdout=logfile,
+                                 stderr=subprocess.STDOUT)
+
+            # print dots to wake TRAVIS
+            secs = 0
+            secs_between_dots = 10
+            sys.stdout.write('Working')
             sys.stdout.flush()
-            time.sleep(1)
-            num_dots = (num_dots + 1) % (max_num_dots + 1)
-        sys.stdout.write('\n')
+            while p.poll() is None:
+                # poll more frequently than print dots to stop as soon as process finished
+                time.sleep(1)
+                secs += 1
+                if secs >= secs_between_dots:
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
+                    secs = 0
+            sys.stdout.write('\n')
+
+            # print log in case of failure
+            if p.returncode != 0:
+                print 'FAILED:'
+                for line in logfile:
+                    print line,
 
     return p.returncode
 
