@@ -63,8 +63,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to install/find rosdep')
 
             # init rosdep, rosdep can already be initialized resulting in error, that's ok
-            run_shell('sudo ' + rosdep + ' init',
-                      verbose=robustus.settings['verbosity'] >= 1)
+            os.system('sudo ' + rosdep + ' init')
 
             # update ros dependencies
             retcode = run_shell(rosdep + ' update',
