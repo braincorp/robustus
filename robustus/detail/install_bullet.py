@@ -6,9 +6,8 @@
 import logging
 import os
 from requirement import RequirementException
-from utility import unpack, safe_remove
+from utility import unpack, safe_remove, run_shell
 import shutil
-import subprocess
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -27,18 +26,24 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
             logging.info('Building bullet')
             os.chdir(bullet_archive_name)
-            subprocess.call(['cmake', '.',
-                             '-G', "Unix Makefiles",
-                             '-DCMAKE_INSTALL_PREFIX=%s' % bullet_cache_dir,
-                             '-DCMAKE_CXX_FLAGS=-fPIC',
-                             '-DBUILD_NVIDIA_OPENCL_DEMOS:BOOL=OFF',
-                             '-DBUILD_INTEL_OPENCL_DEMOS:BOOL=OFF',
-                             '-DCMAKE_C_COMPILER=gcc',
-                             '-DCMAKE_CXX_COMPILER=g++'])
-            retcode = subprocess.call(['make', '-j4'])
+            run_shell(['cmake', '.',
+                       '-G', "Unix Makefiles",
+                       '-DCMAKE_INSTALL_PREFIX=%s' % bullet_cache_dir,
+                       '-DCMAKE_CXX_FLAGS=-fPIC',
+                       '-DBUILD_NVIDIA_OPENCL_DEMOS:BOOL=OFF',
+                       '-DBUILD_INTEL_OPENCL_DEMOS:BOOL=OFF',
+                       '-DCMAKE_C_COMPILER=gcc',
+                       '-DCMAKE_CXX_COMPILER=g++'],
+                      shell=False,
+                      verbose=robustus.settings['verbosity'] >= 1)
+            retcode = run_shell(['make', '-j4'],
+                                shell=False,
+                                verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('bullet build failed')
-            retcode = subprocess.call(['make', 'install'])
+            retcode = run_shell(['make', 'install'],
+                                shell=False,
+                                verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('bullet "make install" failed')
         finally:

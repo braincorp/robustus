@@ -7,7 +7,7 @@ import glob
 import logging
 import os
 from requirement import RequirementException
-from utility import unpack
+from utility import unpack, run_shell
 import shutil
 import subprocess
 import sys
@@ -68,7 +68,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             f.write(camera_h_source.replace('linux/videodev.h',
                                             'libv4l1-videodev.h'))
 
-        subprocess.call([robustus.python_executable, 'setup.py', 'build'])
+        run_shell([robustus.python_executable, 'setup.py', 'build'],
+                  shell=False,
+                  verbose=robustus.settings['verbosity'] >= 1)
 
         # under build there will be platform specific dir, e.g. lib.linux-x86_64-2.7
         # inside pygame will reside, copy it to robustus cache
