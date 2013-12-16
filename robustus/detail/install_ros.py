@@ -24,7 +24,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosinstall==0.6.30',
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
-                      'catkin_pkg'])
+                      'catkin_pkg==0.1.24'])
 
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
@@ -54,7 +54,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
                     rosdep = which('rosdep')
                     if rosdep is None:
-                        os.system('sudo apt-get install python-rosdep -y')
+                        os.system('sudo pip install rosdep')
                 else:
                     # on mac use pip
                     os.system('sudo pip install python-rosdep')
