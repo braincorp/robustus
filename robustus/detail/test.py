@@ -22,7 +22,8 @@ def perform_standard_test(package,
                           dependencies=[],
                           postinstall_script=None,
                           test_env='test_env',
-                          test_cache='test_wheelhouse'):
+                          test_cache='test_wheelhouse',
+                          options=[]):
     """
     create env, install package, check package is available,
     remove env, install package without index, check package is available
@@ -32,16 +33,16 @@ def perform_standard_test(package,
     test_env = os.path.abspath(test_env)
     test_cache = os.path.abspath(test_cache)
 
-    robustus.execute(['--cache', test_cache, 'env', test_env])
+    robustus.execute(options + ['--cache', test_cache, 'env', test_env])
     install_dependencies(test_env, dependencies)
-    robustus.execute(['--env', test_env, 'install', package])
+    robustus.execute(options + ['--env', test_env, 'install', package])
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
 
     # install again, but using only cache
-    robustus.execute(['--cache', test_cache, 'env', test_env])
+    robustus.execute(options + ['--cache', test_cache, 'env', test_env])
     install_dependencies(test_env, dependencies)
-    robustus.execute(['--env', test_env, 'install', package, '--no-index'])
+    robustus.execute(options + ['--env', test_env, 'install', package, '--no-index'])
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
     shutil.rmtree(test_cache)
