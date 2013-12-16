@@ -6,9 +6,8 @@
 import logging
 import os
 from requirement import RequirementException
-from utility import cp, unpack
+from utility import cp, unpack, run_shell
 import shutil
-import subprocess
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -25,9 +24,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         logging.info('Building patchelf')
         os.chdir(patchelf_archive_name)
-        subprocess.call(['./bootstrap.sh'])
-        subprocess.call(['./configure'])
-        subprocess.call(['make'])
+        run_shell(['./bootstrap.sh'], verbose=robustus.settings['verbosity'] >= 1)
+        run_shell(['./configure'], verbose=robustus.settings['verbosity'] >= 1)
+        run_shell(['make'], verbose=robustus.settings['verbosity'] >= 1)
 
         if os.path.isdir(patchelf_cache_dir):
             shutil.rmtree(patchelf_cache_dir)
