@@ -19,12 +19,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         logging.warn('Robustus is only tested to install ROS hydro.\n'
                      'Still, it will try to install required distribution "%s"' % requirement_specifier.version)
 
-    # install dependencies, may throw
-    robustus.execute(['install',
-                      'rosinstall==0.6.30',
-                      'rosinstall_generator==0.1.4',
-                      'wstool==0.0.4'])
-
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
         return os.path.isdir(devel_dir)
