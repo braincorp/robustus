@@ -24,7 +24,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'catkin_pkg==0.1.24',
                       'rosinstall==0.6.30',
                       'rosinstall_generator==0.1.4',
-                      'wstool==0.0.4'])
+                      'wstool==0.0.4',
+                      'empy==3.3'])
 
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
@@ -86,10 +87,14 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to build ROS')
 
             # resolve dependencies
-            retcode = run_shell(rosdep + ' install --from-paths src --ignore-src --rosdistro %s -y' % ver,
+            retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
-                raise RequirementException('Failed to resolve ROS dependencies')
+                if platform.machine() == 'armv7l':
+                    # Due to the lack of LISP machine for ARM we expect some failures
+                    logging.info("No LISP on ARM. Expected not all dependencies to be installed.")
+                else:
+                    raise RequirementException('Failed to resolve ROS dependencies')
 
         # create catkin workspace
         rosdir = os.path.join(robustus.env, 'ros')
