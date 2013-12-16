@@ -11,9 +11,9 @@ def check_module(test_env, python_imports, package_files, postinstall_script):
         assert os.path.isfile(os.path.join(test_env, file))
 
 
-def install_dependencies(test_env, dependencies):
+def install_dependencies(test_env, dependencies, options):
     for dep in dependencies:
-        robustus.execute(['--env', test_env, 'install', dep])
+        robustus.execute(options + ['--env', test_env, 'install', dep])
 
 
 def perform_standard_test(package,
@@ -34,14 +34,14 @@ def perform_standard_test(package,
     test_cache = os.path.abspath(test_cache)
 
     robustus.execute(options + ['--cache', test_cache, 'env', test_env])
-    install_dependencies(test_env, dependencies)
+    install_dependencies(test_env, dependencies, options)
     robustus.execute(options + ['--env', test_env, 'install', package])
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
 
     # install again, but using only cache
     robustus.execute(options + ['--cache', test_cache, 'env', test_env])
-    install_dependencies(test_env, dependencies)
+    install_dependencies(test_env, dependencies, options)
     robustus.execute(options + ['--env', test_env, 'install', package, '--no-index'])
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
