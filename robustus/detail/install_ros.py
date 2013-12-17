@@ -8,7 +8,7 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
-from utility import run_shell, which
+from utility import run_shell
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -43,26 +43,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
-            # install rosdep
-            rosdep = which('rosdep')
+            rosdep = os.path.join(robustus.env, 'bin/rosdep')
             if rosdep is None:
-                if sys.platform.startswith('linux'):
-                    # use system package manager
-                    if not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
-                        os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu precise main"'
-                                  ' > /etc/apt/sources.list.d/ros-latest.list\'')
-                        os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
-                        os.system('sudo apt-get update')
-
-                    rosdep = which('rosdep')
-                    if rosdep is None:
-                        os.system('sudo apt-get install python-rosdep -y')
-                else:
-                    # on mac use pip
-                    os.system('sudo pip install python-rosdep')
-            rosdep = which('rosdep')
-            if rosdep is None:
-                raise RequirementException('Failed to install/find rosdep')
+                raise RequirementException('Failed to find rosdep')
 
             # init rosdep, rosdep can already be initialized resulting in error, that's ok
             os.system('sudo ' + rosdep + ' init')
@@ -91,7 +74,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
-                if platform.machine() == 'armv7l':
+                if sys.platform.machine() == 'armv7l':
                     # Due to the lack of LISP machine for ARM we expect some failures
                     logging.info("No LISP on ARM. Expected not all dependencies to be installed.")
                 else:
