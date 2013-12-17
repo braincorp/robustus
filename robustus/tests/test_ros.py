@@ -8,6 +8,7 @@ import logging
 from robustus.detail import perform_standard_test
 
 
+@pytest.mark.skipif("'TRAVIS' in os.environ")
 def test_ros_installation(tmpdir):
     logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
@@ -20,8 +21,7 @@ def test_ros_installation(tmpdir):
                           imports,
                           [],
                           dependencies,
-                          postinstall_script='source test_env/bin/activate && source test_env/ros/setup.sh',
-                          options=['-v'])
+                          postinstall_script='source test_env/bin/activate && source test_env/ros/setup.sh')
 
 
 if __name__ == '__main__':
