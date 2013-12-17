@@ -9,9 +9,6 @@ from robustus.detail import perform_standard_test
 
 
 def test_ros_installation(tmpdir):
-    """
-    Install OpenCV and ROS. Check that OpenCV available after ROS activation.
-    """
     logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
 
