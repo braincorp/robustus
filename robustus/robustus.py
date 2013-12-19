@@ -117,6 +117,9 @@ class Robustus(object):
 
         # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
         subprocess.call([pip_executable, 'install', 'pip==1.4.1', '--upgrade'])
+        # some sloppy maintained packages (like ROS) require outdated distribute for installation
+        # and we need to install it before setuptools
+        subprocess.call([pip_executable, 'install', 'distribute==0.7.3'])
         subprocess.call([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'])
         subprocess.call([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'])
 
@@ -458,90 +461,106 @@ class Robustus(object):
                 os.remove(cache_archive)
             os.chdir(cwd)
 
+    @staticmethod
+    def _create_args_parser():
+        parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
+                                                     'setup necessary packages and cache them if necessary.',
+                                         prog='robustus')
+        parser.add_argument('--env', help='virtualenv to use')
+        parser.add_argument('--cache', help='binary package cache directory')
+        parser.add_argument('-v',
+                            '--verbose',
+                            default=0,
+                            action='count',
+                            dest="verbosity",
+                            help='give more output, option is additive, and can be used up to 3 times')
+
+        subparsers = parser.add_subparsers(help='robustus commands')
+
+        env_parser = subparsers.add_parser('env', help='make robustus')
+        env_parser.add_argument('env',
+                                default='.env',
+                                help='virtualenv arguments')
+        env_parser.add_argument('-p', '--python',
+                                help='python interpreter to use')
+        env_parser.add_argument('--prompt',
+                                default='(robustus)',
+                                help='provides an alternative prompt prefix for this environment')
+        env_parser.add_argument('--system-site-packages',
+                                default=False,
+                                action='store_true',
+                                help='five access to the global site-packages dir to the virtual environment')
+        env_parser.set_defaults(func=Robustus.env)
+
+        install_parser = subparsers.add_parser('install', help='install packages')
+        install_parser.add_argument('-r', '--requirement',
+                                    action='append',
+                                    help='install all the packages listed in the given'
+                                         'requirements file, this option can be used multiple times.')
+        install_parser.add_argument('packages',
+                                    nargs='*',
+                                    help='packages to install in format <package name>==version')
+        install_parser.add_argument('-e', '--editable',
+                                    action='append',
+                                    help='installs package in editable mode')
+        install_parser.add_argument('--no-index',
+                                    action='store_true',
+                                    help='ignore package index (only looking in robustus cache and at --find-links URLs)')
+        install_parser.add_argument('-f', '--find-links',
+                                    action='append',
+                                    help='location where to find robustus packages, also is passed to pip')
+        install_parser.add_argument('--update-editables',
+                                    action='store_true',
+                                    help='clone all editable non-versioned requirements inside venv '
+                                         '(by default robustus skips editable requiterements)')
+        install_parser.set_defaults(func=Robustus.install)
+
+        freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
+        freeze_parser.set_defaults(func=Robustus.freeze)
+
+        download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path,'
+                                                                             'if robustus cache is not empty,'
+                                                                             'cached packages will be added to existing ones')
+        download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
+        download_cache_parser.add_argument('-b', '--bucket',
+                                           help='amazon S3 bucket to download from')
+        download_cache_parser.add_argument('-k', '--key',
+                                           help='amazon S3 access key')
+        download_cache_parser.add_argument('-s', '--secret',
+                                           help='amazon S3 secret access key')
+        download_cache_parser.set_defaults(func=Robustus.download_cache)
+
+        upload_cache_parser = subparsers.add_parser('upload-cache', help='upload cache to server or path')
+        upload_cache_parser.add_argument('url', help='cache filename or url (directory, *.tar.gz, *.tar.bz or *.zip)')
+        upload_cache_parser.add_argument('-b', '--bucket',
+                                         help='amazon S3 bucket to upload into')
+        upload_cache_parser.add_argument('-k', '--key',
+                                         help='amazon S3 access key')
+        upload_cache_parser.add_argument('-s', '--secret',
+                                         help='amazon S3 secret access key')
+        upload_cache_parser.add_argument('-p', '--public',
+                                         action='store_true',
+                                         default=False,
+                                         help='make uploaded file to amazon S3 public')
+        upload_cache_parser.set_defaults(func=Robustus.upload_cache)
+
+        return parser
+
+    def execute(self, argv):
+        """
+        Execute command in environment handled by robustus object.     
+        """
+        parser = Robustus._create_args_parser()
+        args = parser.parse_args(argv)
+        if args.func == Robustus.env:
+            Robustus.env(args)
+        else:
+            args.func(self, args)
+        
 
 def execute(argv):
     logging.basicConfig(format="%(message)s", level=logging.INFO)
-    parser = argparse.ArgumentParser(description='Tool to make and configure python virtualenv,'
-                                                 'setup necessary packages and cache them if necessary.',
-                                     prog='robustus')
-    parser.add_argument('--env', help='virtualenv to use')
-    parser.add_argument('--cache', help='binary package cache directory')
-    parser.add_argument('-v',
-                        '--verbose',
-                        default=0,
-                        action='count',
-                        dest="verbosity",
-                        help='give more output, option is additive, and can be used up to 3 times')
-
-    subparsers = parser.add_subparsers(help='robustus commands')
-
-    env_parser = subparsers.add_parser('env', help='make robustus')
-    env_parser.add_argument('env',
-                            default='.env',
-                            help='virtualenv arguments')
-    env_parser.add_argument('-p', '--python',
-                            help='python interpreter to use')
-    env_parser.add_argument('--prompt',
-                            default='(robustus)',
-                            help='provides an alternative prompt prefix for this environment')
-    env_parser.add_argument('--system-site-packages',
-                            default=False,
-                            action='store_true',
-                            help='five access to the global site-packages dir to the virtual environment')
-    env_parser.set_defaults(func=Robustus.env)
-
-    install_parser = subparsers.add_parser('install', help='install packages')
-    install_parser.add_argument('-r', '--requirement',
-                                action='append',
-                                help='install all the packages listed in the given'
-                                     'requirements file, this option can be used multiple times.')
-    install_parser.add_argument('packages',
-                                nargs='*',
-                                help='packages to install in format <package name>==version')
-    install_parser.add_argument('-e', '--editable',
-                                action='append',
-                                help='installs package in editable mode')
-    install_parser.add_argument('--no-index',
-                                action='store_true',
-                                help='ignore package index (only looking in robustus cache and at --find-links URLs)')
-    install_parser.add_argument('-f', '--find-links',
-                                action='append',
-                                help='location where to find robustus packages, also is passed to pip')
-    install_parser.add_argument('--update-editables',
-                                action='store_true',
-                                help='clone all editable non-versioned requirements inside venv '
-                                     '(by default robustus skips editable requiterements)')
-    install_parser.set_defaults(func=Robustus.install)
-
-    freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
-    freeze_parser.set_defaults(func=Robustus.freeze)
-
-    download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path,'
-                                                                         'if robustus cache is not empty,'
-                                                                         'cached packages will be added to existing ones')
-    download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
-    download_cache_parser.add_argument('-b', '--bucket',
-                                       help='amazon S3 bucket to download from')
-    download_cache_parser.add_argument('-k', '--key',
-                                       help='amazon S3 access key')
-    download_cache_parser.add_argument('-s', '--secret',
-                                       help='amazon S3 secret access key')
-    download_cache_parser.set_defaults(func=Robustus.download_cache)
-
-    upload_cache_parser = subparsers.add_parser('upload-cache', help='upload cache to server or path')
-    upload_cache_parser.add_argument('url', help='cache filename or url (directory, *.tar.gz, *.tar.bz or *.zip)')
-    upload_cache_parser.add_argument('-b', '--bucket',
-                                     help='amazon S3 bucket to upload into')
-    upload_cache_parser.add_argument('-k', '--key',
-                                     help='amazon S3 access key')
-    upload_cache_parser.add_argument('-s', '--secret',
-                                     help='amazon S3 secret access key')
-    upload_cache_parser.add_argument('-p', '--public',
-                                     action='store_true',
-                                     default=False,
-                                     help='make uploaded file to amazon S3 public')
-    upload_cache_parser.set_defaults(func=Robustus.upload_cache)
-
+    parser = Robustus._create_args_parser()
     args = parser.parse_args(argv)
     try:
         if args.func == Robustus.env:

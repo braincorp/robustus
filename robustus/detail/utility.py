@@ -54,6 +54,26 @@ def ln(src, dst, force=False):
     os.symlink(src, dst)
 
 
+def which(program):
+    import os
+
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
 def download(url, filename=None):
     """
     download file from url, store it under name
@@ -70,7 +90,8 @@ def download(url, filename=None):
 
     with open(filename, 'wb') as f:
         file_size_dl = 0
-        block_sz = 32768
+        prev_percent = 0
+        block_sz = 131072
         while True:
             buffer = u.read(block_sz)
             if not buffer:
@@ -78,8 +99,11 @@ def download(url, filename=None):
 
             file_size_dl += len(buffer)
             f.write(buffer)
-            status = "%10d  [%3.2f%%]\r" % (file_size_dl, file_size_dl * 100. / file_size)
-            logging.info(status,)
+            percent_downloaded = file_size_dl * 100. / file_size
+            if percent_downloaded > prev_percent + 1:
+                status = "%10d  [%3.2f%%]\r" % (file_size_dl, percent_downloaded)
+                logging.info(status,)
+                prev_percent = percent_downloaded
         f.close()
 
     return filename
@@ -165,7 +189,7 @@ def run_shell(command, shell=True, verbose=False):
     return p.returncode
 
 
-def execute_python_expr(env, expr):
+def execute_python_expr(env, expr, shell_script=None):
     """
     Execute expression using env python interpreter.
     :param env: path to python environment
@@ -177,7 +201,10 @@ def execute_python_expr(env, expr):
         python_executable = os.path.join(env, 'bin/python27')
     if not os.path.isfile(python_executable):
         raise RuntimeError('can\'t find python executable in %s' % env)
-    return subprocess.call([python_executable, '-c', expr])
+    cmd = python_executable + ' -c "' + expr + '"'
+    if shell_script is not None:
+        cmd = shell_script + ' && ' + cmd
+    return subprocess.call(cmd, shell=True)
 
 
 def check_module_available(env, module):
