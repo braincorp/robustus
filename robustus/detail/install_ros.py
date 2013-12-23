@@ -97,5 +97,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.chdir(cwd)
     except RequirementException:
         os.chdir(cwd)
-        shutil.rmtree(ros_cache)
+        if robustus.settings['debug']:
+            logging.info('Not removing folder %s due to debug flag.' % ros_cache)
+        else:
+            shutil.rmtree(ros_cache)
         raise
