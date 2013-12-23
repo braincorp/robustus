@@ -83,6 +83,7 @@ class Robustus(object):
         if args.cache is not None:
             settings['cache'] = args.cache
         settings['verbosity'] = args.verbosity
+        settings['debug'] = args.debug
         return settings
 
     @staticmethod
@@ -474,6 +475,9 @@ class Robustus(object):
                             action='count',
                             dest="verbosity",
                             help='give more output, option is additive, and can be used up to 3 times')
+        parser.add_argument('--debug',
+                            action='store_true',
+                            help="Take actions to assist with debugging such as not deleting packages which fail to build.")
 
         subparsers = parser.add_subparsers(help='robustus commands')
 

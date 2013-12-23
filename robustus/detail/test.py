@@ -33,16 +33,16 @@ def perform_standard_test(package,
     test_env = os.path.abspath(test_env)
     test_cache = os.path.abspath(test_cache)
 
-    robustus.execute(options + ['--cache', test_cache, 'env', test_env])
+    robustus.execute(options + ['--debug', '--cache', test_cache, 'env', test_env])
     install_dependencies(test_env, dependencies, options)
-    robustus.execute(options + ['--env', test_env, 'install', package])
+    robustus.execute(options + ['--debug', '--env', test_env, 'install', package])
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
 
     # install again, but using only cache
-    robustus.execute(options + ['--cache', test_cache, 'env', test_env])
+    robustus.execute(options + ['--debug', '--cache', test_cache, 'env', test_env])
     install_dependencies(test_env, dependencies, options)
-    robustus.execute(options + ['--env', test_env, 'install', package, '--no-index'])
+    robustus.execute(options + ['--debug', '--env', test_env, 'install', package, '--no-index'])
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
     shutil.rmtree(test_cache)
