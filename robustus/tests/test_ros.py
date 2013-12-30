@@ -21,7 +21,7 @@ def test_ros_installation(tmpdir):
                           imports,
                           [],
                           dependencies,
-                          postinstall_script='source test_env/bin/activate && source test_env/ros/setup.sh')
+                          postinstall_script='. test_env/bin/activate && . test_env/ros/setup.sh')
 
 
 if __name__ == '__main__':

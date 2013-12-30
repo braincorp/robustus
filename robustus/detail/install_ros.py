@@ -89,8 +89,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         # create catkin workspace
         rosdir = os.path.join(robustus.env, 'ros')
+        py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
         catkin_make_isolated = os.path.join(ros_cache, 'src/catkin/bin/catkin_make_isolated')
-        retcode = run_shell(catkin_make_isolated + ' --install-space %s --install' % rosdir,
+        retcode = run_shell('. ' + py_activate_file + ' && ' +
+                            catkin_make_isolated + ' --install-space %s --install' % rosdir,
                             verbose=robustus.settings['verbosity'] >= 1)
         if retcode != 0:
             raise RequirementException('Failed to create catkin workspace for ROS')
