@@ -16,4 +16,3 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
            os.path.join(robustus.env, 'lib/python2.7/site-packages/pyassimp'), force = True)
     else:
         raise RequirementException('System-wide pyassimp is missing, run: sudo apt-get install python-pyassimp')
-
