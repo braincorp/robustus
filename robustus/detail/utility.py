@@ -44,13 +44,13 @@ def cp(mask, dest_dir):
 def ln(src, dst, force=False):
     """
     make symlink as unix ln
-    :param src: source file
-    :param dst: destination file
-    :param force: remove destination file
+    :param src: source file/dir
+    :param dst: destination file/dir
+    :param force: remove destination file/dir
     :return: None
     """
     if force and os.path.exists(dst):
-        os.remove(dst)
+        os.unlink(dst)
     os.symlink(src, dst)
 
 
