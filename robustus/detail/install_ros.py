@@ -8,7 +8,7 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
-from utility import run_shell
+from utility import run_shell, add_source_ref
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -97,6 +97,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if retcode != 0:
             raise RequirementException('Failed to create catkin workspace for ROS')
         os.chdir(cwd)
+
+        # Add ROS settings to activate file
+        add_source_ref(robustus, os.path.join(robustus.env, 'ros', 'setup.sh'))
     except RequirementException:
         os.chdir(cwd)
         if robustus.settings['debug']:
