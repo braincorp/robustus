@@ -84,6 +84,10 @@ class Robustus(object):
             settings['cache'] = args.cache
         settings['verbosity'] = args.verbosity
         settings['debug'] = args.debug
+
+        # Set logging volume for debugging
+        if settings['debug']:
+            logging.getLogger('').setLevel(logging.DEBUG)
         return settings
 
     @staticmethod

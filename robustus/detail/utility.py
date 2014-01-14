@@ -15,6 +15,25 @@ import time
 import zipfile
 import logging
 import urllib2
+import os
+import logging
+
+
+def add_source_ref(robustus, source_path):
+    """Add a line to the active file to source from source_path when
+    activate is run.
+
+    If the source line already exists we avoid duplication."""
+    
+    py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
+    
+    source_line = '. ' + os.path.abspath(source_path) + '\n'
+    if source_line not in open(py_activate_file, 'r').readlines():
+        logging.info('Adding source line %s' % source_line)
+        open(py_activate_file, 'a').write(
+            '\n# Added by robustus\n' + source_line + '\n')
+    else:
+        logging.info('Source line %s already in activate file' % source_line)
 
 
 def write_file(filename, mode, data):
@@ -182,9 +201,9 @@ def run_shell(command, shell=True, verbose=False):
 
             # print log in case of failure
             if p.returncode != 0:
-                print 'FAILED:'
-                for line in logfile:
-                    print line,
+                print 'Shell command "%s" failed' % str(command)
+                logfile.seek(0)
+                print logfile.read()
 
     return p.returncode
 

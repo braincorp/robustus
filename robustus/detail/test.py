@@ -36,6 +36,7 @@ def perform_standard_test(package,
     robustus.execute(options + ['--debug', '--cache', test_cache, 'env', test_env])
     install_dependencies(test_env, dependencies, options)
     robustus.execute(options + ['--debug', '--env', test_env, 'install', package])
+        
     check_module(test_env, python_imports, package_files, postinstall_script)
     shutil.rmtree(test_env)
 
