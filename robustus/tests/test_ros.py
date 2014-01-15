@@ -31,7 +31,8 @@ def test_gscam_installation(tmpdir):
 
     imports = ['import rospy',
                'import boto']
-    dependencies = ['boto==2.19.0', 'ros==hydro.ros_comm']  # boto is just to ensure that non-ROS requirements are also in venv
+    dependencies = ['boto==2.19.0', 'ros==hydro.ros_comm',
+                    'opencv==2.4.4', 'numpy==1.7.1', 'sip']
     
     perform_standard_test(['ros_overlay=https://github.com/ros-drivers/gscam.git#3d976c80324f5723cd7a23c18d452c4231044cc0,https://github.com/ros/nodelet_core.git#71a90d671e49f6e4b8b73d4e856f6335e9511dba'],
                           imports,

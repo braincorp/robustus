@@ -8,7 +8,10 @@ import re
 import urlparse
 from git_accessor import GitAccessor
 import logging
+import urllib
 from collections import OrderedDict
+import string
+import hashlib
 
 
 class RequirementException(Exception):
@@ -45,6 +48,10 @@ class Requirement(object):
             self._from_specifier(kwargs['specifier'])
         elif 'rob_filename' in kwargs:
             self._from_rob(kwargs['rob_filename'])
+
+    def is_ros_package(self):
+        """ROS packages are treated differently."""
+        return self.name =='ros_overlay'
 
     def _from_rob(self, rob_filename):
         """
@@ -134,10 +141,17 @@ class Requirement(object):
         >>> Requirement('scipy').rob_filename()
         'scipy.rob'
         """
-        if self.name is not None:
-            if self.version is not None:
-                return '%s__%s.rob' % (self.name, self.version.replace('.', '_'))
+        if self.is_ros_package():
+            return self._ros_rob_filename()
+        else:
+            if self.name is not None:
+                if self.version is not None:
+                    return '%s__%s.rob' % (self.name, self.version)
             return '%s.rob' % self.name
+
+    def _ros_rob_filename(self):
+        """ROS versions can be very long - too long for filenames so we just use a hash."""
+        return 'ros_overlay__' + hashlib.sha256(self.version).hexdigest()
 
 
 class RequirementSpecifier(Requirement):
@@ -235,15 +249,24 @@ class RequirementSpecifier(Requirement):
             self.path = path_specifier
             return self.path, self.editable
 
-        # check if requirement is in <package>[==|>=]<version> format
-        mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
-        if mo is None:
-            raise RequirementException('invalid requirement specified "%s"' % specifier)
-        self.name, self.version = mo.group(1, 3)
-        # check if user accepts greater version, i.e. >= is used
-        version_specifier = mo.group(2)
-        if version_specifier is not None and version_specifier == '>=':
-            self.allow_greater_version = True
+        mo = re.match(r'^ros_overlay\w*==(.*)', specifier)
+        if mo is not None:
+            # This is a ROS package description
+            logging.info('ROS overlay %s' % specifier)
+            self.name = 'ros_overlay'
+            self.version = mo.group(1)
+            self.allow_greater_version = False
+            self.editable = False
+        else:
+            # check if requirement is in <package>[==|>=]<version> format
+            mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
+            if mo is None:
+                raise RequirementException('invalid requirement specified "%s"' % specifier)
+            self.name, self.version = mo.group(1, 3)
+            # check if user accepts greater version, i.e. >= is used
+            version_specifier = mo.group(2)
+            if version_specifier is not None and version_specifier == '>=':
+                self.allow_greater_version = True
 
         return self.name, self.version, self.allow_greater_version, self.editable
 

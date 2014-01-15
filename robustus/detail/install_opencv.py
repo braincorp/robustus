@@ -8,11 +8,16 @@ import os
 import platform
 import glob
 import sys
-from utility import cp, unpack, safe_remove, fix_rpath, ln, run_shell
+from utility import cp, unpack, safe_remove, fix_rpath, ln, run_shell, check_module_available
 from requirement import RequirementException
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+    # Make sure numpy is installed - to avoid weird error when bindings
+    # are silently not generated.
+    if not check_module_available(robustus.env, 'numpy'):
+        raise RequirementException('numpy is required for opencv')
+
     # temporary hack for bstems, otherwise opencv segfaults
     if os.uname()[4] == 'armv7l':
         candidates = ['/usr/lib/pymodules/python2.7/']
