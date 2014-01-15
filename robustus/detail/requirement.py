@@ -151,7 +151,12 @@ class Requirement(object):
 
     def _ros_rob_filename(self):
         """ROS versions can be very long - too long for filenames so we just use a hash."""
-        return 'ros_overlay__' + hashlib.sha256(self.version).hexdigest()
+        return 'ros_overlay__' + self.version_hash()
+
+    def version_hash(self):
+        """Return a string hash of the version useful for unique filenames etc.
+        """
+        return hashlib.sha256(self.version).hexdigest()
 
 
 class RequirementSpecifier(Requirement):

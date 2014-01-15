@@ -16,8 +16,11 @@ def _make_overlay_folder(robustus, requirement_specifier):
     overlay_folder = os.path.join(robustus.cache,
                                   requirement_specifier.rob_filename()[0:-3])
     if not os.path.isdir(overlay_folder):
+        build = True
         os.mkdir(overlay_folder)
-    return overlay_folder
+    else:
+        build = False
+    return overlay_folder, build
 
 
 def _get_source(package):
@@ -85,32 +88,38 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     try:
         cwd = os.getcwd()
-        overlay_folder = _make_overlay_folder(robustus, requirement_specifier)
+        overlay_folder, build = _make_overlay_folder(robustus, requirement_specifier)
         os.chdir(overlay_folder)
-
-        logging.info('Building ros overlay in %s with versions %s' % (overlay_folder,
-                                                                      str(packages)))
-
-        os.mkdir(os.path.join(overlay_folder, 'src'))
-        _get_sources(packages)
-
+        overlay_install_folder = os.path.join(robustus.env, 'ros_installed_overlay_%s'
+                              % requirement_specifier.version_hash())
         env_source = os.path.join(robustus.env, 'bin/activate')
-        _ros_dep(env_source, robustus)
 
+        if build:
+            logging.info('Building ros overlay in %s with versions %s'
+                     ' install folder %s' % (overlay_folder, str(packages),
+                                             overlay_install_folder))
+
+            os.mkdir(os.path.join(overlay_folder, 'src'))
+            _get_sources(packages)
+            _ros_dep(env_source, robustus)
+        else:
+            logging.info('ROS overlay cached')
         opencv_cmake_dir = _opencv_cmake_path(robustus)
-        ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated' %
-                             (env_source, opencv_cmake_dir) +
+        ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
+                             ' --install-space %s --install' %
+                             (env_source, opencv_cmake_dir, overlay_install_folder) +
                              ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1',
                                 verbose=robustus.settings['verbosity'] >= 1)
         if ret_code != 0:
             raise RequirementException('Error during catkin_make')
 
+        add_source_ref(robustus, os.path.join(overlay_install_folder, 'setup.sh'))
 
-
-    finally:
-        os.chdir(cwd)
+    except:
         if robustus.settings['debug']:
             logging.info('Not removing folder %s due to debug flag.' % overlay_folder)
         else:
             shutil.rmtree(overlay_folder)
-
+        raise
+    finally:
+        os.chdir(cwd)
