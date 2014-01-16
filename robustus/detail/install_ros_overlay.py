@@ -91,13 +91,13 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         overlay_folder, build = _make_overlay_folder(robustus, requirement_specifier)
         os.chdir(overlay_folder)
         overlay_install_folder = os.path.join(robustus.env, 'ros_installed_overlay_%s'
-                              % requirement_specifier.version_hash())
+                                              % requirement_specifier.version_hash())
         env_source = os.path.join(robustus.env, 'bin/activate')
 
         if build:
             logging.info('Building ros overlay in %s with versions %s'
-                     ' install folder %s' % (overlay_folder, str(packages),
-                                             overlay_install_folder))
+                         ' install folder %s' % (overlay_folder, str(packages),
+                                                 overlay_install_folder))
 
             os.mkdir(os.path.join(overlay_folder, 'src'))
             _get_sources(packages)
@@ -109,7 +109,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                              ' --install-space %s --install' %
                              (env_source, opencv_cmake_dir, overlay_install_folder) +
                              ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1',
-                                verbose=robustus.settings['verbosity'] >= 1)
+                             verbose=robustus.settings['verbosity'] >= 1)
         if ret_code != 0:
             raise RequirementException('Error during catkin_make')
 
