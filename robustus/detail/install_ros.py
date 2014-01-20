@@ -1,3 +1,4 @@
+
 # =============================================================================
 # COPYRIGHT 2013 Brain Corporation.
 # License under MIT license (see LICENSE file)
@@ -8,6 +9,7 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
+import platform
 from utility import run_shell, add_source_ref
 
 
@@ -81,7 +83,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
-                if sys.platform.machine() == 'armv7l':
+                if platform.machine() == 'armv7l':
                     # Due to the lack of LISP machine for ARM we expect some failures
                     logging.info("No LISP on ARM. Expected not all dependencies to be installed.")
                 else:
