@@ -8,12 +8,8 @@ import logging
 from robustus.detail import perform_standard_test
 
 
-def test_opencv_installation_244(tmpdir):
-    _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.4')
-
-
-def test_opencv_installation_247(tmpdir):
-    _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.7')
+def test_opencv_installation_248(tmpdir):
+    _do_test_opencv_installation(tmpdir, 'OpenCV==2.4.8')
 
 
 def _do_test_opencv_installation(tmpdir, requirement):
