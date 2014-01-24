@@ -75,7 +75,7 @@ def _ros_dep(env_source, robustus):
                         ' install -r --from-paths src --ignore-src -y',
                         verbose=robustus.settings['verbosity'] >= 1)
     if retcode != 0:
-        raise RequirementException('Failed to update ROS dependencies')
+        logging.warning('Failed to update ROS dependencies')
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):

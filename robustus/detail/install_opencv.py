@@ -18,17 +18,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if not check_module_available(robustus.env, 'numpy'):
         raise RequirementException('numpy is required for opencv')
 
-    # temporary hack for bstems, otherwise opencv segfaults
-    if os.uname()[4] == 'armv7l':
-        candidates = ['/usr/lib/pymodules/python2.7/']
-        for c in candidates:
-            if os.path.isfile(os.path.join(c, 'cv2.so')):
-                logging.info('Linking opencv from %s on arm architecture' % os.path.join(c, 'cv2.so'))
-                ln(c + 'cv2.so',
-                    os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so'), force = True)
-                return
-        raise RequirementException('can\'t find system-wide opencv on arm here: %s' % candidates)
-
     if platform.linux_distribution()[0] == 'CentOS':
         # linking opencv for CentOs
         logging.info('Linking opencv for CentOS')
