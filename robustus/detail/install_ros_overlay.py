@@ -49,18 +49,17 @@ def _opencv_cmake_path(robustus):
     """Determine the path to the OpenCV cmake file (or None if
     OpenCV is not installed)."""
 
-    found = None
-    for p in robustus.cached_packages:
-        if p.name == 'opencv':
-            if found is not None:
-                raise RequirementException('multiple opencv versions found')
-            found = p
+    opencv_packages = [p for p in robustus.cached_packages if p.name == 'opencv']
 
-    if found is None:
+    if len(opencv_packages)==0:
         logging.info('No OpenCV found - ROS overlay will build without OpenCV')
         return None
 
-    cmake_path = os.path.join(robustus.cache, 'OpenCV-%s' % found.version,
+    if len(opencv_packages)>1:
+        logging.info('multiple opencv versions found: %s. ROS will build with %s' % (opencv_packages,
+                                                                                     opencv_packages[-1]))
+
+    cmake_path = os.path.join(robustus.cache, 'OpenCV-%s' % opencv_packages[-1].version,
                               'share', 'OpenCV')
     logging.info('OpenCV Cmake path is %s' % cmake_path)
     return cmake_path
