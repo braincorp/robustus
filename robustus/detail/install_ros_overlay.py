@@ -8,8 +8,8 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
+import importlib
 from utility import run_shell, add_source_ref, check_module_available
-import os
 
 
 def _make_overlay_folder(robustus, requirement_specifier):
@@ -80,8 +80,14 @@ def _ros_dep(env_source, robustus):
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert requirement_specifier.name == 'ros_overlay'
     package_desc = requirement_specifier.version
-    packages = package_desc.split(',')
 
+    try:
+        # try to use specific packages list
+        packages_module = importlib.import_module('robustus.detail.ros_overlays.%s' % package_desc)
+        packages = packages_module.packages
+    except ImportError:
+        packages = package_desc.split(',')
+    
     if not check_module_available(robustus.env, 'rospy'):
         raise RequirementException('ROS must be installed prior to any ros nodes')
 
