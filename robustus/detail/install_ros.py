@@ -27,7 +27,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosinstall==0.6.30',
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
-                      'empy==3.3',
+                      'empy==3.3.2',
                       'rosdep==0.10.24'])
 
     def in_cache():
