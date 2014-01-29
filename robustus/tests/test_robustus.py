@@ -72,14 +72,14 @@ def test_pereditable(tmpdir):
     robustus_executable = os.path.join(test_env, 'bin/robustus')
     test_requirements = os.path.join(working_dir, 'requirements.txt')
     with open(test_requirements, 'w') as file:
-        file.write('-e git+ssh://git@github.com/braincorp/bc_artifacts@master#egg=bc_artifacts\n')
+        file.write('-e git+https://github.com/braincorp/python-ardrone.git@master#egg=ardrone\n')
 
     subprocess.call([robustus_executable, 'install', '-r', test_requirements])
 
     # Now check that robustus behaves as expected
     subprocess.call([robustus_executable, 'perrepo', 'touch', 'foo'])
     assert os.path.exists(os.path.join(working_dir, 'foo'))
-    assert os.path.exists(os.path.join(test_env, 'src', 'bc-artifacts', 'foo'))
+    assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'foo'))
 
 
 if __name__ == '__main__':
