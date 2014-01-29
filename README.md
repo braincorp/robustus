@@ -101,6 +101,14 @@ Later, this state can be retrieved by cloning the base repo and
     git checkout tag-name
     robustus install requirements.txt --tag tag-name
 
+Underneath this functionality is implemented by a useful utility command
+
+	robustus perrepo anything after here
+
+which will run whatever is specified once at each editable repo (including
+the base repo). This can be used to update all dependencies (e.g. git pull ...).
+
+
 ### Misc
 
 It it sometimes helpful to perform operations across all the editable repos in an
