@@ -87,3 +87,33 @@ cache).
 
 As you can see you can freely move cache and merge them by just copying files. Though it is dangerous
 to remove files from the cache as well as move separate files from one cache to another.
+
+
+### Tagging
+
+Robustus supports tagging as a way of recording the state of the multi-repo project. Git
+tags are created for all editable packages and pushed to the origin repo.
+
+	 robustus tag tag-name
+
+Later, this state can be retrieved by cloning the base repo and
+
+    git checkout tag-name
+    robustus install requirements.txt --tag tag-name
+
+Underneath this functionality is implemented by a useful utility command
+
+	robustus perrepo anything after here
+
+which will run whatever is specified once at each editable repo (including
+the base repo). This can be used to update all dependencies (e.g. git pull ...).
+
+
+### Misc
+
+It it sometimes helpful to perform operations across all the editable repos in an
+environment (such as git updates etc.).
+
+    robustus perrepo [--not-base] operation
+
+supports this.
