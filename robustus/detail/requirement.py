@@ -434,6 +434,34 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None):
     return expand_requirements_specifiers(req_file_content, git_accessor, visited_sites) + [original_req]
 
 
+def _filter_requirements_lines(lines):
+    '''
+    Remove commented and empty lines. Concatenate lines separated with '\'
+    '''
+    
+    lines = [l for l in lines if not(l.isspace() or (len(l) < 2))]
+    lines = [l for l in lines if not(l[0] == '#')]
+    lines = [l.strip() for l in lines]
+      
+    filtered_lines = []
+    concatenation = ''
+    for l in lines:
+        if l.endswith('\\'):
+            concatenation += l[:-1]
+        else:
+            if len(concatenation):
+                # the last line of concatenation
+                concatenation += l
+                filtered_lines.append(concatenation)
+                concatenation = ''
+            else:
+                # normal line
+                filtered_lines.append(l)
+    if len(concatenation):
+        filtered_lines.append(concatenation)
+    return filtered_lines
+
+
 def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None):
     '''
     Nice dirty hack to have a clean workflow:)
@@ -453,9 +481,11 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
     requirements = []
     if git_accessor is None:
         git_accessor = GitAccessor()
-    for line in specifiers_list:
-        if line[0] == '#' or line.isspace() or (len(line) < 2):
-            continue
+
+    # remove comments, empty lines, concatenate lines with '\'
+    filtered_lines = _filter_requirements_lines(specifiers_list)
+
+    for line in filtered_lines:
         r = RequirementSpecifier(specifier=line)
         if r.freeze() not in [ritem.freeze() for ritem in requirements]:
             requirements += do_requirement_recursion(git_accessor, r, visited_sites)
