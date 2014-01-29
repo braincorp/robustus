@@ -290,6 +290,23 @@ class Robustus(object):
 
         return None
 
+    def perrepo(self, args):
+        # Use git to find the top-level working folder and run the command
+        cmd_str = ' '.join(args.command)
+        os.system('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s' 
+                  % (self._activate_path(), cmd_str))
+
+        for d in os.listdir(os.path.join(self.env, 'src')):
+            full_path = os.path.join(self.env, 'src', d)
+            if os.path.isdir(full_path):
+                logging.info('Running command in %s' % full_path)
+                os.system('cd "%s" && . "%s" && %s' % (full_path,
+                                                       self._activate_path(), cmd_str))
+
+    def _activate_path(self):
+        """Return the path to the virtual env activate file."""
+        return os.path.join(self.env, 'bin', 'activate')
+
     def install(self, args):
         # grab index locations
         if args.find_links is not None:
@@ -522,6 +539,11 @@ class Robustus(object):
                                     help='clone all editable non-versioned requirements inside venv '
                                          '(by default robustus skips editable requiterements)')
         install_parser.set_defaults(func=Robustus.install)
+
+        perrepo_parser = subparsers.add_parser('perrepo',
+                                               help='Run command across the editable repos')
+        perrepo_parser.add_argument('command', nargs=argparse.REMAINDER)
+        perrepo_parser.set_defaults(func=Robustus.perrepo)
 
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)
