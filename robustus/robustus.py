@@ -314,6 +314,7 @@ class Robustus(object):
 
         logging.info('Here are all packages cached in robustus:\n' +
                      '\n'.join([r.freeze() for r in self.cached_packages]) + '\n')
+
         logging.info('Here are all the requirements robustus is going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]) + '\n')
         # install

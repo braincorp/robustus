@@ -257,7 +257,6 @@ class RequirementSpecifier(Requirement):
         mo = re.match(r'^ros_overlay\w*==(.*)', specifier)
         if mo is not None:
             # This is a ROS package description
-            logging.info('ROS overlay %s' % specifier)
             self.name = 'ros_overlay'
             self.version = mo.group(1)
             self.allow_greater_version = False
@@ -438,7 +437,6 @@ def _filter_requirements_lines(lines):
     '''
     Remove commented and empty lines. Concatenate lines separated with '\'
     '''
-    
     lines = [l for l in lines if not(l.isspace() or (len(l) < 2))]
     lines = [l for l in lines if not(l[0] == '#')]
     lines = [l.strip() for l in lines]
@@ -508,6 +506,11 @@ def remove_duplicate_requirements(requirements_list):
     version.
     '''
     result = OrderedDict()
+    ros_overlay_counter = 0
     for r in requirements_list:
-        result[r.base_name()] = r
+        name = r.base_name()
+        if name == 'ros_overlay':
+            name += str(ros_overlay_counter)
+            ros_overlay_counter += 1
+        result[name] = r
     return result.values()

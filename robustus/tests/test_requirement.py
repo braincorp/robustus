@@ -99,7 +99,22 @@ def test_remove_requirements_duplicates():
     assert(sparse_list[0].freeze() == 'numpy==1.7.3')
     assert(sparse_list[1].freeze() == 'pytest==2')
     assert(sparse_list[2].freeze() == '-e git+https://github.com/company/my_package@master#egg=my_package')
+
+
+def test_remove_requirements_duplicates_with_ros_overlays():
+    req_list = [RequirementSpecifier(specifier='numpy == 1.7.2  # comment'),
+                RequirementSpecifier(specifier='numpy==1.7.2'),
+                RequirementSpecifier(specifier='ros_overlay==https://github.com/ros/robot_model.git'),
+                RequirementSpecifier(specifier='ros_overlay==https://github.com/ros/robot_model2.git'),
+                RequirementSpecifier(specifier='numpy==1.7.3')]
+                 
+    sparse_list = remove_duplicate_requirements(req_list)
+    assert(len(sparse_list) == 3)
  
+    assert(sparse_list[0].freeze() == 'numpy==1.7.3')
+    assert(sparse_list[1].freeze() == 'ros_overlay==https://github.com/ros/robot_model.git')
+    assert(sparse_list[2].freeze() == 'ros_overlay==https://github.com/ros/robot_model2.git')
+
  
 def test_requirement_recursion_starting_with_local_non_editable(tmpdir):
     temp_folder = str(tmpdir.mkdtemp())
@@ -263,5 +278,5 @@ def test_multiline_requirements_parsing(tmpdir):
 
 
 if __name__ == '__main__':
-    #doctest.testmod(robustus.detail.requirement)
+    doctest.testmod(robustus.detail.requirement)
     pytest.main('-s %s -n0' % __file__)
