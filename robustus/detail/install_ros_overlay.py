@@ -86,9 +86,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert requirement_specifier.name == 'ros_overlay'
     packages = requirement_specifier.version.split(',')
 
-#     if not check_module_available(robustus.env, 'rospy'):
-#         raise RequirementException('ROS must be installed prior to any ros nodes')
-
     try:
         cwd = os.getcwd()
         overlay_folder, build = _make_overlay_folder(robustus, requirement_specifier)
