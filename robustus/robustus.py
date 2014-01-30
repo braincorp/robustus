@@ -290,9 +290,16 @@ class Robustus(object):
 
         return None
 
+    def tag(self, args):
+        tag_name = args.tag
+        print 'tagging with %s' % tag_name
+
     def perrepo(self, args):
         # Use git to find the top-level working folder and run the command
         cmd_str = ' '.join(args.command)
+        self._perrepo(cmd_str)
+
+    def _perrepo(self, cmd_str):
         os.system('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s' 
                   % (self._activate_path(), cmd_str))
 
@@ -544,6 +551,11 @@ class Robustus(object):
                                                help='Run command across the editable repos')
         perrepo_parser.add_argument('command', nargs=argparse.REMAINDER)
         perrepo_parser.set_defaults(func=Robustus.perrepo)
+
+        tag = subparsers.add_parser('tag',
+                                    help='Tag all editable repos and push tags')
+        tag.add_argument('tag', nargs=1, action='store')
+        tag.set_defaults(func=Robustus.tag)
 
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)
