@@ -178,6 +178,17 @@ class RequirementSpecifier(Requirement):
         if 'specifier' in kwargs:
             self._from_specifier(kwargs['specifier'])
 
+    def override_branch(self, tag):
+        """Modified the specified branch to a given tag or branch."""
+        assert self.editable
+        actual_url = self.url.geturl()
+        assert actual_url[0:3] == 'git'
+        match = re.match('([^@]*)@([^#]*)#(.*)', actual_url)
+        assert match is not None
+        new_url = match.group(1) + '@' + tag + '#' + match.group(3)
+        logging.info('New URL is %s' % new_url)
+        self.url = urlparse.urlparse(new_url)
+
     def _from_specifier(self, specifier):
         """
         Extract requirement name and version from requirement string

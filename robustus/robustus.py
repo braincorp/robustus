@@ -226,14 +226,14 @@ class Robustus(object):
                                        % (requirement_specifier.freeze(), self.cache))
         logging.info('Done')
 
-    def install_requirement(self, requirement_specifier, ignore_index):
+    def install_requirement(self, requirement_specifier, ignore_index, tag):
         logging.info('Installing ' + requirement_specifier.freeze())
+        if tag:
+            logging.info('with tag %s' % tag)
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
             # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
-            # TODO: use install scripts for specific packages (https://braincorporation.atlassian.net/browse/MISC-49)
-
             if not self.settings['update_editables'] and \
                     requirement_specifier.url is not None and \
                     requirement_specifier.editable:
@@ -249,6 +249,10 @@ class Robustus(object):
 
             # here we have to run via shell because requirement can be editable and then it will require
             # extra parsing to extract -e flag into separate argument.
+            if tag and requirement_specifier.editable:
+                logging.info('Overriding editable branch with tag %s' % tag)
+                requirement_specifier.override_branch(tag)
+
             command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '
                          'Fall back to pip shell command:%s' % (command,))
@@ -290,9 +294,17 @@ class Robustus(object):
 
         return None
 
+    def tag(self, args):
+        tag_name = args.tag
+        self._perrepo('git tag %s' % tag_name)
+        self._perrepo('git push origin %s' % tag_name)
+
     def perrepo(self, args):
         # Use git to find the top-level working folder and run the command
         cmd_str = ' '.join(args.command)
+        self._perrepo(cmd_str)
+
+    def _perrepo(self, cmd_str):
         os.system('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s' 
                   % (self._activate_path(), cmd_str))
 
@@ -315,6 +327,10 @@ class Robustus(object):
         # determine whether to do cloning of editable non-versioned requirements
         self.settings['update_editables'] = args.update_editables
 
+        tag = args.tag
+        if tag is not None:
+            logging.info('Installing with tag %s' % tag)
+
         # construct requirements list
         specifiers = args.packages
         if args.editable is not None:
@@ -336,7 +352,7 @@ class Robustus(object):
                      '\n'.join([r.freeze() for r in requirements]) + '\n')
         # install
         for requirement_specifier in requirements:
-            self.install_requirement(requirement_specifier, args.no_index)
+            self.install_requirement(requirement_specifier, args.no_index, tag)
 
     def freeze(self, args):
         for requirement in self.cached_packages:
@@ -539,12 +555,20 @@ class Robustus(object):
                                     action='store_true',
                                     help='clone all editable non-versioned requirements inside venv '
                                          '(by default robustus skips editable requiterements)')
+        install_parser.add_argument('--tag',
+                                    action='store',
+                                    help='Install editables using tag or branch')
         install_parser.set_defaults(func=Robustus.install)
 
         perrepo_parser = subparsers.add_parser('perrepo',
                                                help='Run command across the editable repos')
         perrepo_parser.add_argument('command', nargs=argparse.REMAINDER)
         perrepo_parser.set_defaults(func=Robustus.perrepo)
+
+        tag = subparsers.add_parser('tag',
+                                    help='Tag all editable repos and push tags')
+        tag.add_argument('tag', action='store')
+        tag.set_defaults(func=Robustus.tag)
 
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)
