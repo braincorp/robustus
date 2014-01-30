@@ -42,4 +42,3 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 os.path.join(robustus.env, 'lib/python2.7/site-packages/PyQt4'), force = True)
         else:
             raise RequirementException('System-wide PySide is missing, run: sudo apt-get install python-pyside')
-
