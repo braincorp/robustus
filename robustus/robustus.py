@@ -292,7 +292,8 @@ class Robustus(object):
 
     def tag(self, args):
         tag_name = args.tag
-        print 'tagging with %s' % tag_name
+        self._perrepo('git tag %s' % tag_name)
+        self._perrepo('git push origin %s' % tag_name)
 
     def perrepo(self, args):
         # Use git to find the top-level working folder and run the command
@@ -555,7 +556,7 @@ class Robustus(object):
 
         tag = subparsers.add_parser('tag',
                                     help='Tag all editable repos and push tags')
-        tag.add_argument('tag', nargs=1, action='store')
+        tag.add_argument('tag', action='store')
         tag.set_defaults(func=Robustus.tag)
 
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
