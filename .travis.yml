@@ -7,7 +7,11 @@ install:
   # sdformat dependencies
   - sudo apt-get install -y --force-yes libtinyxml-dev
   # Gazebo dependencies
-  - sudo apt-get install -y --force-yes libboost-all-dev libprotoc-dev libprotobuf-dev protobuf-compiler libqt4-dev libtar-dev
+  - sudo apt-get install -y --force-yes build-essential libboost-all-dev pkg-config \
+                                        libprotoc-dev libprotobuf-dev protobuf-compiler libqt4-dev libtar-dev \
+                                        libcurl4-openssl-dev libcegui-mk2-dev libtbb-dev \
+                                        libswscale-dev libavformat-dev libavcodec-dev libogre-1.8-dev \
+                                        libgts-dev libltdl3-dev playerc++ libxml2-dev libfreeimage-dev freeglut3-dev
   - source use_repo.sh
 script:
   - py.test -s
