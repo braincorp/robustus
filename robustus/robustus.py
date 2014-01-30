@@ -346,7 +346,7 @@ class Robustus(object):
                                                                             requirement_specifier.version)))
 
         def in_cache():
-            return os.path.isfile(os.path.join(pkg_cache_dir, 'lib/libsdformat.so'))
+            return os.path.isdir(pkg_cache_dir)
 
         if not in_cache() and not ignore_index:
             cwd = os.getcwd()
@@ -365,26 +365,28 @@ class Robustus(object):
                                     shell=False,
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
-                    raise RequirementException('gazebo build failed')
+                    raise RequirementException('%s build failed' % requirement_specifier.name)
                 retcode = run_shell(['make', 'install'],
                                     shell=False,
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
-                    raise RequirementException('gazebo "make install" failed')
+                    raise RequirementException('%s "make install" failed' % requirement_specifier.name)
             finally:
                 safe_remove(pkg_archive)
                 safe_remove(pkg_archive_name)
                 os.chdir(cwd)
 
+        pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
+                                                                requirement_specifier.version))
         if in_cache():
             # install gazebo somewhere into venv
-            pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
-                                                                    requirement_specifier.version))
             if os.path.exists(pkg_install_dir):
                 shutil.rmtree(pkg_install_dir)
             shutil.copytree(pkg_cache_dir, pkg_install_dir)
         else:
             raise RequirementException('can\'t find gazebo-%s in robustus cache' % requirement_specifier.version)
+
+        return pkg_install_dir
 
     def freeze(self, args):
         for requirement in self.cached_packages:
