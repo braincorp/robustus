@@ -28,7 +28,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
                       'empy==3.3.2',
-                      'rosdep==0.10.24'])
+                      'rosdep==0.10.24',
+                      'sip'])
 
     def in_cache():
         devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
@@ -51,8 +52,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
             # add ros package sources
             if sys.platform.startswith('linux') and not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
-                os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu precise main"'
-                          ' > /etc/apt/sources.list.d/ros-latest.list\'')
+                ubuntu_distr = platform.linux_distribution()[2]
+                os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu %s main"'
+                          ' > /etc/apt/sources.list.d/ros-latest.list\'' % ubuntu_distr)
                 os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
                 os.system('sudo apt-get update')
 

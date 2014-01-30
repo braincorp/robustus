@@ -8,8 +8,8 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
+import importlib
 from utility import run_shell, add_source_ref, check_module_available
-import os
 
 
 def _make_overlay_folder(robustus, requirement_specifier):
@@ -27,12 +27,17 @@ def _get_source(package):
     """Download source code for package."""
     logging.info('Obtaining ROS package %s' % package)
     # Break the git spec into components
-    if '#' in package:
-        origin, branch = package.split('#')
+    if package.startswith('git@'):
+        # searching '@' after git@
+        at_pos = package.find('@', 5) 
+    else:
+        at_pos = package.find('@')
+
+    if at_pos > 0:
+        origin, branch = package[:at_pos], package[at_pos+1:]
         branch_str = '--branch ' + branch
     else:
-        origin = package
-        branch = None
+        origin, branch = package, None
         branch_str = ''
 
     run_shell('git clone "%s" %s' % (origin, branch_str))
@@ -49,18 +54,17 @@ def _opencv_cmake_path(robustus):
     """Determine the path to the OpenCV cmake file (or None if
     OpenCV is not installed)."""
 
-    found = None
-    for p in robustus.cached_packages:
-        if p.name == 'opencv':
-            if found is not None:
-                raise RequirementException('multiple opencv versions found')
-            found = p
+    opencv_packages = [p for p in robustus.cached_packages if p.name == 'opencv']
 
-    if found is None:
+    if len(opencv_packages)==0:
         logging.info('No OpenCV found - ROS overlay will build without OpenCV')
         return None
 
-    cmake_path = os.path.join(robustus.cache, 'OpenCV-%s' % found.version,
+    if len(opencv_packages)>1:
+        logging.info('multiple opencv versions found: %s. ROS will build with %s' % (opencv_packages,
+                                                                                     opencv_packages[-1]))
+
+    cmake_path = os.path.join(robustus.cache, 'OpenCV-%s' % opencv_packages[-1].version,
                               'share', 'OpenCV')
     logging.info('OpenCV Cmake path is %s' % cmake_path)
     return cmake_path
@@ -80,11 +84,7 @@ def _ros_dep(env_source, robustus):
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert requirement_specifier.name == 'ros_overlay'
-    package_desc = requirement_specifier.version
-    packages = package_desc.split(',')
-
-    if not check_module_available(robustus.env, 'rospy'):
-        raise RequirementException('ROS must be installed prior to any ros nodes')
+    packages = requirement_specifier.version.split(',')
 
     try:
         cwd = os.getcwd()

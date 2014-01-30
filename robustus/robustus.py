@@ -337,9 +337,10 @@ class Robustus(object):
         requirements = remove_duplicate_requirements(requirements)
 
         logging.info('Here are all packages cached in robustus:\n' +
-                     '\n'.join([r.freeze() for r in self.cached_packages]))
+                     '\n'.join([r.freeze() for r in self.cached_packages]) + '\n')
+
         logging.info('Here are all the requirements robustus is going to install:\n' +
-                     '\n'.join([r.freeze() for r in requirements]))
+                     '\n'.join([r.freeze() for r in requirements]) + '\n')
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index)
