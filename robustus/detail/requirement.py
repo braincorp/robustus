@@ -178,7 +178,6 @@ class RequirementSpecifier(Requirement):
         if 'specifier' in kwargs:
             self._from_specifier(kwargs['specifier'])
 
-
     def override_branch(self, tag):
         """Modified the specified branch to a given tag or branch."""
         assert self.editable
