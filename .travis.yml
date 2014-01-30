@@ -10,7 +10,7 @@ install:
   - sudo apt-get install -y --force-yes build-essential libboost-all-dev pkg-config
   - sudo apt-get install -y --force-yes libprotoc-dev libprotobuf-dev protobuf-compiler libqt4-dev libtar-dev
   - sudo apt-get install -y --force-yes libcurl4-openssl-dev libcegui-mk2-dev libtbb-dev
-  - sudo apt-get install -y --force-yes libswscale-dev libavformat-dev libavcodec-dev libogre-1.8-dev
+  - sudo apt-get install -y --force-yes libswscale-dev libavformat-dev libavcodec-dev libogre-dev
   - sudo apt-get install -y --force-yes libgts-dev libltdl3-dev playerc++ libxml2-dev libfreeimage-dev freeglut3-dev
   - source use_repo.sh
 script:
