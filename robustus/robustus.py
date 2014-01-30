@@ -8,11 +8,12 @@ import glob
 import importlib
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
-from detail.utility import ln, run_shell, download
+from detail.utility import ln, run_shell, download, safe_remove, unpack
 import urllib2
 # for doctests
 import detail
@@ -336,6 +337,54 @@ class Robustus(object):
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index)
+
+    def install_cmake_package(self, requirement_specifier, cmake_options, ignore_index):
+        """
+        Build and install cmake package into cache & copy it to env.
+        """
+        pkg_cache_dir = os.path.abspath(os.path.join(self.cache, '%s-%s' % (requirement_specifier.name,
+                                                                            requirement_specifier.version)))
+
+        def in_cache():
+            return os.path.isfile(os.path.join(pkg_cache_dir, 'lib/libsdformat.so'))
+
+        if not in_cache() and not ignore_index:
+            cwd = os.getcwd()
+            pkg_archive = None
+            pkg_archive_name = None
+            try:
+                pkg_archive = self.download(requirement_specifier.name, requirement_specifier.version)
+                pkg_archive_name = unpack(pkg_archive)
+
+                logging.info('Building %s' % requirement_specifier.name)
+                os.chdir(pkg_archive_name)
+                run_shell(['cmake', '.', '-DCMAKE_INSTALL_PREFIX=%s' % pkg_cache_dir] + cmake_options,
+                          shell=False,
+                          verbose=self.settings['verbosity'] >= 1)
+                retcode = run_shell(['make', '-j4'],
+                                    shell=False,
+                                    verbose=self.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('gazebo build failed')
+                retcode = run_shell(['make', 'install'],
+                                    shell=False,
+                                    verbose=self.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('gazebo "make install" failed')
+            finally:
+                safe_remove(pkg_archive)
+                safe_remove(pkg_archive_name)
+                os.chdir(cwd)
+
+        if in_cache():
+            # install gazebo somewhere into venv
+            pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
+                                                                    requirement_specifier.version))
+            if os.path.exists(pkg_install_dir):
+                shutil.rmtree(pkg_install_dir)
+            shutil.copytree(pkg_cache_dir, pkg_install_dir)
+        else:
+            raise RequirementException('can\'t find gazebo-%s in robustus cache' % requirement_specifier.version)
 
     def freeze(self, args):
         for requirement in self.cached_packages:
