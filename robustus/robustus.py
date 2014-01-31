@@ -4,6 +4,7 @@
 # =============================================================================
 
 import argparse
+import fnmatch
 import glob
 import importlib
 import logging
@@ -338,6 +339,22 @@ class Robustus(object):
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index)
 
+    def search_pkg_config_locations(self, locations=None):
+        """
+        Search for pkg-config files locations. Usually all libraries are going to '<env>/lib' folder, so
+        search it recursively for *.pc files.
+        """
+        if locations is None:
+            locations = [os.path.abspath(os.path.join(self.env, 'lib'))]
+
+        pkg_files_dirs = set()
+        for loc in locations:
+            for root, dirnames, filenames in os.walk(loc):
+                for filename in fnmatch.filter(filenames, '*.pc'):
+                    pkg_files_dirs.add(root)
+
+        return list(pkg_files_dirs)
+
     def install_cmake_package(self, requirement_specifier, cmake_options, ignore_index):
         """
         Build and install cmake package into cache & copy it to env.
@@ -350,17 +367,22 @@ class Robustus(object):
 
         if not in_cache() and not ignore_index:
             cwd = os.getcwd()
-            pkg_archive = None
-            pkg_archive_name = None
+            archive = None
+            archive_name = None
             try:
-                pkg_archive = self.download(requirement_specifier.name, requirement_specifier.version)
-                pkg_archive_name = unpack(pkg_archive)
+                archive = self.download(requirement_specifier.name, requirement_specifier.version)
+                archive_name = unpack(archive)
 
                 logging.info('Building %s' % requirement_specifier.name)
-                os.chdir(pkg_archive_name)
-                run_shell(['cmake', '.', '-DCMAKE_INSTALL_PREFIX=%s' % pkg_cache_dir] + cmake_options,
-                          shell=False,
-                          verbose=self.settings['verbosity'] >= 1)
+                os.chdir(archive_name)
+                env = os.environ.copy()
+                env['PKG_CONFIG_PATH'] = ','.join(self.search_pkg_config_locations())
+                retcode = run_shell(['cmake', '.', '-DCMAKE_INSTALL_PREFIX=%s' % pkg_cache_dir] + cmake_options,
+                                    shell=False,
+                                    env=env,
+                                    verbose=self.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('%s configure failed' % requirement_specifier.name)
                 retcode = run_shell(['make', '-j4'],
                                     shell=False,
                                     verbose=self.settings['verbosity'] >= 1)
@@ -372,8 +394,8 @@ class Robustus(object):
                 if retcode != 0:
                     raise RequirementException('%s "make install" failed' % requirement_specifier.name)
             finally:
-                safe_remove(pkg_archive)
-                safe_remove(pkg_archive_name)
+                safe_remove(archive)
+                safe_remove(archive_name)
                 os.chdir(cwd)
 
         pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
