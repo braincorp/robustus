@@ -35,12 +35,19 @@ def _get_source(package):
 
     if at_pos > 0:
         origin, branch = package[:at_pos], package[at_pos+1:]
-        branch_str = '--branch ' + branch
     else:
         origin, branch = package, None
-        branch_str = ''
 
-    run_shell('git clone "%s" %s' % (origin, branch_str))
+    ret_code = run_shell('git clone "%s"' % origin)
+    if ret_code != 0:
+        raise Exception('git clone failed')
+
+    if branch is not None:
+        clone_folder = os.path.splitext(os.path.basename(package))[0]
+        ret_code = run_shell('cd "%s" && git checkout %s' %
+                             (clone_folder, branch))
+        if ret_code != 0:
+            raise Exception('git checkout failed')
 
 
 def _get_sources(packages):
