@@ -4,15 +4,17 @@
 # =============================================================================
 
 import argparse
+import fnmatch
 import glob
 import importlib
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
-from detail.utility import ln, run_shell, download
+from detail.utility import ln, run_shell, download, safe_remove, unpack
 import urllib2
 # for doctests
 import detail
@@ -353,6 +355,77 @@ class Robustus(object):
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index, tag)
+
+    def search_pkg_config_locations(self, locations=None):
+        """
+        Search for pkg-config files locations. Usually all libraries are going to '<env>/lib' folder, so
+        search it recursively for *.pc files.
+        """
+        if locations is None:
+            locations = [os.path.abspath(os.path.join(self.env, 'lib'))]
+
+        pkg_files_dirs = set()
+        for loc in locations:
+            for root, dirnames, filenames in os.walk(loc):
+                for filename in fnmatch.filter(filenames, '*.pc'):
+                    pkg_files_dirs.add(root)
+
+        return list(pkg_files_dirs)
+
+    def install_cmake_package(self, requirement_specifier, cmake_options, ignore_index):
+        """
+        Build and install cmake package into cache & copy it to env.
+        """
+        pkg_cache_dir = os.path.abspath(os.path.join(self.cache, '%s-%s' % (requirement_specifier.name,
+                                                                            requirement_specifier.version)))
+
+        def in_cache():
+            return os.path.isdir(pkg_cache_dir)
+
+        if not in_cache() and not ignore_index:
+            cwd = os.getcwd()
+            archive = None
+            archive_name = None
+            try:
+                archive = self.download(requirement_specifier.name, requirement_specifier.version)
+                archive_name = unpack(archive)
+
+                logging.info('Building %s' % requirement_specifier.name)
+                os.chdir(archive_name)
+                env = os.environ.copy()
+                env['PKG_CONFIG_PATH'] = ','.join(self.search_pkg_config_locations())
+                retcode = run_shell(['cmake', '.', '-DCMAKE_INSTALL_PREFIX=%s' % pkg_cache_dir] + cmake_options,
+                                    shell=False,
+                                    env=env,
+                                    verbose=self.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('%s configure failed' % requirement_specifier.name)
+                retcode = run_shell(['make', '-j4'],
+                                    shell=False,
+                                    verbose=self.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('%s build failed' % requirement_specifier.name)
+                retcode = run_shell(['make', 'install'],
+                                    shell=False,
+                                    verbose=self.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('%s "make install" failed' % requirement_specifier.name)
+            finally:
+                safe_remove(archive)
+                safe_remove(archive_name)
+                os.chdir(cwd)
+
+        pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
+                                                                requirement_specifier.version))
+        if in_cache():
+            # install gazebo somewhere into venv
+            if os.path.exists(pkg_install_dir):
+                shutil.rmtree(pkg_install_dir)
+            shutil.copytree(pkg_cache_dir, pkg_install_dir)
+        else:
+            raise RequirementException('can\'t find gazebo-%s in robustus cache' % requirement_specifier.version)
+
+        return pkg_install_dir
 
     def freeze(self, args):
         for requirement in self.cached_packages:

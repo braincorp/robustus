@@ -163,7 +163,7 @@ def safe_remove(path):
         shutil.rmtree(path)
 
 
-def run_shell(command, shell=True, verbose=False):
+def run_shell(command, shell=True, verbose=False, **kwargs):
     """
     Run command logging accordingly to the verbosity level.
     """
@@ -173,7 +173,8 @@ def run_shell(command, shell=True, verbose=False):
         p = subprocess.Popen(command,
                              shell=shell,
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+                             stderr=subprocess.STDOUT,
+                             **kwargs)
         while p.poll() is None:
             print p.stdout.readline(),
     else:
@@ -182,7 +183,8 @@ def run_shell(command, shell=True, verbose=False):
             p = subprocess.Popen(command,
                                  shell=shell,
                                  stdout=logfile,
-                                 stderr=subprocess.STDOUT)
+                                 stderr=subprocess.STDOUT,
+                                 **kwargs)
 
             # print dots to wake TRAVIS
             secs = 0
