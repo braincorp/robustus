@@ -96,10 +96,10 @@ tags are created for all editable packages and pushed to the origin repo.
 
 	 robustus tag tag-name
 
-Later, this state can be retrieved by cloning the base repo and
+Later, this state can be retrieved by cloning the base repo and 
 
     git checkout tag-name
-    robustus install requirements.txt --tag tag-name
+    robustus install -r requirements.txt --tag tag-name
 
 Underneath this functionality is implemented by a useful utility command
 
