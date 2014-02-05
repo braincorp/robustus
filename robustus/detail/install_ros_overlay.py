@@ -43,7 +43,7 @@ def _get_source(package):
         raise Exception('git clone failed')
 
     if branch is not None:
-        clone_folder = os.path.splitext(os.path.basename(package))[0]
+        clone_folder = os.path.splitext(os.path.basename(origin))[0]
         ret_code = run_shell('cd "%s" && git checkout %s' %
                              (clone_folder, branch))
         if ret_code != 0:
