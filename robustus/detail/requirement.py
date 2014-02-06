@@ -183,7 +183,7 @@ class RequirementSpecifier(Requirement):
         assert self.editable
         actual_url = self.url.geturl()
         assert actual_url[0:3] == 'git'
-        match = re.match('([^@]*)@([^#]*)#(.*)', actual_url)
+        match = re.match('(.*)@([^#]*)#(.*)', actual_url)
         assert match is not None
         new_url = match.group(1) + '@' + tag + '#' + match.group(3)
         logging.info('New URL is %s' % new_url)
@@ -382,7 +382,8 @@ def _split_egg_and_url(url):
     return url[:egg_position], url[egg_position+5:]
 
 
-def _obtain_requirements_from_remote_package(git_accessor, original_req):
+def _obtain_requirements_from_remote_package(git_accessor, original_req,
+                                             override_tag=None):
     url = original_req.url.geturl()[4:]
     url, name = _split_egg_and_url(url)
 
@@ -396,6 +397,8 @@ def _obtain_requirements_from_remote_package(git_accessor, original_req):
         link, tag = url[:at_pos], url[at_pos+1:]
     else:
         link, tag = url, None
+    if override_tag:
+        tag = override_tag
 
     logging.info('Obtaining requirements from remote package %s(%s)' % (link, tag))
     return git_accessor.access(link, tag, 'requirements.txt')
@@ -411,7 +414,8 @@ def _obtain_requirements_from_local_package(original_req):
         return None
 
 
-def do_requirement_recursion(git_accessor, original_req, visited_sites = None):
+def do_requirement_recursion(git_accessor, original_req, visited_sites = None,
+                             tag=None):
     '''
     Recursive extraction of requirements from -e git+.. pip links.
     @return: list
@@ -431,7 +435,7 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None):
                 return [original_req]
             else:
                 req_file_content = _obtain_requirements_from_remote_package(
-                    git_accessor, original_req)
+                    git_accessor, original_req, override_tag=tag)
         else:
             req_file_content = _obtain_requirements_from_local_package(original_req)
     
@@ -471,7 +475,7 @@ def _filter_requirements_lines(lines):
     return filtered_lines
 
 
-def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None):
+def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None, tag=None):
     '''
     Nice dirty hack to have a clean workflow:)
     In order to process hierarchical dependencies, we assume that -e git+ links
@@ -496,17 +500,20 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
 
     for line in filtered_lines:
         r = RequirementSpecifier(specifier=line)
+        if tag:
+            r.override_branch(tag)
         if r.freeze() not in [ritem.freeze() for ritem in requirements]:
-            requirements += do_requirement_recursion(git_accessor, r, visited_sites)
+            requirements += do_requirement_recursion(git_accessor, r, visited_sites,
+                                                     tag=tag)
             requirements = remove_duplicate_requirements(requirements)
 
     return requirements
 
 
-def read_requirement_file(requirement_file):
+def read_requirement_file(requirement_file, tag):
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
-    return expand_requirements_specifiers(specifiers_list)
+    return expand_requirements_specifiers(specifiers_list, tag=tag)
 
 
 def remove_duplicate_requirements(requirements_list):

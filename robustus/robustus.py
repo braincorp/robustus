@@ -340,7 +340,7 @@ class Robustus(object):
         requirements = expand_requirements_specifiers(specifiers)
         if args.requirement is not None:
             for requirement_file in args.requirement:
-                requirements += read_requirement_file(requirement_file)
+                requirements += read_requirement_file(requirement_file, tag)
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
