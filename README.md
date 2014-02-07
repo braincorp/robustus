@@ -101,6 +101,10 @@ Later, this state can be retrieved by cloning the base repo and
     git checkout tag-name
     robustus install -r requirements.txt --tag tag-name
 
+Alternatively, you can also checkout a tag after cloning (this will not work if the requirements for the tag version are different) using:
+
+    robustus checkout tag-name
+
 Underneath this functionality is implemented by a useful utility command
 
 	robustus perrepo anything after here

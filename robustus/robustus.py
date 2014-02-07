@@ -241,7 +241,7 @@ class Robustus(object):
                     requirement_specifier.editable:
                 editable_requirement_path = os.path.join(self.env, 'src', requirement_specifier.name)
                 logging.info('Got url-based requirement. Checking if exists %s ' % (editable_requirement_path,))
-                if os.path.exists(editable_requirement_path):
+                if tag is None and os.path.exists(editable_requirement_path):
                     logging.info('For safety reasons robustus will not proceed with requirement %s, '
                                  'because directories for installing this package already exists (%s). '
                                  'To update editable dependency, please remove folder and run again.' %
@@ -301,6 +301,10 @@ class Robustus(object):
         self._perrepo('git tag %s' % tag_name)
         self._perrepo('git push origin %s' % tag_name)
 
+    def checkout(self, args):
+        self._perrepo('git fetch origin')
+        self._perrepo('git checkout %s' % args.tag)
+
     def perrepo(self, args):
         # Use git to find the top-level working folder and run the command
         cmd_str = ' '.join(args.command)
@@ -340,7 +344,7 @@ class Robustus(object):
         requirements = expand_requirements_specifiers(specifiers)
         if args.requirement is not None:
             for requirement_file in args.requirement:
-                requirements += read_requirement_file(requirement_file)
+                requirements += read_requirement_file(requirement_file, tag)
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
@@ -642,6 +646,11 @@ class Robustus(object):
                                     help='Tag all editable repos and push tags')
         tag.add_argument('tag', action='store')
         tag.set_defaults(func=Robustus.tag)
+
+        checkout = subparsers.add_parser('checkout',
+                                         help='Perrepo shortcut to checkout a tag on all editables')
+        checkout.add_argument('tag', action='store')
+        checkout.set_defaults(func=Robustus.checkout)
 
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)
