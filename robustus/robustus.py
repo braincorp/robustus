@@ -301,6 +301,10 @@ class Robustus(object):
         self._perrepo('git tag %s' % tag_name)
         self._perrepo('git push origin %s' % tag_name)
 
+    def checkout(self, args):
+        self._perrepo('git fetch origin')
+        self._perrepo('git checkout %s' % args.tag)
+
     def perrepo(self, args):
         # Use git to find the top-level working folder and run the command
         cmd_str = ' '.join(args.command)
@@ -642,6 +646,11 @@ class Robustus(object):
                                     help='Tag all editable repos and push tags')
         tag.add_argument('tag', action='store')
         tag.set_defaults(func=Robustus.tag)
+
+        checkout = subparsers.add_parser('checkout',
+                                         help='Perrepo shortcut to checkout a tag on all editables')
+        checkout.add_argument('tag', action='store')
+        checkout.set_defaults(func=Robustus.checkout)
 
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)

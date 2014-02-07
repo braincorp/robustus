@@ -445,7 +445,7 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None,
         raise RequirementException('Editable requirement %s does not have a requirements.txt file'
                                    % original_req.freeze())
 
-    return expand_requirements_specifiers(req_file_content, git_accessor, visited_sites) + [original_req]
+    return expand_requirements_specifiers(req_file_content, git_accessor, visited_sites, tag=tag) + [original_req]
 
 
 def _filter_requirements_lines(lines):
@@ -500,8 +500,6 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
 
     for line in filtered_lines:
         r = RequirementSpecifier(specifier=line)
-        if tag:
-            r.override_branch(tag)
         if r.freeze() not in [ritem.freeze() for ritem in requirements]:
             requirements += do_requirement_recursion(git_accessor, r, visited_sites,
                                                      tag=tag)
