@@ -241,7 +241,7 @@ class Robustus(object):
                     requirement_specifier.editable:
                 editable_requirement_path = os.path.join(self.env, 'src', requirement_specifier.name)
                 logging.info('Got url-based requirement. Checking if exists %s ' % (editable_requirement_path,))
-                if os.path.exists(editable_requirement_path):
+                if tag is None and os.path.exists(editable_requirement_path):
                     logging.info('For safety reasons robustus will not proceed with requirement %s, '
                                  'because directories for installing this package already exists (%s). '
                                  'To update editable dependency, please remove folder and run again.' %
