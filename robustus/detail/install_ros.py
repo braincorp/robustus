@@ -32,16 +32,16 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'sip'])
 
     def in_cache():
-        devel_dir = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version, 'devel_isolated')
+        devel_dir = os.path.join(robustus.env, 'ros-cache', 'ros-%s' % requirement_specifier.version, 'devel_isolated')
         return os.path.isdir(devel_dir)
 
     try:
         cwd = os.getcwd()
 
         # create ros cache
-        ros_cache = os.path.join(robustus.cache, 'ros-%s' % requirement_specifier.version)
+        ros_cache = os.path.join(robustus.env, 'ros-cache', 'ros-%s' % requirement_specifier.version)
         if not os.path.isdir(ros_cache):
-            os.mkdir(ros_cache)
+            os.makedirs(ros_cache)
         os.chdir(ros_cache)
 
         # build ros if necessary

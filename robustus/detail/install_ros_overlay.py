@@ -13,11 +13,11 @@ from utility import run_shell, add_source_ref, check_module_available
 
 
 def _make_overlay_folder(robustus, requirement_specifier):
-    overlay_folder = os.path.join(robustus.cache,
+    overlay_folder = os.path.join(robustus.env, 'ros-cache', 
                                   requirement_specifier.rob_filename()[0:-3])
     if not os.path.isdir(overlay_folder):
         build = True
-        os.mkdir(overlay_folder)
+        os.makedirs(overlay_folder)
     else:
         build = False
     return overlay_folder, build
