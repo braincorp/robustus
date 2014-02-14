@@ -181,6 +181,9 @@ class RequirementSpecifier(Requirement):
     def override_branch(self, tag):
         """Modified the specified branch to a given tag or branch."""
         assert self.editable
+        if self.url is None:
+            logging.info('Ignoring override for local folder')
+            return
         actual_url = self.url.geturl()
         assert actual_url[0:3] == 'git'
         match = re.match('(.*)@([^#]*)#(.*)', actual_url)
