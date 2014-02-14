@@ -21,7 +21,7 @@ expand_requirements_specifiers = robustus.detail.requirement.expand_requirements
 _filter_requirements_lines = robustus.detail.requirement._filter_requirements_lines
 
 
-def test_requirement_recursion_signle_item():
+def test_requirement_recursion_single_item():
     mock_git = mock.MagicMock()
     reqs = do_requirement_recursion(mock_git, RequirementSpecifier(specifier='  -e    numpy == 1.7.2  # comment'))
     assert(not mock_git.called)
@@ -143,7 +143,19 @@ def test_requirement_recursion_starting_with_local(tmpdir):
     assert(reqs[2].freeze() == '-e git+https://github.com/company/my_package@branch_name#egg=my_package')
     assert(reqs[3].freeze() == 'opencv==1')
     assert(reqs[4].freeze() == '-e ' + temp_folder)
+
+
+def test_local_requirement_with_tag_override(tmpdir):
+    mock_git = mock.MagicMock()
+    mock_git.access.return_value = ['numpy==1', 'scipy==2']
  
+    temp_folder = str(tmpdir.mkdtemp())
+    with open(os.path.join(temp_folder, 'requirements.txt'), 'w') as f:
+        f.write('\n')
+ 
+    reqs = do_requirement_recursion(mock_git, RequirementSpecifier(specifier='-e ' + temp_folder))
+    reqs[0].override_branch('foo')
+
  
 def test_expand_empty_requirements(tmpdir):
     mock_git = mock.MagicMock()
