@@ -13,6 +13,31 @@ import platform
 from utility import run_shell, add_source_ref
 
 
+def _install_ros_deps(robustus):
+    rosdep = os.path.join(robustus.env, 'bin/rosdep')
+    if rosdep is None:
+        raise RequirementException('Failed to find rosdep')
+
+    # add ros package sources
+    if sys.platform.startswith('linux') and not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
+        ubuntu_distr = platform.linux_distribution()[2]
+        os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu %s main"'
+                  ' > /etc/apt/sources.list.d/ros-latest.list\'' % ubuntu_distr)
+        os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
+        os.system('sudo apt-get update')
+
+    # init rosdep, rosdep can already be initialized resulting in error, that's ok
+    os.system('sudo ' + rosdep + ' init')
+
+    # update ros dependencies
+    retcode = run_shell(rosdep + ' update',
+                        verbose=robustus.settings['verbosity'] >= 1)
+    if retcode != 0:
+        raise RequirementException('Failed to update ROS dependencies')
+
+    return rosdep
+
+
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     ver, dist = requirement_specifier.version.split('.')
 
@@ -31,43 +56,24 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosdep==0.10.24',
                       'sip'])
 
+    ros_src_dir = os.path.join(robustus.cache, 'ros-src-%s' % requirement_specifier.version)
+    ros_install_dir = os.path.join(robustus.cache, 'ros-install-%s' % requirement_specifier.version)
+
     def in_cache():
-        devel_dir = os.path.join(robustus.env, 'ros-cache', 'ros-%s' % requirement_specifier.version, 'devel_isolated')
-        return os.path.isdir(devel_dir)
+        return os.path.isdir(ros_install_dir)
+
+    rosdep = _install_ros_deps(robustus)
 
     try:
         cwd = os.getcwd()
 
         # create ros cache
-        ros_cache = os.path.join(robustus.env, 'ros-cache', 'ros-%s' % requirement_specifier.version)
-        if not os.path.isdir(ros_cache):
-            os.makedirs(ros_cache)
-        os.chdir(ros_cache)
+        if not os.path.isdir(ros_src_dir):
+            os.makedirs(ros_src_dir)
+        os.chdir(ros_src_dir)
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
-            rosdep = os.path.join(robustus.env, 'bin/rosdep')
-            if rosdep is None:
-                raise RequirementException('Failed to find rosdep')
-
-            # add ros package sources
-            if sys.platform.startswith('linux') and not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
-                ubuntu_distr = platform.linux_distribution()[2]
-                os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu %s main"'
-                          ' > /etc/apt/sources.list.d/ros-latest.list\'' % ubuntu_distr)
-                os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
-                os.system('sudo apt-get update')
-
-            # init rosdep, rosdep can already be initialized resulting in error, that's ok
-            os.system('sudo ' + rosdep + ' init')
-
-            # update ros dependencies
-            retcode = run_shell(rosdep + ' update',
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                raise RequirementException('Failed to update ROS dependencies')
-
-            # install desktop version of ROS
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
                                 + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
@@ -76,7 +82,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 raise RequirementException('Failed to generate rosinstall file')
 
             wstool = os.path.join(robustus.env, 'bin/wstool')
-            retcode = run_shell(wstool + ' init -j8 src %s-%s-wet.rosinstall' % (dist, ver),
+            retcode = run_shell(wstool + ' init -j2 src %s-%s-wet.rosinstall' % (dist, ver),
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to build ROS')
@@ -91,23 +97,29 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 else:
                     raise RequirementException('Failed to resolve ROS dependencies')
 
-        # create catkin workspace
-        rosdir = os.path.join(robustus.env, 'ros')
-        py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
-        catkin_make_isolated = os.path.join(ros_cache, 'src/catkin/bin/catkin_make_isolated')
-        retcode = run_shell('. ' + py_activate_file + ' && ' +
-                            catkin_make_isolated + ' --install-space %s --install' % rosdir,
-                            verbose=robustus.settings['verbosity'] >= 1)
-        if retcode != 0:
-            raise RequirementException('Failed to create catkin workspace for ROS')
+            # create catkin workspace
+            py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
+            catkin_make_isolated = os.path.join(ros_src_dir, 'src/catkin/bin/catkin_make_isolated')
+            retcode = run_shell('. ' + py_activate_file + ' && ' +
+                                catkin_make_isolated +
+                                ' --install-space %s --install' % ros_install_dir,
+                                verbose=robustus.settings['verbosity'] >= 1)
+            if retcode != 0:
+                raise RequirementException('Failed to create catkin workspace for ROS')
+        else:
+            logging.info('Using ROS from cache %s' % ros_src_dir)
+
         os.chdir(cwd)
 
         # Add ROS settings to activate file
-        add_source_ref(robustus, os.path.join(robustus.env, 'ros', 'setup.sh'))
+        add_source_ref(robustus, os.path.join(ros_install_dir, 'setup.sh'))
+
     except RequirementException:
         os.chdir(cwd)
         if robustus.settings['debug']:
-            logging.info('Not removing folder %s due to debug flag.' % ros_cache)
+            logging.info('Not removing folder %s due to debug flag.' % ros_src_dir)
+            logging.info('Not removing folder %s due to debug flag.' % ros_install_dir)
         else:
-            shutil.rmtree(ros_cache)
+            shutil.rmtree(ros_src_dir, ignore_errors=True)
+            shutil.rmtree(ros_install_dir, ignore_errors=True)
         raise

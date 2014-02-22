@@ -708,6 +708,12 @@ def execute(argv):
     except (RobustusException, RequirementException) as exc:
         logging.critical(exc.message)
         exit(1)
+    except NameError as exc:
+        # Handle name errors specially since otherwise the way python does
+        # bin scripts it results in robustus being executed twice (which can
+        # be very confusing when debugging scripts)
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
