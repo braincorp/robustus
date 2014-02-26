@@ -101,7 +101,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
             catkin_make_isolated = os.path.join(ros_src_dir, 'src/catkin/bin/catkin_make_isolated')
             retcode = run_shell('. ' + py_activate_file + ' && ' +
-                                catkin_make_isolated + ' -D PYTHON_EXECUTABLE=python ',
+                                catkin_make_isolated + ' -DPYTHON_EXECUTABLE=python ',
                                 ' --install-space %s --install' % ros_install_dir,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
