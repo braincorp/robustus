@@ -13,7 +13,7 @@ from utility import run_shell, add_source_ref, check_module_available
 
 
 def _make_overlay_folder(robustus, requirement_specifier):
-    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-', 
+    overlay_folder = os.path.join(robustus.cache, 'ros-overlay-source-', 
                                   requirement_specifier.rob_filename()[0:-3])
     if not os.path.isdir(overlay_folder):
         build = True
