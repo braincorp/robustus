@@ -20,6 +20,8 @@ def _make_overlay_folder(robustus, requirement_specifier):
         os.makedirs(overlay_folder)
     else:
         build = False
+
+    logging.info('Overlay folder %s' % overlay_folder)
     return overlay_folder, build
 
 
