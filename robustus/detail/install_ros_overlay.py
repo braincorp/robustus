@@ -116,7 +116,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
                                  ' --install-space %s --install' %
                                  (env_source, opencv_cmake_dir, overlay_install_folder) +
-                                 ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1',
+                                 ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1 -DPYTHON_EXECUTABLE=python',
                                  verbose=robustus.settings['verbosity'] >= 1)
             if ret_code != 0:
                 raise RequirementException('Error during catkin_make')
