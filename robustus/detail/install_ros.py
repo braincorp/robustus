@@ -1,4 +1,3 @@
-
 # =============================================================================
 # COPYRIGHT 2013 Brain Corporation.
 # License under MIT license (see LICENSE file)
@@ -11,6 +10,7 @@ import shutil
 import sys
 import platform
 from utility import run_shell, add_source_ref
+import ros_utils
 
 
 def _install_ros_deps(robustus):
@@ -56,8 +56,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosdep==0.10.24',
                       'sip'])
 
-    ros_src_dir = os.path.join(robustus.cache, 'ros-src-%s' % requirement_specifier.version)
-    ros_install_dir = os.path.join(robustus.cache, 'ros-install-%s' % requirement_specifier.version)
+    ros_src_dir = os.path.join(robustus.env, 'ros-src-%s' % requirement_specifier.version)
+    ros_install_dir = os.path.join(robustus.cache, 'ros-install-%s-%s' % (requirement_specifier.version, ros_utils.hash_path(robustus.env)))
 
     def in_cache():
         return os.path.isdir(ros_install_dir)
@@ -67,13 +67,14 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     try:
         cwd = os.getcwd()
 
-        # create ros cache
-        if not os.path.isdir(ros_src_dir):
-            os.makedirs(ros_src_dir)
-        os.chdir(ros_src_dir)
+        logging.info('ROS install dir %s' % ros_install_dir)
 
         # build ros if necessary
         if not in_cache() and not ignore_index:
+            if not os.path.isdir(ros_src_dir):
+                os.makedirs(ros_src_dir)
+                os.chdir(ros_src_dir)
+
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
                                 + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
