@@ -98,7 +98,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         overlay_install_folder = os.path.join(robustus.cache, 'ros-installed-overlay-%s'
                                               % suffix)
 
-        if os.path.isdir(overlay_install_dir):
+        if os.path.isdir(overlay_install_folder):
             env_source = os.path.join(robustus.env, 'bin/activate')
             overlay_src_folder = _make_overlay_src_folder(robustus, suffix)
             os.chdir(overlay_src_folder)
