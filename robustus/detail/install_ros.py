@@ -12,6 +12,7 @@ import platform
 from utility import run_shell, add_source_ref
 import ros_utils
 
+
 def _install_ros_deps(robustus):
     rosdep = os.path.join(robustus.env, 'bin/rosdep')
     if rosdep is None:
