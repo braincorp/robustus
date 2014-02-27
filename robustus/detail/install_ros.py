@@ -56,7 +56,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'sip'])
 
     ros_src_dir = os.path.join(robustus.env, 'ros-src-%s' % requirement_specifier.version)
-    ros_install_dir = os.path.join(robustus.cache, 'ros-install-%s-' % requirement_specifier.version + '-' + ros_utils.hash_path(robustus.env))
+    ros_install_dir = os.path.join(robustus.cache, 'ros-install-%s-%s' % (requirement_specifier.version, ros_utils.hash_path(robustus.env)))
 
     def in_cache():
         return os.path.isdir(ros_install_dir)

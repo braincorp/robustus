@@ -13,7 +13,7 @@ from utility import run_shell, add_source_ref, check_module_available
 
 
 def _make_overlay_folder(robustus, suffix):
-    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-', suffix)
+    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-' + suffix)
     if not os.path.isdir(overlay_folder):
         os.makedirs(overlay_folder)
 
@@ -123,11 +123,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         add_source_ref(robustus, os.path.join(overlay_install_folder, 'setup.sh'))
 
-    except:
+    except RequirementException:
         if robustus.settings['debug']:
             logging.info('Not removing folder %s due to debug flag.' % overlay_src_folder)
         else:
             shutil.rmtree(overlay_src_folder, ignore_errors=True)
+            shutil.rmtree(overlay_install_folder, ignore_errors=True)
         raise
     finally:
         os.chdir(cwd)
