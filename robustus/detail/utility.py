@@ -68,7 +68,8 @@ def ln(src, dst, force=False):
     :param force: remove destination file/dir
     :return: None
     """
-    if force and os.path.exists(dst):
+    # os.path.exists returns False for broken links. lexists returns True
+    if force and os.path.lexists(dst):
         os.unlink(dst)
     os.symlink(src, dst)
 
