@@ -30,6 +30,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         def in_cache():
             return os.path.isfile(cv2so)
 
+        versions_to_fix_rpath = ['2.4.7', '2.4.8']
+
         if not in_cache() and not ignore_index:
             cwd = os.getcwd()
             opencv_archive = None
@@ -70,7 +72,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 safe_remove(opencv_archive_name)
                 os.chdir(cwd)
 
-            if in_cache() and requirement_specifier.version == '2.4.7':
+            if in_cache() and requirement_specifier.version in versions_to_fix_rpath:
                 # fix rpath for all dynamic libraries of cv2
                 all_cv_dlibs = os.path.abspath(os.path.join(cv_install_dir, 'lib'))
                 if sys.platform.startswith('darwin'):
@@ -84,7 +86,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             logging.info('Copying OpenCV cv2.so to virtualenv')
             cp(os.path.join(cv_install_dir, 'lib/python2.7/site-packages/*'),
                os.path.join(robustus.env, 'lib/python2.7/site-packages'))
-            if requirement_specifier.version == '2.4.7':
+            if requirement_specifier.version in versions_to_fix_rpath:
                 # fix rpath for cv2
                 cv2lib = os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so')
                 fix_rpath(robustus.env, cv2lib, cv_install_dir)  
