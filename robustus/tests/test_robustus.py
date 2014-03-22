@@ -13,10 +13,12 @@ import shutil
 import subprocess
 
 
+def test_doc_tests():
+    doctest.testmod(robustus, raise_on_error=True)
+    doctest.testmod(robustus.detail.utility, raise_on_error=True)
+
+
 def test_robustus(tmpdir):
-    doctest.testmod(robustus)
-    doctest.testmod(robustus.detail.utility)
-    doctest.testmod(robustus.detail.requirement)
 
     tmpdir.chdir()
     test_env = 'test_env'
@@ -109,4 +111,5 @@ def test_install_with_tag(tmpdir):
     
 
 if __name__ == '__main__':
-    pytest.main('-s %s -n0' % __file__)
+    test_doc_tests()
+    #pytest.main('-s %s -n0' % __file__)

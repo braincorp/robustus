@@ -146,7 +146,8 @@ class Requirement(object):
         else:
             if self.name is not None:
                 if self.version is not None:
-                    return '%s__%s.rob' % (self.name, self.version)
+                    version = self.version.replace('.', '_')
+                    return '%s__%s.rob' % (self.name, version)
             return '%s.rob' % self.name
 
     def _ros_rob_filename(self):

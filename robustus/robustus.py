@@ -74,6 +74,14 @@ class Robustus(object):
         if not os.path.isdir(self.cache):
             os.mkdir(self.cache)
 
+        # remove bad formatted rob files with '.' in version instead of '_'
+        for rob_file in glob.iglob('%s/*.rob' % self.cache):
+            rob_basename = os.path.basename(rob_file)
+            if rob_basename.find('__') != -1:
+                _, version = rob_basename[:-4].split('__')
+                if '.' in version:
+                    print(self.cache, self.cache, rob_basename)
+
         # read cached packages
         self.cached_packages = []
         for rob_file in glob.iglob('%s/*.rob' % self.cache):
