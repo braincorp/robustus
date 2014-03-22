@@ -376,7 +376,11 @@ class Robustus(object):
 
         # install
         for requirement_specifier in requirements:
+            logging.info('scipy before %s' % requirement_specifier)
+            run_shell('python -c "import scipy; print scipy.__version__"', verbose=True)
             self.install_requirement(requirement_specifier, args.no_index, tag)
+            logging.info('scipy after %s' % requirement_specifier)
+            run_shell('python -c "import scipy; print scipy.__version__"', verbose=True)
 
     def search_pkg_config_locations(self, locations=None):
         """
