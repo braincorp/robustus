@@ -247,7 +247,6 @@ class Robustus(object):
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
-            # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             if not self.settings['update_editables'] and \
                     requirement_specifier.url is not None and \
                     requirement_specifier.editable:
@@ -368,6 +367,13 @@ class Robustus(object):
 
         logging.info('Here are all the requirements robustus is going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]) + '\n')
+
+        # workaround for xcode 5.1 upgrade. clang fails if there are unused arguments
+        # specified during installation of some packages (cython, pygame, etc).
+        if sys.platform.startswith('darwin'):
+            os.environ['CFLAGS'] = '-Qunused-arguments'
+            os.environ['CPPFLAGS'] = '-Qunused-arguments'
+
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index, tag)
