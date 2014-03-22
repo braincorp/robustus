@@ -78,9 +78,13 @@ class Robustus(object):
         for rob_file in glob.iglob('%s/*.rob' % self.cache):
             rob_basename = os.path.basename(rob_file)
             if rob_basename.find('__') != -1:
-                _, version = rob_basename[:-4].split('__')
+                name, version = rob_basename[:-4].split('__')
                 if '.' in version:
-                    print(self.cache, self.cache, rob_basename)
+                    corrected_filename = os.path.join(self.cache,
+                                                      '%s__%s.rob' % (name, version.replace('.', '_')))
+                    logging.info('Corrected rob file version from %s to %s' % (rob_file, corrected_filename))
+                    shutil.copy(rob_file, corrected_filename)
+                    os.remove(rob_file)
 
         # read cached packages
         self.cached_packages = []
