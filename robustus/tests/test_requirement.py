@@ -296,4 +296,4 @@ def test_doc_tests():
 
 if __name__ == '__main__':
     test_doc_tests()
-    #pytest.main('-s %s -n0' % __file__)
+    pytest.main('-s %s -n0' % __file__)
