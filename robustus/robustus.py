@@ -74,6 +74,18 @@ class Robustus(object):
         if not os.path.isdir(self.cache):
             os.mkdir(self.cache)
 
+        # remove bad formatted rob files with '.' in version instead of '_'
+        for rob_file in glob.iglob('%s/*.rob' % self.cache):
+            rob_basename = os.path.basename(rob_file)
+            if rob_basename.find('__') != -1:
+                name, version = rob_basename[:-4].split('__')
+                if '.' in version:
+                    corrected_filename = os.path.join(self.cache,
+                                                      '%s__%s.rob' % (name, version.replace('.', '_')))
+                    logging.info('Corrected rob file version from %s to %s' % (rob_file, corrected_filename))
+                    shutil.copy(rob_file, corrected_filename)
+                    os.remove(rob_file)
+
         # read cached packages
         self.cached_packages = []
         for rob_file in glob.iglob('%s/*.rob' % self.cache):
@@ -235,7 +247,6 @@ class Robustus(object):
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
-            # TODO: cache url requirements (https://braincorporation.atlassian.net/browse/MISC-48)
             if not self.settings['update_editables'] and \
                     requirement_specifier.url is not None and \
                     requirement_specifier.editable:
@@ -356,6 +367,13 @@ class Robustus(object):
 
         logging.info('Here are all the requirements robustus is going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]) + '\n')
+
+        # workaround for xcode 5.1 upgrade. clang fails if there are unused arguments
+        # specified during installation of some packages (cython, pygame, etc).
+        if sys.platform.startswith('darwin'):
+            os.environ['CFLAGS'] = '-Qunused-arguments'
+            os.environ['CPPFLAGS'] = '-Qunused-arguments'
+
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index, tag)

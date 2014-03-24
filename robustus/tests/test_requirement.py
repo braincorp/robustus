@@ -289,6 +289,11 @@ def test_multiline_requirements_parsing(tmpdir):
     assert(reqs[4].freeze() == '-e ' + temp_folder)
 
 
+def test_doc_tests():
+    result = doctest.testmod(robustus.detail.requirement)
+    if result[0]>0:
+        raise Exception(str(result))
+
 if __name__ == '__main__':
-    doctest.testmod(robustus.detail.requirement)
+    test_doc_tests()
     pytest.main('-s %s -n0' % __file__)
