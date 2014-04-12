@@ -8,6 +8,8 @@ import logging
 from robustus.detail import perform_standard_test
 
 
+@pytest.mark.skipif("'TRAVIS' in os.environ",
+                    reason="panda compilation takes too long for travis")
 def test_panda_installation(tmpdir):
     logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
