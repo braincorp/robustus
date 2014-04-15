@@ -16,8 +16,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         site_packages_dir = os.path.join(robustus.env, 'lib/python2.7/site-packages')
         files = ['pygtk.py', 'pygtk.pyc', 'gtk-2.0', 'glib', 'gobject', 'cairo']
         for f in files:
-            ln('/usr/lib/python2.7/dist-packages/' + f,
-               os.path.join(site_packages_dir, f), force = True)
+            src = os.path.join('/usr/lib/python2.7/dist-packages', f)
+            if not os.path.exists(src):
+                raise RequirementException('Required packages for system-wide PyGtk missing, %s not found' % f)
+            ln(src, os.path.join(site_packages_dir, f), force=True)
         write_file(os.path.join(site_packages_dir, 'pygtk.pth'),
                    'w',
                    os.path.join(site_packages_dir, 'gtk-2.0'))
