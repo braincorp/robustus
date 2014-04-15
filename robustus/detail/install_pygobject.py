@@ -6,23 +6,17 @@
 import os
 from requirement import RequirementException
 import logging
-from utility import ln, write_file
+from utility import ln
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    if requirement_specifier.version != '0.10':
-        raise RequirementException('Only 0.10 version of pygst is supported')
-
-    # Softlinking to existing gst
-    if os.path.isfile('/usr/lib/python2.7/dist-packages/pygst.py'):
-        logging.info('Linking pygst')
+    # Softlinking to existing PyGObject. TODO: install via configure
+    if os.path.isdir('/usr/lib/python2.7/dist-packages/gobject'):
+        logging.info('Linking PyGObject')
         site_packages_dir = os.path.join(robustus.env, 'lib/python2.7/site-packages')
-        files = ['pygst.py', 'gst-0.10', 'gstoption.so', 'glib', 'gobject']
+        files = ['gobject', 'pygobject.py']
         for f in files:
             ln('/usr/lib/python2.7/dist-packages/' + f,
                os.path.join(site_packages_dir, f), force = True)
-        write_file(os.path.join(site_packages_dir, 'pygst.pth'),
-                   'w',
-                   os.path.join(site_packages_dir, 'gst-0.10'))
     else:
-        raise RequirementException('System-wide pygst is missing')   
+        raise RequirementException('System-wide PyGObject is missing')
