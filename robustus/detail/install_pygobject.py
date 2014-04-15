@@ -14,7 +14,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if os.path.isdir('/usr/lib/python2.7/dist-packages/gobject'):
         logging.info('Linking PyGObject')
         site_packages_dir = os.path.join(robustus.env, 'lib/python2.7/site-packages')
-        files = ['gobject', 'pygobject.py']
+        files = ['gobject']
         for f in files:
             src = os.path.join('/usr/lib/python2.7/dist-packages', f)
             if not os.path.exists(src):

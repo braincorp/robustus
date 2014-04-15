@@ -12,7 +12,7 @@ install:
   - sudo apt-get install -y --force-yes libcurl4-openssl-dev libcegui-mk2-dev libtbb-dev
   - sudo apt-get install -y --force-yes libswscale-dev libavformat-dev libavcodec-dev libogre-dev
   - sudo apt-get install -y --force-yes libgts-dev libltdl3-dev playerc++ libxml2-dev libfreeimage-dev freeglut3-dev
-  - sudo apt-get install -y --force-yes python-gst0.10 python-gobject-2
+  - sudo apt-get install -y --force-yes python-gst0.10 python-cairo python-gobject-2
   - source use_repo.sh
 script:
   - py.test -s
