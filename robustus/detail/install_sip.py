@@ -21,16 +21,15 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert 'TRAVIS' not in os.environ
     # Create links to system-wide PySide
     if sys.platform.startswith('darwin'):
-        if os.path.isfile('/usr/local/lib/python2.7/dist-packages/sipconfig.so'):
+        if os.path.isfile('/usr/local/lib/python2.7/site-packages/sipconfig.py'):
             logging.info('Linking sipconfig on macos')
-            ln('/usr/local/lib/python2.7/dist-packages/sipconfig.py',
-               os.path.join(robustus.env, 'lib/python2.7/site-packages/sipconfig.so'),
-               force = True)
-            ln('/usr/local/lib/python2.7/dist-packages/sipconfig_nd.py',
-               os.path.join(robustus.env, 'lib/python2.7/site-packages/sipconfig_nd.py'),
-               force = True)
+            files_to_link = ['sipconfig.py', 'sip.so', 'sipdistutils.py']
+            for f in files_to_link:
+                ln(os.path.join('/usr/local/lib/python2.7/site-packages/', f),
+                   os.path.join(robustus.env, 'lib/python2.7/site-packages/', f),
+                   force = True)
         else:
-            raise RequirementException('System-wide SIP is missing, run: brew install sip')   
+            raise RequirementException('System-wide SIP is missing, run: brew install sip')  
     elif sys.platform.startswith('linux'):
         if os.path.isfile('/usr/lib/python2.7/dist-packages/sipconfig.py'):
             logging.info('Linking pyside on centos')
