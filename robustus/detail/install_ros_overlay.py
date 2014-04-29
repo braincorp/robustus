@@ -64,6 +64,7 @@ def _get_source(package):
         shutil.move(folder_to_take_out, './')
         shutil.rmtree(clone_folder)
 
+
 def _get_sources(packages):
     os.chdir('src')
     for p in packages:
