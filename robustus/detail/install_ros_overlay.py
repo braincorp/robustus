@@ -59,6 +59,7 @@ def _get_source(package):
             raise Exception('git checkout failed')
 
     if cd_path is not None:
+        logging.info('Extracting %s package from %s repo' % (cd_path, origin))
         folder_to_take_out = os.path.join(clone_folder, cd_path)
         shutil.move(folder_to_take_out, './')
         shutil.rmtree(clone_folder)
