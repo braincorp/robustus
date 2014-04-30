@@ -117,7 +117,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         else:
             libs = glob.glob(os.path.join(libdir, '*.so'))
         for lib in libs:
-            fix_rpath(robustus.env, lib, libdir)
+            fix_rpath(robustus, robustus.env, lib, libdir)
 
         prc_dir_setup = "import os; os.environ['PANDA_PRC_DIR'] = '%s'" % etcdir
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/panda3d.pth'),
