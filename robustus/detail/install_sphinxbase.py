@@ -58,6 +58,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             raise RequirementException('sphinxbase install failed')
         # fix rpath for sphinxbase
         sphinxbase = os.path.join(robustus.env, 'lib/python2.7/site-packages/sphinxbase.so')
-        fix_rpath(robustus.env, sphinxbase, os.path.join(robustus.env, 'lib'))
+        fix_rpath(robustus, robustus.env, sphinxbase, os.path.join(robustus.env, 'lib'))
     else:
         raise RequirementException('can\'t find sphinxbase-%s in robustus cache' % requirement_specifier.version)

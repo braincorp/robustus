@@ -23,7 +23,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         binaries += glob.glob(os.path.join(install_dir, 'bin/' + executable + '*'))
     for binary in binaries:
         if os.path.isfile(binary) and not os.path.islink(binary):
-            fix_rpath(robustus.env, binary, lib_dir)
+            fix_rpath(robustus, robustus.env, binary, lib_dir)
 
     # make symlinks
     for executable in executables:

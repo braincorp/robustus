@@ -54,7 +54,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             raise RequirementException('sphinxbase install failed')
         # fix rpath for pocketsphinx
         pocketsphinx = os.path.join(robustus.env, 'lib/python2.7/site-packages/pocketsphinx.so')
-        fix_rpath(robustus.env, pocketsphinx, os.path.join(robustus.env, 'lib'))
+        fix_rpath(robustus, robustus.env, pocketsphinx, os.path.join(robustus.env, 'lib'))
         # there is a super weird bug, first import of pocketsphinx fails http://sourceforge.net/p/cmusphinx/bugs/284/
         write_file(os.path.join(robustus.env, 'lib/python2.7/site-packages/wrap_pocketsphinx.py'),
                    'w',

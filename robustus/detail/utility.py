@@ -239,7 +239,7 @@ def check_module_available(env, module):
     return execute_python_expr(env, 'import %s' % module) == 0
 
 
-def fix_rpath(env, executable, rpath):
+def fix_rpath(robustus, env, executable, rpath):
     """
     Add rpath to list of rpaths of given executable. For osx also add @rpath/
     prefix to dependent library names (absolute paths are not prefixed).
@@ -259,8 +259,9 @@ def fix_rpath(env, executable, rpath):
     else:
         patchelf_executable = os.path.join(env, 'bin/patchelf')
         if not os.path.isfile(patchelf_executable):
-            raise RequirementException('In order to modify rpath of executable on unix system '
-                                       'you need to install patchelf: robustus install patchelf')
+            logging.info('patchelf is not installed. Installing')
+            robustus.execute(['install', 'patchelf==6fb4cdb'])
+
         old_rpath = subprocess.check_output([patchelf_executable, '--print-rpath', executable])
         if len(old_rpath) > 1:
             new_rpath = old_rpath[:-1] + ':' + rpath
