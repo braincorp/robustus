@@ -39,7 +39,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if retcode != 0:
             raise RequirementException('pocketsphinx configure failed')
 
-        retcode = run_shell(['make'], verbose=robustus.settings['verbosity'] >= 1)
+        retcode = run_shell('make clean && make', shell=True, verbose=robustus.settings['verbosity'] >= 1)
         if retcode != 0:
             raise RequirementException('pocketsphinx build failed')
 

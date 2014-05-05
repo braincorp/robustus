@@ -41,7 +41,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if not os.path.isfile(python_config):
             ln('/usr/bin/python-config', python_config)
 
-        retcode = run_shell(['make'], verbose=robustus.settings['verbosity'] >= 1)
+        retcode = run_shell('make clean && make', shell=True, verbose=robustus.settings['verbosity'] >= 1)
         if retcode != 0:
             raise RequirementException('sphinxbase build failed')
 
