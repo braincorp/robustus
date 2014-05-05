@@ -15,6 +15,15 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     def in_cache():
         return os.path.isdir(build_dir)
 
+    def configure():
+        retcode = run_shell('./configure'
+                            + (' --prefix=%s' % robustus.env)
+                            + (' --with-python=%s' % os.path.join(robustus.env, 'bin/python')),
+                            shell=True,
+                            verbose=robustus.settings['verbosity'] >= 1)
+        if retcode != 0:
+            raise RequirementException('sphinxbase configure failed')
+
     cwd = os.getcwd()
     if not in_cache() and not ignore_index:
         try:
@@ -26,19 +35,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             logging.info('Building sphinxbase')
             os.chdir(build_dir)
 
+            configure()
+
             # link python-config from system-wide installation, sphinxbase configure requires it
             python_config = os.path.join(robustus.env, 'bin/python-config')
             if not os.path.isfile(python_config):
                 ln('/usr/bin/python-config', python_config)
-
-            # there is problem executing this command with run_shell
-            retcode = run_shell('./configure'
-                                + (' --prefix=%s' % robustus.env)
-                                + (' --with-python=%s' % os.path.join(robustus.env, 'bin/python')),
-                                shell=True,
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                raise RequirementException('sphinxbase configure failed')
 
             retcode = run_shell(['make'], verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
@@ -52,6 +54,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if in_cache():
         logging.info('Installing sphinxbase into virtualenv')
         os.chdir(build_dir)
+        configure() # need to configure, because install path may change
         retcode = run_shell('make install', shell=True, verbose=robustus.settings['verbosity'] >= 1)
         os.chdir(cwd)
         if retcode != 0:

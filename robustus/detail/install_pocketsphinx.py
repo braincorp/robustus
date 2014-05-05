@@ -15,6 +15,18 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     def in_cache():
         return os.path.isdir(build_dir)
 
+    def configure():
+        sphinxbase_dir = os.path.join(robustus.cache, 'sphinxbase-%s/' % requirement_specifier.version)
+        retcode = run_shell('./configure'
+                            + (' --prefix=%s' % robustus.env)
+                            + (' --with-python=%s' % os.path.join(robustus.env, 'bin/python'))
+                            + (' --with-sphinxbase=%s' % sphinxbase_dir)
+                            + (' --with-sphinxbase-build=%s' % sphinxbase_dir),
+                            shell=True,
+                            verbose=robustus.settings['verbosity'] >= 1)
+        if retcode != 0:
+            raise RequirementException('pocketsphinx configure failed')
+
     cwd = os.getcwd()
     if not in_cache() and not ignore_index:
         try:
@@ -26,16 +38,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             logging.info('Building pocketsphinx')
             os.chdir(build_dir)
 
-            sphinxbase_dir = os.path.join(robustus.cache, 'sphinxbase-%s/' % requirement_specifier.version)
-            retcode = run_shell('./configure'
-                                + (' --prefix=%s' % robustus.env)
-                                + (' --with-python=%s' % os.path.join(robustus.env, 'bin/python'))
-                                + (' --with-sphinxbase=%s' % sphinxbase_dir)
-                                + (' --with-sphinxbase-build=%s' % sphinxbase_dir),
-                                shell=True,
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                raise RequirementException('pocketsphinx configure failed')
+            configure()
 
             retcode = run_shell(['make'], verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
@@ -48,6 +51,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if in_cache():
         logging.info('Installing sphinxbase into virtualenv')
         os.chdir(build_dir)
+        configure() # need to configure, because install path may change
         retcode = run_shell('make install', shell=True, verbose=robustus.settings['verbosity'] >= 1)
         os.chdir(cwd)
         if retcode != 0:
