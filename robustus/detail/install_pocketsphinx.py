@@ -10,21 +10,20 @@ from requirement import RequirementException
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    build_dir = os.path.join(robustus.cache, 'pocketsphinx-%s' % requirement_specifier.version)
-
     # check if already installed
     pocketsphinx = os.path.join(robustus.env, 'lib/python2.7/site-packages/pocketsphinx.so')
     if os.path.isfile(pocketsphinx):
         return
 
-    # unfortunately we can't cache pocketsphinx, it has to be rebuild after reconfigure
     cwd = os.getcwd()
     try:
-        # build in cache
         os.chdir(robustus.cache)
-        archive = robustus.download('pocketsphinx', requirement_specifier.version)
-        unpack(archive)
+        build_dir = os.path.join(robustus.cache, 'pocketsphinx-%s' % requirement_specifier.version)
+        if not os.path.isfile(os.path.join(build_dir, 'configure')):
+            archive = robustus.download('pocketsphinx', requirement_specifier.version)
+            unpack(archive)
 
+        # unfortunately we can't cache pocketsphinx, it has to be rebuild after reconfigure
         logging.info('Building pocketsphinx')
         os.chdir(build_dir)
 
