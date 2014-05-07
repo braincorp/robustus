@@ -80,7 +80,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 else:
                     libs = glob.glob(os.path.join(all_cv_dlibs, '*.so'))
                 for lib in libs:
-                    fix_rpath(robustus.env, lib, cv_install_dir)
+                    fix_rpath(robustus, robustus.env, lib, cv_install_dir)
 
         if in_cache():
             logging.info('Copying OpenCV cv2.so to virtualenv')
@@ -89,6 +89,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             if requirement_specifier.version in versions_to_fix_rpath:
                 # fix rpath for cv2
                 cv2lib = os.path.join(robustus.env, 'lib/python2.7/site-packages/cv2.so')
-                fix_rpath(robustus.env, cv2lib, cv_install_dir)  
+                fix_rpath(robustus, robustus.env, cv2lib, cv_install_dir)  
         else:
             raise RequirementException('can\'t find OpenCV-%s in robustus cache' % requirement_specifier.version)

@@ -37,16 +37,32 @@ def _get_source(package):
     else:
         origin, branch = package, None
 
+    cd_path = None
+    if branch is None:
+        arrow_pos = origin.find('->')
+        if arrow_pos > 0:
+            origin, cd_path = origin[:arrow_pos], origin[arrow_pos+2:]
+    else:
+        arrow_pos = branch.find('->')
+        if arrow_pos > 0:
+            branch, cd_path = branch[:arrow_pos], branch[arrow_pos+2:]
+
     ret_code = run_shell('git clone "%s"' % origin)
     if ret_code != 0:
         raise Exception('git clone failed')
 
+    clone_folder = os.path.splitext(os.path.basename(origin))[0]
     if branch is not None:
-        clone_folder = os.path.splitext(os.path.basename(origin))[0]
         ret_code = run_shell('cd "%s" && git checkout %s' %
                              (clone_folder, branch))
         if ret_code != 0:
             raise Exception('git checkout failed')
+
+    if cd_path is not None:
+        logging.info('Extracting %s package from %s repo' % (cd_path, origin))
+        folder_to_take_out = os.path.join(clone_folder, cd_path)
+        shutil.move(folder_to_take_out, './')
+        shutil.rmtree(clone_folder)
 
 
 def _get_sources(packages):
@@ -91,7 +107,7 @@ def _ros_dep(env_source, robustus):
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert requirement_specifier.name == 'ros_overlay'
     packages = requirement_specifier.version.split(',')
-
+    
     try:
         cwd = os.getcwd()
         suffix = ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())
