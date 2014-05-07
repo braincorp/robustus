@@ -51,7 +51,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if retcode != 0:
             raise RequirementException('sphinxbase install failed')
 
-        fix_rpath(robustus.env, sphinxbase, os.path.join(robustus.env, 'lib'))
+        fix_rpath(robustus, robustus.env, sphinxbase, os.path.join(robustus.env, 'lib'))
     except RequirementException:
         safe_remove(build_dir)
     finally:
