@@ -5,7 +5,7 @@
 
 import logging
 import os
-from utility import unpack, safe_remove, run_shell, fix_rpath, ln
+from utility import unpack, safe_remove, run_shell, fix_rpath, ln, cp
 from requirement import RequirementException
 
 
@@ -28,6 +28,11 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         logging.info('Building sphinxbase')
         os.chdir(build_dir)
 
+        # link python-config from system-wide installation, sphinxbase configure requires it
+        python_config = os.path.join(robustus.env, 'bin/python-config')
+        if not os.path.isfile(python_config):
+            ln('/usr/bin/python-config', python_config)
+
         retcode = run_shell('./configure'
                             + (' --prefix=%s' % robustus.env)
                             + (' --with-python=%s' % os.path.join(robustus.env, 'bin/python')),
@@ -35,11 +40,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                             verbose=robustus.settings['verbosity'] >= 1)
         if retcode != 0:
             raise RequirementException('sphinxbase configure failed')
-
-        # link python-config from system-wide installation, sphinxbase configure requires it
-        python_config = os.path.join(robustus.env, 'bin/python-config')
-        if not os.path.isfile(python_config):
-            ln('/usr/bin/python-config', python_config)
 
         retcode = run_shell('make clean && make', shell=True, verbose=robustus.settings['verbosity'] >= 1)
         if retcode != 0:
