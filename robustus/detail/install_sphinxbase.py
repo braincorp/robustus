@@ -16,6 +16,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         return
 
     cwd = os.getcwd()
+    archive = None
     try:
         # build in cache
         os.chdir(robustus.cache)
@@ -54,5 +55,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     except RequirementException:
         safe_remove(build_dir)
     finally:
-        safe_remove(archive)
+        if archive is not None:
+            safe_remove(archive)
         os.chdir(cwd)
