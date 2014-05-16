@@ -53,7 +53,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
                       'empy==3.3.2',
-                      'rosdep==0.10.24',
+                      'rosdep==0.10.28',
                       'sip'])
 
     ros_src_dir = os.path.join(robustus.env, 'ros-src-%s' % requirement_specifier.version)
