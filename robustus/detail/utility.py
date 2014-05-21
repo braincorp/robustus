@@ -118,6 +118,13 @@ class OutputCapture(object):
 
     def finish(self):
         if not self.verbose:
+            # during self-test on TRAVIS we want to just see the dots during testing, i.e.
+            # robustus/tests/test_bullet.py:10: test_bullet_installation ..................PASSED
+            # while with regular robustus use we want regular line separation
+            # Running shell command: ['cmd1']...
+            # Running shell command: ['cmd2']...
+            if not 'TRAVIS' in os.environ or not 'robustus' in os.environ['TRAVIS_REPO_SLUG']:
+                sys.stderr.write('\n')
             self.logfile.close()
 
     def read_captured_output(self):
@@ -217,6 +224,15 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
             logging.error('Failed with output:\n%s' % oc.read_log_file())
 
     return p.returncode
+
+
+def check_run_shell(command, shell=True, verbose=False, **kwargs):
+    """
+    run_shell with provided args, on failure raise subprocess.CalledProcessError
+    """
+    ret = run_shell(command, shell, verbose, **kwargs)
+    if ret != 0:
+        raise subprocess.CalledProcessError(ret, command)
 
 
 def execute_python_expr(env, expr, shell_script=None):

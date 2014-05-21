@@ -3,11 +3,10 @@
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
-
-import subprocess
 import tempfile
 import shutil
 import os
+from utility import check_run_shell
 
 
 class GitAccessor(object):
@@ -19,10 +18,10 @@ class GitAccessor(object):
         '''
         tmp_dir = tempfile.mkdtemp()
         if tag is not None:
-            subprocess.check_call(['git', 'clone', repo_link, tmp_dir])
-            subprocess.check_call('cd "' + tmp_dir + '" && git checkout ' + tag, shell=True)
+            check_run_shell(['git', 'clone', repo_link, tmp_dir], False)
+            check_run_shell('cd "' + tmp_dir + '" && git checkout ' + tag, True)
         else:
-            subprocess.check_call(['git', 'clone', '--depth', '1', repo_link, tmp_dir])
+            check_run_shell(['git', 'clone', '--depth', '1', repo_link, tmp_dir], False)
         with open(os.path.join(tmp_dir, path_to_file)) as file:
             lines = file.readlines()
         shutil.rmtree(tmp_dir)
