@@ -92,6 +92,9 @@ def which(program):
 
 
 def is_self_test():
+    """
+    Check if this execution is robustus test run on Travis.
+    """
     return 'TRAVIS' in os.environ and 'robustus' in os.environ['TRAVIS_REPO_SLUG']
 
 
