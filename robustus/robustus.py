@@ -124,7 +124,7 @@ class Robustus(object):
                 virtualenv_args += ['--python', args.python]
             if args.system_site_packages:
                 virtualenv_args += ['--system-site-packages']
-            run_shell(virtualenv_args, False, settings['verbosity'] >= 1)
+            run_shell(virtualenv_args, settings['verbosity'] >= 1)
 
         pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
         if not os.path.isfile(pip_executable):
@@ -138,12 +138,12 @@ class Robustus(object):
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
 
         # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
-        run_shell([pip_executable, 'install', 'pip==1.4.1', '--upgrade'], False, settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'pip==1.4.1', '--upgrade'], settings['verbosity'] >= 1)
         # some sloppy maintained packages (like ROS) require outdated distribute for installation
         # and we need to install it before setuptools
-        run_shell([pip_executable, 'install', 'distribute==0.7.3'], False, settings['verbosity'] >= 1)
-        run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], False, settings['verbosity'] >= 1)
-        run_shell([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'], False, settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'distribute==0.7.3'], settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'], settings['verbosity'] >= 1)
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
@@ -169,7 +169,7 @@ class Robustus(object):
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
         # readline must be come before everything else
-        run_shell([easy_install_executable, '-q', 'readline==6.2.2'], False, settings['verbosity'] >= 1)
+        run_shell([easy_install_executable, '-q', 'readline==6.2.2'], settings['verbosity'] >= 1)
 
         # compose settings file
         logging.info('Write .robustus config file')
@@ -182,7 +182,7 @@ class Robustus(object):
         script_dir = os.path.dirname(os.path.realpath(__file__))
         setup_dir = os.path.abspath(os.path.join(script_dir, os.path.pardir))
         os.chdir(setup_dir)
-        run_shell([python_executable, 'setup.py', 'install'], False, settings['verbosity'] >= 1)
+        run_shell([python_executable, 'setup.py', 'install'], settings['verbosity'] >= 1)
         os.chdir(cwd)
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
@@ -203,7 +203,6 @@ class Robustus(object):
                                      '--download',
                                      self.cache,
                                      requirement_specifier.freeze()],
-                                    shell=False,
                                     verbose=self.settings['verbosity'] >= 2)
             if return_code != 0:
                 raise RequirementException('pip failed to download requirement %s' % requirement_specifier.freeze())
@@ -219,9 +218,7 @@ class Robustus(object):
             # we probably sometimes will want to see build log
             for i in xrange(self.settings['verbosity']):
                 wheel_cmd.append('-v')
-            return_code = run_shell(wheel_cmd,
-                                    shell=False,
-                                    verbose=self.settings['verbosity'] >= 1)
+            return_code = run_shell(wheel_cmd, verbose=self.settings['verbosity'] >= 1)
             if return_code != 0:
                 raise RequirementException('pip failed to build wheel for requirement %s'
                                            % requirement_specifier.freeze())
@@ -235,7 +232,6 @@ class Robustus(object):
                                  '--use-wheel',
                                  '--find-links=%s' % self.cache,
                                  requirement_specifier.freeze()],
-                                shell=False,
                                 verbose=self.settings['verbosity'] >= 2)
         if return_code != 0:
             raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
@@ -270,7 +266,7 @@ class Robustus(object):
             command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '
                          'Fall back to pip shell command:%s' % (command,))
-            run_shell(command)
+            run_shell(command, shell=True)
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):
@@ -323,15 +319,14 @@ class Robustus(object):
         self._perrepo(cmd_str)
 
     def _perrepo(self, cmd_str):
-        os.system('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s' 
-                  % (self._activate_path(), cmd_str))
+        run_shell('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s'
+                  % (self._activate_path(), cmd_str), shell=True)
 
         for d in os.listdir(os.path.join(self.env, 'src')):
             full_path = os.path.join(self.env, 'src', d)
             if os.path.isdir(full_path):
                 logging.info('Running command in %s' % full_path)
-                os.system('cd "%s" && . "%s" && %s' % (full_path,
-                                                       self._activate_path(), cmd_str))
+                run_shell('cd "%s" && . "%s" && %s' % (full_path, self._activate_path(), cmd_str), shell=True)
 
     def _activate_path(self):
         """Return the path to the virtual env activate file."""
@@ -418,18 +413,15 @@ class Robustus(object):
                 env = os.environ.copy()
                 env['PKG_CONFIG_PATH'] = ','.join(self.search_pkg_config_locations())
                 retcode = run_shell(['cmake', '.', '-DCMAKE_INSTALL_PREFIX=%s' % pkg_cache_dir] + cmake_options,
-                                    shell=False,
                                     env=env,
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('%s configure failed' % requirement_specifier.name)
                 retcode = run_shell(['make', '-j4'],
-                                    shell=False,
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('%s build failed' % requirement_specifier.name)
                 retcode = run_shell(['make', 'install'],
-                                    shell=False,
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('%s "make install" failed' % requirement_specifier.name)

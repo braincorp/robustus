@@ -32,17 +32,17 @@ def test_robustus(tmpdir):
 
     # install some packages
     logging.info('installing requirements into ' + test_env)
-    run_shell([robustus_executable, 'install', 'pyserial'], False)
+    run_shell([robustus_executable, 'install', 'pyserial'])
     test_requirements1 = 'test_requirements1.txt'
     with open(test_requirements1, 'w') as file:
         file.write('pep8==1.3.3\n')
         file.write('pytest==2.3.5\n')
-    run_shell([robustus_executable, 'install', '-r', test_requirements1], False)
+    run_shell([robustus_executable, 'install', '-r', test_requirements1])
 
     # check packages are installed
     packages_to_check = ['pyserial', 'pep8==1.3.3', 'pytest==2.3.5']
     with open('freezed_requirements.txt', 'w') as req_file:
-        run_shell([robustus_executable, 'freeze'], False, stdout=req_file)
+        run_shell([robustus_executable, 'freeze'], stdout=req_file)
     with open('freezed_requirements.txt') as req_file:
         installed_packages = [line.strip() for line in req_file]
     for package in packages_to_check:
@@ -75,10 +75,10 @@ def test_pereditable(tmpdir):
     with open(test_requirements, 'w') as file:
         file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n')
 
-    run_shell([robustus_executable, 'install', '-r', test_requirements], False)
+    run_shell([robustus_executable, 'install', '-r', test_requirements])
 
     # Now check that robustus behaves as expected
-    run_shell([robustus_executable, 'perrepo', 'touch', 'foo'], False)
+    run_shell([robustus_executable, 'perrepo', 'touch', 'foo'])
     assert os.path.exists(os.path.join(working_dir, 'foo'))
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'foo'))
 
@@ -102,7 +102,7 @@ def test_install_with_tag(tmpdir):
     with open(test_requirements, 'w') as file:
         file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n')
 
-    run_shell([robustus_executable, 'install', '--tag', 'test-tag', '-r', test_requirements], False)
+    run_shell([robustus_executable, 'install', '--tag', 'test-tag', '-r', test_requirements])
 
     # Now check that robustus behaves as expected
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test-tag'))

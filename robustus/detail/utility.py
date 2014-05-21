@@ -218,14 +218,12 @@ def safe_remove(path):
         shutil.rmtree(path)
 
 
-def run_shell(command, shell=True, verbose=False, **kwargs):
+def run_shell(command, verbose=False, **kwargs):
     """
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
     with OutputCapture(verbose) as oc, tempfile.TemporaryFile() as stdout:
-        # extend kwargs
-        kwargs['shell'] = shell
         # there is problem with PIPE in case of large output, so use logfile
         if 'stdout' in kwargs:
             stdout.close()
@@ -246,11 +244,11 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
     return p.returncode
 
 
-def check_run_shell(command, shell=True, verbose=False, **kwargs):
+def check_run_shell(command, verbose=False, **kwargs):
     """
     run_shell with provided args, on failure raise subprocess.CalledProcessError
     """
-    ret = run_shell(command, shell, verbose, **kwargs)
+    ret = run_shell(command, verbose, **kwargs)
     if ret != 0:
         raise subprocess.CalledProcessError(ret, command)
 
@@ -294,12 +292,12 @@ def fix_rpath(robustus, env, executable, rpath):
         for line in otool_output.splitlines()[1:]:
             lib = line.split()[0]
             if not os.path.isabs(lib) and lib != os.path.basename(executable) and not lib.startswith('@rpath'):
-                run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable))
+                run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable), shell=True)
         try:
-            run_shell('install_name_tool -delete_rpath "%s" "%s"' % (rpath, executable))
+            run_shell('install_name_tool -delete_rpath "%s" "%s"' % (rpath, executable), shell=True)
         except:
             pass
-        return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
+        return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable), shell=True)
     else:
         patchelf_executable = os.path.join(env, 'bin/patchelf')
         if not os.path.isfile(patchelf_executable):
@@ -311,4 +309,4 @@ def fix_rpath(robustus, env, executable, rpath):
             new_rpath = old_rpath[:-1] + ':' + rpath
         else:
             new_rpath = rpath
-        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable))
+        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable), shell=True)

@@ -18,10 +18,10 @@ class GitAccessor(object):
         '''
         tmp_dir = tempfile.mkdtemp()
         if tag is not None:
-            check_run_shell(['git', 'clone', repo_link, tmp_dir], False)
-            check_run_shell('cd "' + tmp_dir + '" && git checkout ' + tag, True)
+            check_run_shell(['git', 'clone', repo_link, tmp_dir], shell=False)
+            check_run_shell('cd "' + tmp_dir + '" && git checkout ' + tag, shell=True)
         else:
-            check_run_shell(['git', 'clone', '--depth', '1', repo_link, tmp_dir], False)
+            check_run_shell(['git', 'clone', '--depth', '1', repo_link, tmp_dir], shell=False)
         with open(os.path.join(tmp_dir, path_to_file)) as file:
             lines = file.readlines()
         shutil.rmtree(tmp_dir)

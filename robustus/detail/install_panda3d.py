@@ -105,10 +105,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         shutil.rmtree(etcdir, ignore_errors=True)
         os.mkdir(etcdir)
 
-        run_shell('cp -r -p %s/lib/* %s/' % (panda_install_dir, libdir))
-        run_shell('cp -r -p %s/direct %s/' % (panda_install_dir, libdir))
-        run_shell('cp -r -p %s/pandac %s/' % (panda_install_dir, libdir))
-        run_shell('cp -r -p %s/etc/* %s/' % (panda_install_dir, etcdir))
+        run_shell('cp -r -p %s/lib/* %s/' % (panda_install_dir, libdir), shell=True)
+        run_shell('cp -r -p %s/direct %s/' % (panda_install_dir, libdir), shell=True)
+        run_shell('cp -r -p %s/pandac %s/' % (panda_install_dir, libdir), shell=True)
+        run_shell('cp -r -p %s/etc/* %s/' % (panda_install_dir, etcdir), shell=True)
 
         # modify rpath of libs
         libdir = os.path.abspath(libdir)

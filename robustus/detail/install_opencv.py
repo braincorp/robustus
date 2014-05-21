@@ -57,7 +57,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                            '-DBUILD_opencv_java=OFF',
                            '-DWITH_CUDA=OFF',
                            '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
-                          shell=False,
                           verbose=robustus.settings['verbosity'] >= 1)
                 retcode = run_shell(['make', '-j4'], verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:
@@ -66,7 +65,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 # install into wheelhouse
                 if not os.path.isdir(cv_install_dir):
                     os.mkdir(cv_install_dir)
-                retcode = run_shell(['make', 'install'], shell=False, verbose=robustus.settings['verbosity'] >= 1)
+                retcode = run_shell(['make', 'install'], verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('OpenCV installation failed')
             finally:

@@ -61,7 +61,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                                 'libv4l1-videodev.h'))
 
             run_shell([robustus.python_executable, 'setup.py', 'build'],
-                      shell=False,
                       verbose=robustus.settings['verbosity'] >= 1)
 
             # under build there will be platform specific dir, e.g. lib.linux-x86_64-2.7

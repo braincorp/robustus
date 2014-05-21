@@ -7,9 +7,7 @@ import pytest
 from robustus.detail import perform_standard_test
 
 
-# Simplest test to check basic functionality for manual use
-@pytest.mark.skipif("'TRAVIS' in os.environ",
-                    reason="there are enough autotests already")
+# Simplest test to check basic functionality
 def test_pep8_installation(tmpdir):
     tmpdir.chdir()
     perform_standard_test('pep8', ['import pep8'], [], [])
