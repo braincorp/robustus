@@ -91,15 +91,28 @@ def which(program):
     return None
 
 
+def is_self_test():
+    return 'TRAVIS' in os.environ and 'robustus' in os.environ['TRAVIS_REPO_SLUG']
+
+
 class OutputCapture(object):
-    def __init__(self, verbose, secs_between_dots=10):
+    """
+    Helper to capture output produced by command and print dots instead.
+    By default prints dots every ten seconds.
+    """
+    def __init__(self, verbose, secs_between_dots=10, logfile=None):
         self.verbose = verbose
         self.captured_output = ""
         self.secs_between_dots = secs_between_dots
-        self.logfile = tempfile.TemporaryFile() if not verbose else None
+        if not verbose:
+            self.logfile = tempfile.TemporaryFile() if logfile is None else logfile
         self.prev_time = time.time()
+        self.dot_produced = False
         logging.getLogger().handlers[0].flush()
-        sys.stderr.write('.')
+        # produce first dot during self test, because many small shell commands are executed and test
+        # mail fail to produce output within 10 mins
+        if not verbose and is_self_test():
+            sys.stderr.write('.')
 
     def __enter__(self):
         return self
@@ -107,12 +120,13 @@ class OutputCapture(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.finish()
 
-    def update(self, output='', t=time.time()):
+    def update(self, output=''):
         if not self.verbose:
             self.captured_output += output
-            if t - self.prev_time > self.secs_between_dots:
+            if time.time() - self.prev_time > self.secs_between_dots:
                 sys.stderr.write('.')
-                self.prev_time = t
+                self.prev_time = time.time()
+                self.dot_produced = True
         elif len(output) > 0:
             sys.stderr.write(output,)
 
@@ -123,7 +137,7 @@ class OutputCapture(object):
             # while with regular robustus use we want regular line separation
             # Running shell command: ['cmd1']...
             # Running shell command: ['cmd2']...
-            if not 'TRAVIS' in os.environ or not 'robustus' in os.environ['TRAVIS_REPO_SLUG']:
+            if not is_self_test() and self.dot_produced:
                 sys.stderr.write('\n')
             self.logfile.close()
 
@@ -209,15 +223,15 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    with OutputCapture(verbose) as oc:
-        # poll process for new output until finished
+    with OutputCapture(verbose) as oc, tempfile.TemporaryFile() as logfile:
+        # there is problem with PIPE in case of large output, so use logfile
         p = subprocess.Popen(command,
                              shell=shell,
-                             stdout=subprocess.PIPE,
+                             stdout=logfile,
                              stderr=subprocess.STDOUT,
                              **kwargs)
         while p.poll() is None:
-            oc.update(p.stdout.readline())
+            oc.update(logfile.readline())
 
         # print log in case of failure
         if oc.verbose and p.returncode != 0:
