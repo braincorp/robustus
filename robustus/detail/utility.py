@@ -223,15 +223,21 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    with OutputCapture(verbose) as oc, tempfile.TemporaryFile() as logfile:
+    with OutputCapture(verbose) as oc, tempfile.TemporaryFile() as stdout:
+        # extend kwargs
+        kwargs['shell'] = shell
         # there is problem with PIPE in case of large output, so use logfile
-        p = subprocess.Popen(command,
-                             shell=shell,
-                             stdout=logfile,
-                             stderr=subprocess.STDOUT,
-                             **kwargs)
+        if 'stdout' in kwargs:
+            stdout.close()
+            stdout = kwargs['stdout']
+        else:
+            kwargs['stdout'] = stdout
+        readable = 'r' in stdout.mode
+        if 'stderr' not in kwargs:
+            kwargs['stderr'] = subprocess.STDOUT
+        p = subprocess.Popen(command, **kwargs)
         while p.poll() is None:
-            oc.update(logfile.readline())
+            oc.update(stdout.readline() if readable else '')
 
         # print log in case of failure
         if oc.verbose and p.returncode != 0:

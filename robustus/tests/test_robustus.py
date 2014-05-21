@@ -6,6 +6,7 @@
 import doctest
 import logging
 import os
+import pytest
 import robustus
 from robustus.detail import check_module_available
 from robustus.detail.utility import run_shell
@@ -109,4 +110,4 @@ def test_install_with_tag(tmpdir):
 
 if __name__ == '__main__':
     test_doc_tests()
-    #pytest.main('-s %s -n0' % __file__)
+    pytest.main('-s %s -n0' % __file__)
