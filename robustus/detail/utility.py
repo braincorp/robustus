@@ -11,9 +11,9 @@ import tarfile
 import tempfile
 import time
 import zipfile
+import logging
 import urllib2
 import os
-import logging
 
 
 def add_source_ref(robustus, source_path):
@@ -98,8 +98,8 @@ class OutputCapture(object):
         self.secs_between_dots = secs_between_dots
         self.logfile = tempfile.TemporaryFile() if not verbose else None
         self.prev_time = time.time()
-        sys.stdout.write('Working')
-        sys.stdout.flush()
+        logging.getLogger().handlers[0].flush()
+        sys.stderr.write('.')
 
     def __enter__(self):
         return self
@@ -111,16 +111,13 @@ class OutputCapture(object):
         if not self.verbose:
             self.captured_output += output
             if t - self.prev_time > self.secs_between_dots:
-                sys.stdout.write('.')
-                sys.stdout.flush()
+                sys.stderr.write('.')
                 self.prev_time = t
         elif len(output) > 0:
-            logging.info(output,)
+            sys.stderr.write(output,)
 
     def finish(self):
         if not self.verbose:
-            sys.stdout.write('\n')
-        if self.logfile is not None:
             self.logfile.close()
 
     def read_captured_output(self):
@@ -217,7 +214,7 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
 
         # print log in case of failure
         if oc.verbose and p.returncode != 0:
-            logging.error('Failed:\n%s' % oc.read_log_file())
+            logging.error('Failed with output:\n%s' % oc.read_log_file())
 
     return p.returncode
 

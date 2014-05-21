@@ -4,12 +4,10 @@
 # =============================================================================
 
 import pytest
-import logging
 from robustus.detail import perform_standard_test
 
 
 def test_pocketsphinx_installation(tmpdir):
-    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     files = ['lib/libsphinxbase.so']
     imports = ['import wrap_pocketsphinx']

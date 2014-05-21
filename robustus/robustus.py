@@ -124,7 +124,7 @@ class Robustus(object):
                 virtualenv_args += ['--python', args.python]
             if args.system_site_packages:
                 virtualenv_args += ['--system-site-packages']
-            subprocess.call(virtualenv_args)
+            run_shell(virtualenv_args, False, settings['verbosity'] >= 1)
 
         pip_executable = os.path.abspath(os.path.join(args.env, 'bin/pip'))
         if not os.path.isfile(pip_executable):
@@ -169,7 +169,6 @@ class Robustus(object):
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
         # readline must be come before everything else
-        logging.info('Installing readline...')
         run_shell([easy_install_executable, '-q', 'readline==6.2.2'], False, settings['verbosity'] >= 1)
 
         # compose settings file
@@ -241,7 +240,6 @@ class Robustus(object):
         if return_code != 0:
             raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
                                        % (requirement_specifier.freeze(), self.cache))
-        logging.info('Done')
 
     def install_requirement(self, requirement_specifier, ignore_index, tag):
         logging.info('Installing ' + requirement_specifier.freeze())
