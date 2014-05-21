@@ -110,6 +110,9 @@ class Robustus(object):
         Create robustus environment.
         @param args: command line arguments
         """
+        settings = dict()
+        settings = Robustus._override_settings(settings, args)
+
         # create virtualenv
         python_executable = os.path.abspath(os.path.join(args.env, 'bin/python'))
         if os.path.isfile(python_executable):
@@ -135,12 +138,12 @@ class Robustus(object):
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
 
         # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
-        subprocess.call([pip_executable, 'install', 'pip==1.4.1', '--upgrade'])
+        run_shell([pip_executable, 'install', 'pip==1.4.1', '--upgrade'], False, settings['verbosity'] >= 1)
         # some sloppy maintained packages (like ROS) require outdated distribute for installation
         # and we need to install it before setuptools
-        subprocess.call([pip_executable, 'install', 'distribute==0.7.3'])
-        subprocess.call([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'])
-        subprocess.call([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'])
+        run_shell([pip_executable, 'install', 'distribute==0.7.3'], False, settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], False, settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'], False, settings['verbosity'] >= 1)
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
@@ -167,7 +170,7 @@ class Robustus(object):
 
         # readline must be come before everything else
         logging.info('Installing readline...')
-        subprocess.call([easy_install_executable, '-q', 'readline==6.2.2'])
+        run_shell([easy_install_executable, '-q', 'readline==6.2.2'], False, settings['verbosity'] >= 1)
 
         # compose settings file
         logging.info('Write .robustus config file')
@@ -180,7 +183,7 @@ class Robustus(object):
         script_dir = os.path.dirname(os.path.realpath(__file__))
         setup_dir = os.path.abspath(os.path.join(script_dir, os.path.pardir))
         os.chdir(setup_dir)
-        subprocess.call([python_executable, 'setup.py', 'install'])
+        run_shell([python_executable, 'setup.py', 'install'], False, settings['verbosity'] >= 1)
         os.chdir(cwd)
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
@@ -467,7 +470,7 @@ class Robustus(object):
         for index in self.settings['find_links']:
             for archive_name in [archive_base_name + ext for ext in extensions]:
                 try:
-                    download(os.path.join(index, archive_name), archive_name)
+                    download(os.path.join(index, archive_name), archive_name, verbose=self.settings['verbosity'] >= 2)
                     return os.path.abspath(archive_name)
                 except urllib2.URLError:
                     pass
@@ -626,7 +629,7 @@ class Robustus(object):
         env_parser.add_argument('--system-site-packages',
                                 default=False,
                                 action='store_true',
-                                help='five access to the global site-packages dir to the virtual environment')
+                                help='give access to the global site-packages dir to the virtual environment')
         env_parser.set_defaults(func=Robustus.env)
 
         install_parser = subparsers.add_parser('install', help='install packages')

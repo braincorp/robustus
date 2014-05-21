@@ -4,8 +4,6 @@
 # =============================================================================
 
 import glob
-import os
-from requirement import RequirementException
 import shutil
 import subprocess
 import sys
@@ -13,7 +11,6 @@ import tarfile
 import tempfile
 import time
 import zipfile
-import logging
 import urllib2
 import os
 import logging
@@ -94,7 +91,44 @@ def which(program):
     return None
 
 
-def download(url, filename=None):
+class OutputCapture(object):
+    def __init__(self, verbose, secs_between_dots=10):
+        self.verbose = verbose
+        self.captured_output = ""
+        self.secs_between_dots = secs_between_dots
+        self.logfile = tempfile.TemporaryFile() if not verbose else None
+        self.prev_time = time.time()
+        sys.stdout.write('Working')
+        sys.stdout.flush()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.finish()
+
+    def update(self, output='', t=time.time()):
+        if not self.verbose:
+            self.captured_output += output
+            if t - self.prev_time > self.secs_between_dots:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                self.prev_time = t
+        elif len(output) > 0:
+            logging.info(output,)
+
+    def finish(self):
+        if not self.verbose:
+            sys.stdout.write('\n')
+        if self.logfile is not None:
+            self.logfile.close()
+
+    def read_captured_output(self):
+        self.logfile.seek(0)
+        return self.logfile.read()
+
+
+def download(url, filename=None, verbose=False):
     """
     download file from url, store it under name
     :param url: url to download file
@@ -106,9 +140,9 @@ def download(url, filename=None):
 
     u = urllib2.urlopen(url)
     file_size = int(u.info().getheaders("Content-Length")[0])
-    logging.info("Downloading: %s Bytes: %s" % (file, file_size))
+    logging.info("Downloading: %s Bytes: %s" % (filename, file_size))
 
-    with open(filename, 'wb') as f:
+    with open(filename, 'wb') as f, OutputCapture(verbose) as oc:
         file_size_dl = 0
         prev_percent = 0
         block_sz = 131072
@@ -119,12 +153,14 @@ def download(url, filename=None):
 
             file_size_dl += len(buffer)
             f.write(buffer)
+
             percent_downloaded = file_size_dl * 100. / file_size
             if percent_downloaded > prev_percent + 1:
                 status = "%10d  [%3.2f%%]\r" % (file_size_dl, percent_downloaded)
-                logging.info(status,)
+                oc.update(status,)
                 prev_percent = percent_downloaded
-        f.close()
+            else:
+                oc.update()
 
     return filename
 
@@ -169,7 +205,7 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    if verbose:
+    with OutputCapture(verbose) as oc:
         # poll process for new output until finished
         p = subprocess.Popen(command,
                              shell=shell,
@@ -177,36 +213,11 @@ def run_shell(command, shell=True, verbose=False, **kwargs):
                              stderr=subprocess.STDOUT,
                              **kwargs)
         while p.poll() is None:
-            print p.stdout.readline(),
-    else:
-        # redirect log to temporary file
-        with tempfile.TemporaryFile() as logfile:
-            p = subprocess.Popen(command,
-                                 shell=shell,
-                                 stdout=logfile,
-                                 stderr=subprocess.STDOUT,
-                                 **kwargs)
+            oc.update(p.stdout.readline())
 
-            # print dots to wake TRAVIS
-            secs = 0
-            secs_between_dots = 10
-            sys.stdout.write('Working')
-            sys.stdout.flush()
-            while p.poll() is None:
-                # poll more frequently than print dots to stop as soon as process finished
-                time.sleep(1)
-                secs += 1
-                if secs >= secs_between_dots:
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
-                    secs = 0
-            sys.stdout.write('\n')
-
-            # print log in case of failure
-            if p.returncode != 0:
-                print 'Shell command "%s" failed' % str(command)
-                logfile.seek(0)
-                print logfile.read()
+        # print log in case of failure
+        if oc.verbose and p.returncode != 0:
+            logging.error('Failed:\n%s' % oc.read_log_file())
 
     return p.returncode
 
