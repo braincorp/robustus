@@ -4,7 +4,6 @@
 # =============================================================================
 
 import pytest
-import logging
 import os
 from robustus.detail import perform_standard_test
 
@@ -12,7 +11,6 @@ from robustus.detail import perform_standard_test
 @pytest.mark.skipif("'TRAVIS' in os.environ",
                     reason="gazebo compilation takes too long for travis")
 def test_gazebo_installation(tmpdir):
-    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     perform_standard_test('gazebo==2.2.1',
                           [],

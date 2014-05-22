@@ -4,7 +4,7 @@
 # =============================================================================
 
 import pytest
-from git_accessor import GitAccessor
+from robustus.detail.git_accessor import GitAccessor
 from subprocess import CalledProcessError
 
 

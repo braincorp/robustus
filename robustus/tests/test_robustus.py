@@ -9,8 +9,8 @@ import os
 import pytest
 import robustus
 from robustus.detail import check_module_available
+from robustus.detail.utility import run_shell
 import shutil
-import subprocess
 
 
 def test_doc_tests():
@@ -19,7 +19,6 @@ def test_doc_tests():
 
 
 def test_robustus(tmpdir):
-
     tmpdir.chdir()
     test_env = 'test_env'
 
@@ -33,17 +32,17 @@ def test_robustus(tmpdir):
 
     # install some packages
     logging.info('installing requirements into ' + test_env)
-    subprocess.call([robustus_executable, 'install', 'pyserial'])
+    run_shell([robustus_executable, 'install', 'pyserial'])
     test_requirements1 = 'test_requirements1.txt'
     with open(test_requirements1, 'w') as file:
         file.write('pep8==1.3.3\n')
         file.write('pytest==2.3.5\n')
-    subprocess.call([robustus_executable, 'install', '-r', test_requirements1])
+    run_shell([robustus_executable, 'install', '-r', test_requirements1])
 
     # check packages are installed
     packages_to_check = ['pyserial', 'pep8==1.3.3', 'pytest==2.3.5']
     with open('freezed_requirements.txt', 'w') as req_file:
-        subprocess.call([robustus_executable, 'freeze'], stdout=req_file)
+        run_shell([robustus_executable, 'freeze'], stdout=req_file)
     with open('freezed_requirements.txt') as req_file:
         installed_packages = [line.strip() for line in req_file]
     for package in packages_to_check:
@@ -76,10 +75,10 @@ def test_pereditable(tmpdir):
     with open(test_requirements, 'w') as file:
         file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n')
 
-    subprocess.call([robustus_executable, 'install', '-r', test_requirements])
+    run_shell([robustus_executable, 'install', '-r', test_requirements])
 
     # Now check that robustus behaves as expected
-    subprocess.call([robustus_executable, 'perrepo', 'touch', 'foo'])
+    run_shell([robustus_executable, 'perrepo', 'touch', 'foo'])
     assert os.path.exists(os.path.join(working_dir, 'foo'))
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'foo'))
 
@@ -103,8 +102,7 @@ def test_install_with_tag(tmpdir):
     with open(test_requirements, 'w') as file:
         file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n')
 
-    subprocess.call([robustus_executable, 'install', '--tag', 'test-tag',
-                     '-r', test_requirements])
+    run_shell([robustus_executable, 'install', '--tag', 'test-tag', '-r', test_requirements])
 
     # Now check that robustus behaves as expected
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test-tag'))
@@ -112,4 +110,4 @@ def test_install_with_tag(tmpdir):
 
 if __name__ == '__main__':
     test_doc_tests()
-    #pytest.main('-s %s -n0' % __file__)
+    pytest.main('-s %s -n0' % __file__)

@@ -4,7 +4,6 @@
 # =============================================================================
 
 import pytest
-import logging
 from robustus.detail import perform_standard_test
 
 
@@ -13,7 +12,6 @@ def test_opencv_installation_248(tmpdir):
 
 
 def _do_test_opencv_installation(tmpdir, requirement):
-    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
 
     imports = ['import cv2',

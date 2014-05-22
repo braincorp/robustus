@@ -34,7 +34,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                        '-DBUILD_INTEL_OPENCL_DEMOS:BOOL=OFF',
                        '-DCMAKE_C_COMPILER=gcc',
                        '-DCMAKE_CXX_COMPILER=g++'],
-                      shell=False,
                       verbose=robustus.settings['verbosity'] >= 1)
             retcode = run_shell(['make', '-j4'],
                                 shell=False,
@@ -42,7 +41,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             if retcode != 0:
                 raise RequirementException('bullet build failed')
             retcode = run_shell(['make', 'install'],
-                                shell=False,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('bullet "make install" failed')
