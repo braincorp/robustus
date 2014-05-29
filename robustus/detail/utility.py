@@ -241,8 +241,8 @@ def run_shell(command, verbose=False, **kwargs):
             oc.update(stdout.readline() if readable else '')
 
         # print log in case of failure
-        if oc.verbose and p.returncode != 0:
-            logging.error('Failed with output:\n%s' % oc.read_log_file())
+        if not oc.verbose and p.returncode != 0:
+            logging.error('Failed with output:\n%s' % oc.read_captured_output())
 
     return p.returncode
 

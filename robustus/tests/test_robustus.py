@@ -9,13 +9,30 @@ import os
 import pytest
 import robustus
 from robustus.detail import check_module_available
-from robustus.detail.utility import run_shell
+from robustus.detail.utility import run_shell, check_run_shell
 import shutil
+import subprocess
 
 
 def test_doc_tests():
     doctest.testmod(robustus, raise_on_error=True)
     doctest.testmod(robustus.detail.utility, raise_on_error=True)
+
+
+def test_run_shell():
+    # execute some command
+    run_shell('echo robustus', shell=True, verbose=False)
+    run_shell('echo robustus', shell=True, verbose=True)
+    check_run_shell('echo robustus', shell=True)
+    # execute some failing command
+    run_shell('non existing command for sure', shell=True, verbose=False)
+    run_shell('non existing command for sure', shell=True, verbose=True)
+    try:
+        exception_occured = False
+        check_run_shell('non existing command for sure', shell=True)
+    except subprocess.CalledProcessError as e:
+        exception_occured = True
+    assert exception_occured
 
 
 def test_robustus(tmpdir):
