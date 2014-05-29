@@ -268,7 +268,7 @@ class Robustus(object):
                          'Fall back to pip shell command:%s' % (command,))
             ret_code = run_shell(command, shell=True, verbose=self.settings['verbosity'] >= 1)
             if ret_code != 0:
-                return  # do not print done
+                return  # do not print done, do not add package to the list of cached packages
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):
@@ -294,7 +294,7 @@ class Robustus(object):
                 os.remove(rob)
                 return
 
-        # add requirement to the this of cached packages
+        # add requirement to the list of cached packages
         if self.find_satisfactory_requirement(requirement_specifier) is None:
             self.cached_packages.append(requirement_specifier)
         logging.info('Done')
