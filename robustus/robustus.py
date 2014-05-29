@@ -266,7 +266,9 @@ class Robustus(object):
             command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
             logging.info('Got url-based requirement. '
                          'Fall back to pip shell command:%s' % (command,))
-            run_shell(command, shell=True, verbose=self.settings['verbosity'] >= 1)
+            ret_code = run_shell(command, shell=True, verbose=self.settings['verbosity'] >= 1)
+            if ret_code != 0:
+                return  # do not print done
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):
