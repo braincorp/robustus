@@ -502,47 +502,27 @@ class Robustus(object):
 
         raise RequirementException('Failed to find package archive %s-%s' % (package, version))
 
-    def find_and_download_satisfactory_requirement_from_amazon(self, requirement, bucket_name, key, secret):
-        if requirement is None or bucket_name is None:
-            raise RobustusException('In order to download from amazon S3 you should specify requirement,'
-                                    'bucket, access key and secret access key, see "robustus install -h"')
+    def download_precomp(self, package, version):
+        """
+        Download precompiled package archive, look for locations specified using --find-links. Store archive in current
+        working folder.
+        :param package: package name
+        :param version: package version
+        :return: path to archive or None if not found
+        """
+        logging.info('Searching for precompiled package archive %s-%s' % (package, version))
+        archive_base_name = '%s-%s' % (package, version)
+        extensions = ['.precomp.tar.gz', '.precomp.tar.bz2', '.precomp.zip']
+        for index in self.settings['find_links']:
+            for archive_name in [archive_base_name + ext for ext in extensions]:
+                try:
+                    download(os.path.join(index, archive_name), archive_name, verbose=self.settings['verbosity'] >= 2)
+                    return os.path.abspath(archive_name)
+                except urllib2.URLError:
+                    pass
 
-        try:
-            import boto
-            from boto.s3.key import Key
-
-            # set boto lib debug to critical
-            logging.getLogger('boto').setLevel(logging.CRITICAL)
-
-            # connect to the bucket
-            conn = boto.connect_s3(key, secret)
-            bucket = conn.get_bucket(bucket_name)
-
-            # go through the list of files looking for wheels
-            cwd = os.getcwd()
-            os.chdir(self.cache)
-            filename = None
-            requirement_satisfier = None
-            for l in bucket.list():
-                key_str = str(l.key)
-                #print key_str # DEBUG.
-                if key_str.endswith('.whl'):
-                    key_parts = key_str.split('-')
-                    if len(key_parts) >= 2:
-                        requirement_specifier = RequirementSpecifier(name=key_parts[0], version=key_parts[1])
-                        if requirement_specifier.allows(requirement):
-                            filename = key_str
-                            l.get_contents_to_filename(filename)
-                            requirement_satisfier = requirement_specifier
-                            break
-            os.chdir(cwd)
-            if requirement_satisfier is not None and not os.path.exists(os.path.join(self.cache, filename)):
-                raise RobustusException('Can\'t find file %s in amazon cloud bucket %s' % (filename, bucket_name))
-            return requirement_satisfier
-        except ImportError:
-            raise RobustusException('To use S3 cloud install boto library into robustus virtual')
-        except Exception as e:
-            raise RobustusException(e.message)
+        logging.info('Failed to find precompiled package archive %s-%s' % (package, version))
+        return None
 
     def download_cache_from_amazon(self, filename, bucket_name, key, secret):
         if filename is None or bucket_name is None:

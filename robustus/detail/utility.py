@@ -60,6 +60,21 @@ def cp(mask, dest_dir):
             shutil.copy2(file, dest_dir)
 
 
+def safe_move(src, dst):
+    """
+    safely move single file or directory as shutil.move
+    with no overwrites
+    :param src: source file/dir
+    :param dst: destination file/dir
+    :return: None
+    """
+    if not os.path.exists(src):
+        raise RuntimeError('src does not exist: %s' % src)
+    if os.path.exists(dst) and not os.path.isdir(dst):
+        raise RuntimeError('dst exists and is not dir: %s' % dst)
+    shutil.move(src, dst)
+
+
 def ln(src, dst, force=False):
     """
     make symlink as unix ln

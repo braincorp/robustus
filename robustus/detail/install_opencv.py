@@ -8,7 +8,7 @@ import os
 import platform
 import glob
 import sys
-from utility import cp, unpack, safe_remove, fix_rpath, ln, run_shell, check_module_available
+from utility import cp, unpack, safe_remove, fix_rpath, safe_move, ln, run_shell, check_module_available
 from requirement import RequirementException
 
 
@@ -30,43 +30,52 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         def in_cache():
             return os.path.isfile(cv2so)
 
-        versions_to_fix_rpath = ['2.4.7', '2.4.8']
+        versions_to_fix_rpath = ['2.4.7', '2.4.8', '2.4.9']
 
         if not in_cache() and not ignore_index:
             cwd = os.getcwd()
             opencv_archive = None
             opencv_archive_name = None
             try:
-                opencv_archive = robustus.download('OpenCV', requirement_specifier.version)
-                opencv_archive_name = unpack(opencv_archive)
+                opencv_archive = robustus.download_precomp('OpenCV', requirement_specifier.version)
+                if opencv_archive:
+                    opencv_archive_name = unpack(opencv_archive)
 
-                logging.info('Building OpenCV')
-                cv_build_dir = os.path.join(opencv_archive_name, 'build')
-                if not os.path.isdir(cv_build_dir):
-                    os.mkdir(cv_build_dir)
-                os.chdir(cv_build_dir)
-                # TODO: check that PYTHON_LIBRARY variable is set up correctly
-                run_shell(['cmake',
-                           '../',
-                           '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
-                           '-DBUILD_NEW_PYTHON_SUPPORT=ON',
-                           '-DBUILD_TESTS=OFF',
-                           '-DBUILD_PERF_TESTS=OFF',
-                           '-DBUILD_DOCS=OFF',
-                           '-DBUILD_opencv_apps=OFF',
-                           '-DBUILD_opencv_java=OFF',
-                           '-DWITH_CUDA=OFF',
-                           '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
-                          shell=False,
-                          verbose=robustus.settings['verbosity'] >= 1)
-                retcode = run_shell(['make', '-j4'], verbose=robustus.settings['verbosity'] >= 1)
-                if retcode != 0:
-                    raise RequirementException('OpenCV build failed')
-
-                # install into wheelhouse
-                if not os.path.isdir(cv_install_dir):
-                    os.mkdir(cv_install_dir)
-                run_shell(['make', 'install'], shell=False, verbose=robustus.settings['verbosity'] >= 1)
+                    logging.info('Initializing precompiled OpenCV')
+                    # install into wheelhouse
+                    safe_move(opencv_archive_name, cv_install_dir)
+                else:
+                    opencv_archive = robustus.download('OpenCV', requirement_specifier.version)
+                    opencv_archive_name = unpack(opencv_archive)
+    
+                    logging.info('Building OpenCV')
+                    cv_build_dir = os.path.join(opencv_archive_name, 'build')
+                    if not os.path.isdir(cv_build_dir):
+                        os.mkdir(cv_build_dir)
+                    os.chdir(cv_build_dir)
+                    # TODO: check that PYTHON_LIBRARY variable is set up correctly
+                    run_shell(['cmake',
+                               '../',
+                               '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
+                               '-DBUILD_NEW_PYTHON_SUPPORT=ON',
+                               '-DBUILD_TESTS=OFF',
+                               '-DBUILD_PERF_TESTS=OFF',
+                               '-DBUILD_DOCS=OFF',
+                               '-DBUILD_opencv_apps=OFF',
+                               '-DBUILD_opencv_java=OFF',
+                               '-DWITH_CUDA=OFF',
+                               '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
+                              verbose=robustus.settings['verbosity'] >= 1)
+                    retcode = run_shell(['make', '-j4'], verbose=robustus.settings['verbosity'] >= 1)
+                    if retcode != 0:
+                        raise RequirementException('OpenCV build failed')
+    
+                    # install into wheelhouse
+                    if not os.path.isdir(cv_install_dir):
+                        os.mkdir(cv_install_dir)
+                    retcode = run_shell(['make', 'install'], verbose=robustus.settings['verbosity'] >= 1)
+                    if retcode != 0:
+                        raise RequirementException('OpenCV installation failed')
             finally:
                 safe_remove(opencv_archive)
                 safe_remove(opencv_archive_name)
