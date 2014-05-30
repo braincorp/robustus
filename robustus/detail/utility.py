@@ -105,7 +105,6 @@ class OutputCapture(object):
     """
     def __init__(self, verbose, secs_between_dots=10, logfile=None):
         self.verbose = verbose
-        self.captured_output = ""
         self.secs_between_dots = secs_between_dots
         if not verbose:
             self.logfile = tempfile.TemporaryFile() if logfile is None else logfile
@@ -125,7 +124,8 @@ class OutputCapture(object):
 
     def update(self, output=''):
         if not self.verbose:
-            self.captured_output += output
+            if len(output) > 0:
+                self.logfile.write(output)
             if time.time() - self.prev_time > self.secs_between_dots:
                 sys.stderr.write('.')
                 self.prev_time = time.time()
@@ -226,6 +226,7 @@ def run_shell(command, verbose=False, **kwargs):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
+    # some problem using temporary files to capture output
     with OutputCapture(verbose) as oc, tempfile.TemporaryFile('w+') as stdout:
         # there is problem with PIPE in case of large output, so use logfile
         if 'stdout' in kwargs:
@@ -238,12 +239,16 @@ def run_shell(command, verbose=False, **kwargs):
             # do not use subprocess.STDOUT
             # http://stackoverflow.com/questions/11495783/redirect-subprocess-stderr-to-stdout
             kwargs['stderr'] = stdout
-        if 'universal_newlines' not in kwargs:
-            kwargs['universal_newlines'] = True
         p = subprocess.Popen(command, **kwargs)
+        s = 0
         while p.poll() is None:
+            # writing to stdout moves cursor further, so need to seek back to read written data
+            stdout.seek(s)
             oc.update(stdout.readline() if readable else '')
-        oc.update(stdout.read() if readable else '')  # read rest
+            s = stdout.tell()
+        # read rest
+        stdout.seek(s)
+        oc.update(stdout.read() if readable else '')
 
         # print log in case of failure
         if not oc.verbose and p.returncode != 0:
