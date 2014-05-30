@@ -226,19 +226,24 @@ def run_shell(command, verbose=False, **kwargs):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    with OutputCapture(verbose) as oc, tempfile.TemporaryFile() as stdout:
+    with OutputCapture(verbose) as oc, tempfile.TemporaryFile('w+') as stdout:
         # there is problem with PIPE in case of large output, so use logfile
         if 'stdout' in kwargs:
             stdout.close()
             stdout = kwargs['stdout']
         else:
             kwargs['stdout'] = stdout
-        readable = 'r' in stdout.mode
+        readable = 'r' in stdout.mode or '+' in stdout.mode
         if 'stderr' not in kwargs:
-            kwargs['stderr'] = subprocess.STDOUT
+            # do not use subprocess.STDOUT
+            # http://stackoverflow.com/questions/11495783/redirect-subprocess-stderr-to-stdout
+            kwargs['stderr'] = stdout
+        if 'universal_newlines' not in kwargs:
+            kwargs['universal_newlines'] = True
         p = subprocess.Popen(command, **kwargs)
         while p.poll() is None:
             oc.update(stdout.readline() if readable else '')
+        oc.update(stdout.read() if readable else '')  # read rest
 
         # print log in case of failure
         if not oc.verbose and p.returncode != 0:
