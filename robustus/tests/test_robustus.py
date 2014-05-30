@@ -12,6 +12,7 @@ from robustus.detail import check_module_available
 from robustus.detail.utility import run_shell, check_run_shell
 import shutil
 import subprocess
+import tempfile
 
 
 def test_doc_tests():
@@ -20,19 +21,22 @@ def test_doc_tests():
 
 
 def test_run_shell():
-    # execute some command
-    run_shell('echo robustus', shell=True, verbose=False)
-    run_shell('echo robustus', shell=True, verbose=True)
-    check_run_shell('echo robustus', shell=True)
-    # execute some failing command
-    run_shell('non existing command for sure', shell=True, verbose=False)
-    run_shell('non existing command for sure', shell=True, verbose=True)
-    try:
-        exception_occured = False
-        check_run_shell('non existing command for sure', shell=True)
-    except subprocess.CalledProcessError as e:
-        exception_occured = True
-    assert exception_occured
+    def check(command, expected_ret_code, expected_output, verbose):
+        tf = tempfile.TemporaryFile('w+')
+        assert run_shell(command, shell=True, stdout=tf, verbose=verbose) == expected_ret_code
+        tf.seek(0)
+        assert tf.read() == expected_output
+        try:
+            exception_occured = False
+            check_run_shell(command, shell=True, verbose=verbose)
+        except subprocess.CalledProcessError:
+            exception_occured = True
+        assert exception_occured == (exception_occured != 0)
+
+    check('echo robustus', 0, 'robustus\n', verbose=True)
+    check('echo robustus', 0, 'robustus\n', verbose=False)
+    check('echo robustus && exit 1', 1, 'robustus\n', verbose=True)
+    check('echo robustus && exit 1', 1, 'robustus\n', verbose=False)
 
 
 def test_robustus(tmpdir):
