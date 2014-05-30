@@ -12,7 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
-from detail import Requirement, RequirementException, RequirementSpecifier, read_requirement_file
+from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
 from detail.utility import ln, run_shell, download, safe_remove, unpack
 import urllib2
@@ -189,16 +189,14 @@ class Robustus(object):
     def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
         Check if package cache already contains package of specified version, if so install it.
-        Otherwise, check if remote package cache already contains package of specified version; if so, install it.
         Otherwise make a wheel and put it into cache.
         Hope manual check for requirements file won't be necessary, waiting for pip 1.5 https://github.com/pypa/pip/issues/855
         :param package: package name
         :param version: package version string
         :return: None
         """
-        # if local and remote wheelhouses don't contain necessary requirement - make a local wheel
-        if self.find_satisfactory_requirement(requirement_specifier) is None and \
-           self.find_remote_satisfactory_requirement(requirement_specifier) is None:
+        # if wheelhouse doesn't contain necessary requirement - make a wheel
+        if self.find_satisfactory_requirement(requirement_specifier) is None:
             logging.info('Wheel not found, downloading package')
             return_code = run_shell([self.pip_executable,
                                      'install',
@@ -224,9 +222,6 @@ class Robustus(object):
             if return_code != 0:
                 raise RequirementException('pip failed to build wheel for requirement %s'
                                            % requirement_specifier.freeze())
-
-            self.upload_satisfactory_requirement(requirement_specifier)
-
             logging.info('Done')
 
         # install from prebuilt wheel
@@ -309,24 +304,6 @@ class Robustus(object):
 
         return None
 
-    def find_remote_satisfactory_requirement(self, requirement_specifier):
-        requirement = None
-        bucket_name = self.settings['amazon_s3_bucket_name']
-        key = self.settings['amazon_s3_key']
-        secret = self.settings['amazon_s3_secret']
-        if all(val is not None for val in [bucket_name, key, secret]):
-            requirement = self.find_and_download_satisfactory_requirement_from_amazon(requirement_specifier, \
-                              bucket_name, key, secret)
-        return requirement
-
-    def upload_satisfactory_requirement(self, requirement_specifier):
-        bucket_name = self.settings['amazon_s3_bucket_name']
-        key = self.settings['amazon_s3_key']
-        secret = self.settings['amazon_s3_secret']
-        if all(val is not None for val in [bucket_name, key, secret]):
-            self.upload_satisfactory_requirement_to_amazon(requirement_specifier, \
-                              bucket_name, key, secret)
-
     def tag(self, args):
         tag_name = args.tag
         self._perrepo('git tag %s' % tag_name)
@@ -376,15 +353,10 @@ class Robustus(object):
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file, tag)
 
-        self.settings['amazon_s3_bucket_name'] = args.bucket
-        self.settings['amazon_s3_key'] = args.key
-        self.settings['amazon_s3_secret'] = args.secret
-
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
         requirements = remove_duplicate_requirements(requirements)
-        #print str(requirements) # DEBUG.
 
         logging.info('Here are all packages cached in robustus:\n' +
                      '\n'.join([r.freeze() for r in self.cached_packages]) + '\n')
@@ -583,48 +555,6 @@ class Robustus(object):
         os.chdir(cwd)
         logging.info('Done')
 
-    def upload_satisfactory_requirement_to_amazon(self, requirement, bucket_name, key, secret):
-        if requirement is None or bucket_name is None:
-            raise RobustusException('In order to upload to Amazon S3 you should specify requirement,'
-                                    'bucket, access key, and secret access key.  See "robustus install -h".')
-
-        try:
-            import boto
-            from boto.s3.key import Key
-
-            # set boto lib debug to critical
-            logging.getLogger('boto').setLevel(logging.CRITICAL)
-
-            # connect to the bucket
-            conn = boto.connect_s3(key, secret)
-            bucket = conn.get_bucket(bucket_name)
-
-            # go through the list of files looking for wheels
-            cwd = os.getcwd()
-            os.chdir(self.cache)
-            filename_satisfier = None
-            requirement_satisfier = None
-            for filename in next(os.walk('.'))[2]:
-                #print filename # DEBUG.
-                if filename.endswith('.whl'):
-                    filename_parts = filename.split('-')
-                    if len(filename_parts) >= 2:
-                        requirement_specifier = RequirementSpecifier(name=filename_parts[0], version=filename_parts[1])
-                        if requirement_specifier.allows(requirement):
-                            filename_satisfier = filename
-                            requirement_satisfier = requirement_specifier
-                            break
-            if requirement_satisfier is None:
-                raise RobustusException('Can\'t find requirement satisfier in local cache')
-            if not os.path.exists(os.path.join(self.cache, filename_satisfier)):
-                raise RobustusException('Can\'t find file %s in local cache' % (filename_satisfier))
-            self.upload_cache_to_amazon(filename_satisfier, bucket_name, key, secret, False)
-            os.chdir(cwd)
-        except ImportError:
-            raise RobustusException('To use S3 cloud install boto library into robustus virtual')
-        except Exception as e:
-            raise RobustusException(e.message)
-
     def upload_cache_to_amazon(self, filename, bucket_name, key, secret, public):
         if filename is None or bucket_name is None or key is None or secret is None:
             raise RobustusException('In order to upload to amazon S3 you should specify filename,'
@@ -647,7 +577,7 @@ class Robustus(object):
             # create a key to keep track of our file in the storage
             k = Key(bucket)
             k.key = filename
-            k.set_contents_from_filename(filename) # WARNING: This fails silently if file not found.
+            k.set_contents_from_filename(filename)
             if public:
                 k.make_public()
         except ImportError:
@@ -738,12 +668,6 @@ class Robustus(object):
         install_parser.add_argument('--tag',
                                     action='store',
                                     help='Install editables using tag or branch')
-        install_parser.add_argument('-b', '--bucket',
-                                    help='amazon S3 bucket to download from')
-        install_parser.add_argument('-k', '--key',
-                                    help='amazon S3 access key')
-        install_parser.add_argument('-s', '--secret',
-                                    help='amazon S3 secret access key')
         install_parser.set_defaults(func=Robustus.install)
 
         perrepo_parser = subparsers.add_parser('perrepo',
