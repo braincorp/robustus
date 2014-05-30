@@ -4,13 +4,11 @@
 # =============================================================================
 
 import pytest
-import logging
 from robustus.detail import perform_standard_test
 
 
 @pytest.mark.skipif("'TRAVIS' in os.environ")
 def test_ros_installation(tmpdir):
-    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
 
     imports = ['import rospy',
@@ -26,7 +24,6 @@ def test_ros_installation(tmpdir):
 
 @pytest.mark.skipif("'TRAVIS' in os.environ")
 def test_gscam_installation(tmpdir):
-    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
 
     imports = ['import rospy',

@@ -4,14 +4,12 @@
 # =============================================================================
 
 import pytest
-import logging
 from robustus.detail import perform_standard_test
 
 
 @pytest.mark.skipif("'TRAVIS' in os.environ",
                     reason="for reason unknown fails on TRAVIS")
 def test_pygst_installation(tmpdir):
-    logging.getLogger().setLevel(logging.INFO)
     tmpdir.chdir()
     files = []
     imports = ['import pygtk', 'import gtk', 'import pygst', 'import gst']

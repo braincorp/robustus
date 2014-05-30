@@ -31,6 +31,7 @@ def _install_ros_deps(robustus):
 
     # update ros dependencies
     retcode = run_shell(rosdep + ' update',
+                        shell=True,
                         verbose=robustus.settings['verbosity'] >= 1)
     if retcode != 0:
         raise RequirementException('Failed to update ROS dependencies')
@@ -53,7 +54,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
                       'empy==3.3.2',
-                      'rosdep==0.10.24',
+                      'rosdep==0.10.27',
                       'sip'])
 
     ros_src_dir = os.path.join(robustus.env, 'ros-src-%s' % requirement_specifier.version)
@@ -78,18 +79,21 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
                                 + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
+                                shell=True,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to generate rosinstall file')
 
             wstool = os.path.join(robustus.env, 'bin/wstool')
             retcode = run_shell(wstool + ' init -j2 src %s-%s-wet.rosinstall' % (dist, ver),
+                                shell=True,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to build ROS')
 
             # resolve dependencies
             retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
+                                shell=True,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 if platform.machine() == 'armv7l':
@@ -104,6 +108,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             retcode = run_shell('. ' + py_activate_file + ' && ' +
                                 catkin_make_isolated +
                                 ' --install-space %s --install' % ros_install_dir,
+                                shell=True,
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to create catkin workspace for ROS')

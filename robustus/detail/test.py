@@ -1,3 +1,4 @@
+import logging
 import os
 import robustus
 import shutil
@@ -29,6 +30,8 @@ def perform_standard_test(package,
     remove env, install package without index, check package is available
     :return: None
     """
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
+
     # create env and install bullet into it
     test_env = os.path.abspath(test_env)
     test_cache = os.path.abspath(test_cache)

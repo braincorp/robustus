@@ -47,14 +47,13 @@ def _get_source(package):
         if arrow_pos > 0:
             branch, cd_path = branch[:arrow_pos], branch[arrow_pos+2:]
 
-    ret_code = run_shell('git clone "%s"' % origin)
+    ret_code = run_shell('git clone "%s"' % origin, shell=True)
     if ret_code != 0:
         raise Exception('git clone failed')
 
     clone_folder = os.path.splitext(os.path.basename(origin))[0]
     if branch is not None:
-        ret_code = run_shell('cd "%s" && git checkout %s' %
-                             (clone_folder, branch))
+        ret_code = run_shell('cd "%s" && git checkout %s' % (clone_folder, branch), shell=True)
         if ret_code != 0:
             raise Exception('git checkout failed')
 
@@ -99,6 +98,7 @@ def _ros_dep(env_source, robustus):
     rosdep = os.path.join(robustus.env, 'bin/rosdep')
     retcode = run_shell(rosdep +
                         ' install -r --from-paths src --ignore-src -y',
+                        shell=True,
                         verbose=robustus.settings['verbosity'] >= 1)
     if retcode != 0:
         logging.warning('Failed to update ROS dependencies')
@@ -132,6 +132,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                  ' --install-space %s --install' %
                                  (env_source, opencv_cmake_dir, overlay_install_folder) +
                                  ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1 ',
+                                 shell=True,
                                  verbose=robustus.settings['verbosity'] >= 1)
             if ret_code != 0:
                 raise RequirementException('Error during catkin_make')

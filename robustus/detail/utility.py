@@ -4,8 +4,6 @@
 # =============================================================================
 
 import glob
-import os
-from requirement import RequirementException
 import shutil
 import subprocess
 import sys
@@ -16,7 +14,6 @@ import zipfile
 import logging
 import urllib2
 import os
-import logging
 
 
 def add_source_ref(robustus, source_path):
@@ -109,7 +106,65 @@ def which(program):
     return None
 
 
-def download(url, filename=None):
+def is_self_test():
+    """
+    Check if this execution is robustus test run on Travis.
+    """
+    return 'TRAVIS' in os.environ and 'robustus' in os.environ['TRAVIS_REPO_SLUG']
+
+
+class OutputCapture(object):
+    """
+    Helper to capture output produced by command and print dots instead.
+    By default prints dots every ten seconds.
+    """
+    def __init__(self, verbose, secs_between_dots=10, logfile=None):
+        self.verbose = verbose
+        self.captured_output = ""
+        self.secs_between_dots = secs_between_dots
+        if not verbose:
+            self.logfile = tempfile.TemporaryFile() if logfile is None else logfile
+        self.prev_time = time.time()
+        self.dot_produced = False
+        logging.getLogger().handlers[0].flush()
+        # produce first dot during self test, because many small shell commands are executed and test
+        # mail fail to produce output within 10 mins
+        if not verbose and is_self_test():
+            sys.stderr.write('.')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.finish()
+
+    def update(self, output=''):
+        if not self.verbose:
+            self.captured_output += output
+            if time.time() - self.prev_time > self.secs_between_dots:
+                sys.stderr.write('.')
+                self.prev_time = time.time()
+                self.dot_produced = True
+        elif len(output) > 0:
+            sys.stderr.write(output,)
+
+    def finish(self):
+        if not self.verbose:
+            # during self-test on TRAVIS we want to just see the dots during testing, i.e.
+            # robustus/tests/test_bullet.py:10: test_bullet_installation ..................PASSED
+            # while with regular robustus use we want regular line separation
+            # Running shell command: ['cmd1']...
+            # Running shell command: ['cmd2']...
+            if not is_self_test() and self.dot_produced:
+                sys.stderr.write('\n')
+            self.logfile.close()
+
+    def read_captured_output(self):
+        self.logfile.seek(0)
+        return self.logfile.read()
+
+
+def download(url, filename=None, verbose=False):
     """
     download file from url, store it under name
     :param url: url to download file
@@ -121,9 +176,9 @@ def download(url, filename=None):
 
     u = urllib2.urlopen(url)
     file_size = int(u.info().getheaders("Content-Length")[0])
-    logging.info("Downloading: %s Bytes: %s" % (file, file_size))
+    logging.info("Downloading: %s Bytes: %s" % (filename, file_size))
 
-    with open(filename, 'wb') as f:
+    with open(filename, 'wb') as f, OutputCapture(verbose) as oc:
         file_size_dl = 0
         prev_percent = 0
         block_sz = 131072
@@ -134,12 +189,14 @@ def download(url, filename=None):
 
             file_size_dl += len(buffer)
             f.write(buffer)
+
             percent_downloaded = file_size_dl * 100. / file_size
             if percent_downloaded > prev_percent + 1:
                 status = "%10d  [%3.2f%%]\r" % (file_size_dl, percent_downloaded)
-                logging.info(status,)
+                oc.update(status,)
                 prev_percent = percent_downloaded
-        f.close()
+            else:
+                oc.update()
 
     return filename
 
@@ -179,51 +236,39 @@ def safe_remove(path):
         shutil.rmtree(path)
 
 
-def run_shell(command, shell=True, verbose=False, **kwargs):
+def run_shell(command, verbose=False, **kwargs):
     """
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    if verbose:
-        # poll process for new output until finished
-        p = subprocess.Popen(command,
-                             shell=shell,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             **kwargs)
+    with OutputCapture(verbose) as oc, tempfile.TemporaryFile() as stdout:
+        # there is problem with PIPE in case of large output, so use logfile
+        if 'stdout' in kwargs:
+            stdout.close()
+            stdout = kwargs['stdout']
+        else:
+            kwargs['stdout'] = stdout
+        readable = 'r' in stdout.mode
+        if 'stderr' not in kwargs:
+            kwargs['stderr'] = subprocess.STDOUT
+        p = subprocess.Popen(command, **kwargs)
         while p.poll() is None:
-            print p.stdout.readline(),
-    else:
-        # redirect log to temporary file
-        with tempfile.TemporaryFile() as logfile:
-            p = subprocess.Popen(command,
-                                 shell=shell,
-                                 stdout=logfile,
-                                 stderr=subprocess.STDOUT,
-                                 **kwargs)
+            oc.update(stdout.readline() if readable else '')
 
-            # print dots to wake TRAVIS
-            secs = 0
-            secs_between_dots = 10
-            sys.stdout.write('Working')
-            sys.stdout.flush()
-            while p.poll() is None:
-                # poll more frequently than print dots to stop as soon as process finished
-                time.sleep(1)
-                secs += 1
-                if secs >= secs_between_dots:
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
-                    secs = 0
-            sys.stdout.write('\n')
-
-            # print log in case of failure
-            if p.returncode != 0:
-                print 'Shell command "%s" failed' % str(command)
-                logfile.seek(0)
-                print logfile.read()
+        # print log in case of failure
+        if not oc.verbose and p.returncode != 0:
+            logging.error('Failed with output:\n%s' % oc.read_captured_output())
 
     return p.returncode
+
+
+def check_run_shell(command, verbose=False, **kwargs):
+    """
+    run_shell with provided args, on failure raise subprocess.CalledProcessError
+    """
+    ret = run_shell(command, verbose, **kwargs)
+    if ret != 0:
+        raise subprocess.CalledProcessError(ret, command)
 
 
 def execute_python_expr(env, expr, shell_script=None):
@@ -265,12 +310,12 @@ def fix_rpath(robustus, env, executable, rpath):
         for line in otool_output.splitlines()[1:]:
             lib = line.split()[0]
             if not os.path.isabs(lib) and lib != os.path.basename(executable) and not lib.startswith('@rpath'):
-                run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable))
+                run_shell('install_name_tool -change %s %s "%s"' % (lib, '@rpath/' + lib, executable), shell=True)
         try:
-            run_shell('install_name_tool -delete_rpath "%s" "%s"' % (rpath, executable))
+            run_shell('install_name_tool -delete_rpath "%s" "%s"' % (rpath, executable), shell=True)
         except:
             pass
-        return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable))
+        return run_shell('install_name_tool -add_rpath "%s" "%s"' % (rpath, executable), shell=True)
     else:
         patchelf_executable = os.path.join(env, 'bin/patchelf')
         if not os.path.isfile(patchelf_executable):
@@ -282,4 +327,4 @@ def fix_rpath(robustus, env, executable, rpath):
             new_rpath = old_rpath[:-1] + ':' + rpath
         else:
             new_rpath = rpath
-        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable))
+        return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable), shell=True)
