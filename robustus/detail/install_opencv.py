@@ -8,16 +8,45 @@ import os
 import platform
 import glob
 import sys
+import subprocess
 from utility import cp, unpack, safe_remove, fix_rpath, ln, run_shell, check_module_available
 from requirement import RequirementException
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+    '''
+    Opencv has a lot of cmake flags. Here are some examples to play with:
+    brew configuration for opencv 2.4.9:
+                    '-DCMAKE_OSX_DEPLOYMENT_TARGET=',
+                    '-DBUILD_ZLIB=OFF',
+                    '-DBUILD_TIFF=OFF',
+                    '-DBUILD_PNG=OFF',
+                    '-DBUILD_OPENEXR=OFF',
+                    '-DBUILD_JASPER=OFF',
+                    '-DBUILD_JPEG=OFF',
+                    '-DJPEG_INCLUDE_DIR=/usr/local/opt/jpeg/include',
+                    '-DJPEG_LIBRARY=/usr/local/opt/jpeg/lib/libjpeg.dylib',
+                    '-DPYTHON_LIBRARY=/usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/Python',
+                    '-DPYTHON_INCLUDE_DIR=/usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/Headers',
+                    '-DBUILD_TESTS=OFF',
+                    '-DBUILD_PERF_TESTS=OFF',
+                    '-DBUILD_opencv_java=OFF',
+                    '-DWITH_QT=OFF',
+                    '-DWITH_TBB=OFF',
+                    '-DWITH_FFMPEG=OFF',
+                    '-DWITH_OPENEXR=OFF',
+                    '-DWITH_CUDA=OFF',
+                    '-DWITH_OPENCL=OFF',
+                    '-DENABLE_SSSE3=ON',
+                    '-DENABLE_SSE41=ON',
+                    '-DENABLE_SSE42=ON',
+                    '-DENABLE_AVX=ON',
+    '''
     # Make sure numpy is installed - to avoid weird error when bindings
     # are silently not generated.
     if not check_module_available(robustus.env, 'numpy'):
         raise RequirementException('numpy is required for opencv')
-
+    
     if platform.linux_distribution()[0] == 'CentOS':
         # linking opencv for CentOs
         logging.info('Linking opencv for CentOS')
@@ -30,12 +59,13 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         def in_cache():
             return os.path.isfile(cv2so)
 
-        versions_to_fix_rpath = ['2.4.7', '2.4.8']
+        versions_to_fix_rpath = ['2.4.7', '2.4.8', '2.4.9']
 
         if not in_cache() and not ignore_index:
             cwd = os.getcwd()
             opencv_archive = None
             opencv_archive_name = None
+                
             try:
                 opencv_archive = robustus.download('OpenCV', requirement_specifier.version)
                 opencv_archive_name = unpack(opencv_archive)
@@ -45,18 +75,26 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 if not os.path.isdir(cv_build_dir):
                     os.mkdir(cv_build_dir)
                 os.chdir(cv_build_dir)
-                # TODO: check that PYTHON_LIBRARY variable is set up correctly
-                run_shell(['cmake',
-                           '../',
-                           '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
-                           '-DBUILD_NEW_PYTHON_SUPPORT=ON',
-                           '-DBUILD_TESTS=OFF',
-                           '-DBUILD_PERF_TESTS=OFF',
-                           '-DBUILD_DOCS=OFF',
-                           '-DBUILD_opencv_apps=OFF',
-                           '-DBUILD_opencv_java=OFF',
-                           '-DWITH_CUDA=OFF',
-                           '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
+                
+                opencv_cmake_call_args = [
+                    'cmake',
+                    '../',
+                    '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
+                    '-DBUILD_NEW_PYTHON_SUPPORT=ON',
+                    '-DBUILD_TESTS=OFF',
+                    '-DBUILD_PERF_TESTS=OFF',
+                    '-DBUILD_DOCS=OFF',
+                    '-DBUILD_opencv_apps=OFF',
+                    '-DBUILD_opencv_java=OFF',
+                    '-DWITH_CUDA=OFF',
+                    '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir]
+                
+                if sys.platform.startswith('darwin'):
+                    python_lib_path = subprocess.check_output(['python-config', '--prefix']).strip()
+                    opencv_cmake_call_args.append('-DPYTHON_LIBRARY=%s/Python' % python_lib_path)
+                    opencv_cmake_call_args.append('-DPYTHON_INCLUDE_DIR=%s/Headers' % python_lib_path)
+                
+                run_shell(opencv_cmake_call_args,
                           verbose=robustus.settings['verbosity'] >= 1)
                 retcode = run_shell(['make', '-j4'], verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:
