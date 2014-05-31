@@ -91,8 +91,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 
                 if sys.platform.startswith('darwin'):
                     python_lib_path = subprocess.check_output(['python-config', '--prefix']).strip()
-                    opencv_cmake_call_args.append('-DPYTHON_LIBRARY=%s/Python'%python_lib_path)
-                    opencv_cmake_call_args.append('-DPYTHON_INCLUDE_DIR=%s/Headers'%python_lib_path)
+                    opencv_cmake_call_args.append('-DPYTHON_LIBRARY=%s/Python' % python_lib_path)
+                    opencv_cmake_call_args.append('-DPYTHON_INCLUDE_DIR=%s/Headers' % python_lib_path)
                 
                 run_shell(opencv_cmake_call_args,
                           verbose=robustus.settings['verbosity'] >= 1)
