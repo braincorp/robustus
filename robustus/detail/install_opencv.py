@@ -46,18 +46,49 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     os.mkdir(cv_build_dir)
                 os.chdir(cv_build_dir)
                 # TODO: check that PYTHON_LIBRARY variable is set up correctly
-                run_shell(['cmake',
-                           '../',
-                           '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
-                           '-DBUILD_NEW_PYTHON_SUPPORT=ON',
-                           '-DBUILD_TESTS=OFF',
-                           '-DBUILD_PERF_TESTS=OFF',
-                           '-DBUILD_DOCS=OFF',
-                           '-DBUILD_opencv_apps=OFF',
-                           '-DBUILD_opencv_java=OFF',
-                           '-DWITH_CUDA=OFF',
-                           '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
+
+                run_shell([
+                    'cmake',
+                    '../',
+                    '-DCMAKE_OSX_DEPLOYMENT_TARGET=',
+                    '-DBUILD_ZLIB=OFF',
+                    '-DBUILD_TIFF=OFF',
+                    '-DBUILD_PNG=OFF',
+                    '-DBUILD_OPENEXR=OFF',
+                    '-DBUILD_JASPER=OFF',
+                    '-DBUILD_JPEG=OFF',
+                    '-DJPEG_INCLUDE_DIR=/usr/local/opt/jpeg/include',
+                    '-DJPEG_LIBRARY=/usr/local/opt/jpeg/lib/libjpeg.dylib',
+                    '-DPYTHON_LIBRARY=/usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/Python',
+                    '-DPYTHON_INCLUDE_DIR=/usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/Headers',
+                    '-DBUILD_TESTS=OFF',
+                    '-DBUILD_PERF_TESTS=OFF',
+                    '-DBUILD_opencv_java=OFF',
+                    '-DWITH_QT=OFF',
+                    '-DWITH_TBB=OFF',
+                    '-DWITH_FFMPEG=OFF',
+                    '-DWITH_OPENEXR=OFF',
+                    '-DWITH_CUDA=OFF',
+                    '-DWITH_OPENCL=OFF',
+                    '-DENABLE_SSSE3=ON',
+                    '-DENABLE_SSE41=ON',
+                    '-DENABLE_SSE42=ON',
+                    '-DENABLE_AVX=ON',
+                    '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
                           verbose=robustus.settings['verbosity'] >= 1)
+                
+#                 run_shell(['cmake',
+#                            '../',
+#                            '-DPYTHON_EXECUTABLE=%s' % robustus.python_executable,
+#                            '-DBUILD_NEW_PYTHON_SUPPORT=ON',
+#                            '-DBUILD_TESTS=OFF',
+#                            '-DBUILD_PERF_TESTS=OFF',
+#                            '-DBUILD_DOCS=OFF',
+#                            '-DBUILD_opencv_apps=OFF',
+#                            '-DBUILD_opencv_java=OFF',
+#                            '-DWITH_CUDA=OFF',
+#                            '-DCMAKE_INSTALL_PREFIX=%s' % cv_install_dir],
+#                           verbose=robustus.settings['verbosity'] >= 1)
                 retcode = run_shell(['make', '-j4'], verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('OpenCV build failed')
