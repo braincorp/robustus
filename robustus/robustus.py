@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
 from detail.utility import ln, run_shell, download, safe_remove, unpack
@@ -186,6 +187,40 @@ class Robustus(object):
         os.chdir(cwd)
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
+    def install_satisfactory_requirement_from_remote(self, requirement_specifier):
+        logging.info('Attempting to install package from remote wheel')
+        installed = False
+        find_links_url = self.default_package_locations[0] + '/python-wheels/index.html', # TEMPORARY.
+        dtemp_path = tempfile.mkdtemp()
+        return_code = run_shell([self.pip_executable,
+                                 'install',
+                                 '--download-cache=%s' % dtemp_path,
+                                 '--no-index',
+                                 '--use-wheel',
+                                 '--find-links=%s' % find_links_url,
+                                 requirement_specifier.freeze()],
+                                verbose=self.settings['verbosity'] >= 2)
+        if return_code == 0:
+            installed = True
+            # NOTE: Regarding the need for this q.v. "Wheels for Dependencies" "http://lucumr.pocoo.org/2014/1/27/python-on-wheels/".
+            cwd = os.getcwd()
+            os.chdir(dtemp_path)
+            for file_name in glob.glob('http*.whl'):
+                if os.path.isfile(file_name):
+                    file_name_new = file_name.rpartition('%2F')[-1]
+                    file_path_new = os.path.join(self.cache, file_name_new)
+                    shutil.move(file_name, file_path_new) # NOTE: Allow overwrites.
+            os.chdir(cwd)
+        else:
+            installed = False
+            logging.info('pip failed to install requirement %s from remote wheels cache %s.'
+                         % (requirement_specifier.freeze(), find_links_url))
+
+        safe_remove(dtemp_path)
+
+        return installed
+
+
     def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
         Check if package cache already contains package of specified version, if so install it.
@@ -195,47 +230,52 @@ class Robustus(object):
         :param version: package version string
         :return: None
         """
-        # if wheelhouse doesn't contain necessary requirement - make a wheel
+        # If wheelhouse doesn't contain necessary requirement attempt to install from remote wheel archive or make a wheel.
+        installed = False
         if self.find_satisfactory_requirement(requirement_specifier) is None:
-            logging.info('Wheel not found, downloading package')
+            # Pip does not download the wheels of dependencies unless it installs.
+            installed = self.install_satisfactory_requirement_from_remote(requirement_specifier)
+            if not installed:
+                logging.info('Wheel not found, downloading package')
+                return_code = run_shell([self.pip_executable,
+                                         'install',
+                                         '--download',
+                                         self.cache,
+                                         requirement_specifier.freeze()],
+                                        verbose=self.settings['verbosity'] >= 2)
+                if return_code != 0:
+                    raise RequirementException('pip failed to download requirement %s' % requirement_specifier.freeze())
+                logging.info('Done')
+    
+                logging.info('Building wheel')
+                wheel_cmd = [self.pip_executable,
+                             'wheel',
+                             '--no-index',
+                             '--find-links=%s' % self.cache,
+                             '--wheel-dir=%s' % self.cache,
+                             requirement_specifier.freeze()]
+                # we probably sometimes will want to see build log
+                for i in xrange(self.settings['verbosity']):
+                    wheel_cmd.append('-v')
+                return_code = run_shell(wheel_cmd, verbose=self.settings['verbosity'] >= 1)
+                if return_code != 0:
+                    raise RequirementException('pip failed to build wheel for requirement %s'
+                                               % requirement_specifier.freeze())
+                logging.info('Done')
+    
+        if not installed:
+            # install from new prebuilt wheel
+            logging.info('Installing package from wheel')
             return_code = run_shell([self.pip_executable,
                                      'install',
-                                     '--download',
-                                     self.cache,
+                                     '--no-index',
+                                     '--use-wheel',
+                                     '--find-links=%s' % self.cache,
                                      requirement_specifier.freeze()],
-                                    verbose=self.settings['verbosity'] >= 2)
+                                     verbose=self.settings['verbosity'] >= 2)
             if return_code != 0:
-                raise RequirementException('pip failed to download requirement %s' % requirement_specifier.freeze())
-            logging.info('Done')
-
-            logging.info('Building wheel')
-            wheel_cmd = [self.pip_executable,
-                         'wheel',
-                         '--no-index',
-                         '--find-links=%s' % self.cache,
-                         '--wheel-dir=%s' % self.cache,
-                         requirement_specifier.freeze()]
-            # we probably sometimes will want to see build log
-            for i in xrange(self.settings['verbosity']):
-                wheel_cmd.append('-v')
-            return_code = run_shell(wheel_cmd, verbose=self.settings['verbosity'] >= 1)
-            if return_code != 0:
-                raise RequirementException('pip failed to build wheel for requirement %s'
-                                           % requirement_specifier.freeze())
-            logging.info('Done')
-
-        # install from prebuilt wheel
-        logging.info('Installing package from wheel')
-        return_code = run_shell([self.pip_executable,
-                                 'install',
-                                 '--no-index',
-                                 '--use-wheel',
-                                 '--find-links=%s' % self.cache,
-                                 requirement_specifier.freeze()],
-                                verbose=self.settings['verbosity'] >= 2)
-        if return_code != 0:
-            raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
-                                       % (requirement_specifier.freeze(), self.cache))
+                raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
+                                           % (requirement_specifier.freeze(), self.cache))
 
     def install_requirement(self, requirement_specifier, ignore_index, tag):
         logging.info('Installing ' + requirement_specifier.freeze())
@@ -333,6 +373,7 @@ class Robustus(object):
         return os.path.join(self.env, 'bin', 'activate')
 
     def install(self, args):
+        logging.info('Robustus.install()')
         # grab index locations
         if args.find_links is not None:
             self.settings['find_links'] += args.find_links
