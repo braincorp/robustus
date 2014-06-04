@@ -8,16 +8,45 @@ import os
 import platform
 import glob
 import sys
+import subprocess
 from utility import cp, unpack, safe_remove, fix_rpath, safe_move, ln, run_shell, check_module_available
 from requirement import RequirementException
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+    '''
+    Opencv has a lot of cmake flags. Here are some examples to play with:
+    brew configuration for opencv 2.4.9:
+                    '-DCMAKE_OSX_DEPLOYMENT_TARGET=',
+                    '-DBUILD_ZLIB=OFF',
+                    '-DBUILD_TIFF=OFF',
+                    '-DBUILD_PNG=OFF',
+                    '-DBUILD_OPENEXR=OFF',
+                    '-DBUILD_JASPER=OFF',
+                    '-DBUILD_JPEG=OFF',
+                    '-DJPEG_INCLUDE_DIR=/usr/local/opt/jpeg/include',
+                    '-DJPEG_LIBRARY=/usr/local/opt/jpeg/lib/libjpeg.dylib',
+                    '-DPYTHON_LIBRARY=/usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/Python',
+                    '-DPYTHON_INCLUDE_DIR=/usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/Headers',
+                    '-DBUILD_TESTS=OFF',
+                    '-DBUILD_PERF_TESTS=OFF',
+                    '-DBUILD_opencv_java=OFF',
+                    '-DWITH_QT=OFF',
+                    '-DWITH_TBB=OFF',
+                    '-DWITH_FFMPEG=OFF',
+                    '-DWITH_OPENEXR=OFF',
+                    '-DWITH_CUDA=OFF',
+                    '-DWITH_OPENCL=OFF',
+                    '-DENABLE_SSSE3=ON',
+                    '-DENABLE_SSE41=ON',
+                    '-DENABLE_SSE42=ON',
+                    '-DENABLE_AVX=ON',
+    '''
     # Make sure numpy is installed - to avoid weird error when bindings
     # are silently not generated.
     if not check_module_available(robustus.env, 'numpy'):
         raise RequirementException('numpy is required for opencv')
-
+    
     if platform.linux_distribution()[0] == 'CentOS':
         # linking opencv for CentOs
         logging.info('Linking opencv for CentOS')
@@ -36,6 +65,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             cwd = os.getcwd()
             opencv_archive = None
             opencv_archive_name = None
+                
             try:
                 opencv_archive = robustus.download_precomp('OpenCV', requirement_specifier.version)
                 if opencv_archive:
