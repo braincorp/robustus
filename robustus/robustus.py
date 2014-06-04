@@ -188,6 +188,12 @@ class Robustus(object):
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
     def install_satisfactory_requirement_from_remote(self, requirement_specifier):
+        """
+        If wheel for satisfactory requirement found on remote, install it.
+        :param requirement_specifier: specifies package namd and package version string
+        :return: True if package installed by function (according to pip return code);
+        False otherwise.
+        """
         logging.info('Attempting to install package from remote wheel')
         installed = False
         find_links_url = self.default_package_locations[0] + '/python-wheels/index.html', # TEMPORARY.
@@ -202,15 +208,16 @@ class Robustus(object):
                                 verbose=self.settings['verbosity'] >= 2)
         if return_code == 0:
             installed = True
-            # NOTE: Regarding the need for this q.v. "Wheels for Dependencies" "http://lucumr.pocoo.org/2014/1/27/python-on-wheels/".
-            cwd = os.getcwd()
-            os.chdir(dtemp_path)
-            for file_name in glob.glob('http*.whl'):
-                if os.path.isfile(file_name):
+            # The following downloads the wheels of the requirment (and those of
+            # dependencies) into a pip download cache and moves (renames) the downloaded
+            # wheels into the local Robustus cache.  Regarding the need for this see "Wheels
+            # for Dependencies" "http://lucumr.pocoo.org/2014/1/27/python-on-wheels/".
+            for file_path in glob.glob(os.path.join(dtemp_path, 'http*.whl')):
+                if os.path.isfile(file_path):
+                    file_name = os.path.basename(file_path)
                     file_name_new = file_name.rpartition('%2F')[-1]
                     file_path_new = os.path.join(self.cache, file_name_new)
                     shutil.move(file_name, file_path_new) # NOTE: Allow overwrites.
-            os.chdir(cwd)
         else:
             installed = False
             logging.info('pip failed to install requirement %s from remote wheels cache %s.'
@@ -510,7 +517,7 @@ class Robustus(object):
 
         raise RequirementException('Failed to find package archive %s-%s' % (package, version))
 
-    def download_precomp(self, package, version):
+    def download_precompiled_archive(self, package, version):
         """
         Download precompiled package archive, look for locations specified using --find-links. Store archive in current
         working folder.

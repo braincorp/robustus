@@ -36,29 +36,19 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
 </html>
 """
 
-    cwd = os.getcwd()
-    print "cwd = \"" + cwd + "\""
-    command = os.path.join(cwd, "../admin/gen_robustus_wheelhouse_index_html.sh")
+    command = os.path.join(os.path.dirname(__file__), "gen_robustus_wheelhouse_index_html.sh")
 
     work_dir = str(tmpdir.mkdir('test_gen_robustus_wheelhouse_index_html_sh'))
     os.chdir(work_dir)
     wheelhouse_dir = "wheelhouse"
     os.mkdir(wheelhouse_dir)
 
-    try:
-        exception_occurred = False
+    with pytest.raises(subprocess.CalledProcessError):
         check_run_shell(command, shell=True)
-    except subprocess.CalledProcessError as e:
-        exception_occurred = True
-    assert exception_occurred
 
     command += " ./" + wheelhouse_dir
-    try:
-        exception_occurred = False
+    with pytest.raises(subprocess.CalledProcessError):
         check_run_shell(command, shell=True)
-    except subprocess.CalledProcessError as e:
-        exception_occurred = True
-    assert exception_occurred
 
     os.chdir(wheelhouse_dir)
     for pkg in pkg_list:
@@ -66,19 +56,14 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
             f.write(pkg + '\n')
     os.chdir(work_dir)
 
-    try:
-        exception_occurred = False
+    with pytest.raises(subprocess.CalledProcessError):
         check_run_shell(command, shell=True)
-    except subprocess.CalledProcessError as e:
-        exception_occurred = True
-    assert not exception_occurred
 
     os.chdir(wheelhouse_dir)
     with open('index.html', 'r') as f:
         html=f.read()
     assert html == html_expected
 
-    os.chdir(cwd)
     shutil.rmtree(work_dir)
 
 

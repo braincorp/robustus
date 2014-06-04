@@ -67,7 +67,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             opencv_archive_name = None
                 
             try:
-                opencv_archive = robustus.download_precomp('OpenCV', requirement_specifier.version)
+                opencv_archive = robustus.download_precompiled_archive('OpenCV', requirement_specifier.version)
                 if opencv_archive:
                     opencv_archive_name = unpack(opencv_archive)
 
