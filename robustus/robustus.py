@@ -382,7 +382,6 @@ class Robustus(object):
         return os.path.join(self.env, 'bin', 'activate')
 
     def install(self, args):
-        logging.info('Robustus.install()')
         # grab index locations
         if args.find_links is not None:
             self.settings['find_links'] += args.find_links
