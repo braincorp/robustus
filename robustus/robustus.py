@@ -217,7 +217,7 @@ class Robustus(object):
                     file_name = os.path.basename(file_path)
                     file_name_new = file_name.rpartition('%2F')[-1]
                     file_path_new = os.path.join(self.cache, file_name_new)
-                    shutil.move(file_name, file_path_new) # NOTE: Allow overwrites.
+                    shutil.move(file_path, file_path_new) # NOTE: Allow overwrites.
         else:
             installed = False
             logging.info('pip failed to install requirement %s from remote wheels cache %s.'
