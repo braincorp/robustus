@@ -56,8 +56,7 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
             f.write(pkg + '\n')
     os.chdir(work_dir)
 
-    with pytest.raises(subprocess.CalledProcessError):
-        check_run_shell(command, shell=True)
+    check_run_shell(command, shell=True)
 
     os.chdir(wheelhouse_dir)
     with open('index.html', 'r') as f:
