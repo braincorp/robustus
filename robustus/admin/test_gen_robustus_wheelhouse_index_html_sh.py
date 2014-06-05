@@ -40,13 +40,13 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
 
     work_dir = str(tmpdir.mkdir('test_gen_robustus_wheelhouse_index_html_sh'))
     os.chdir(work_dir)
-    wheelhouse_dir = "wheelhouse"
+    wheelhouse_dir = os.path.join(work_dir, "wheelhouse")
     os.mkdir(wheelhouse_dir)
 
     with pytest.raises(subprocess.CalledProcessError):
         check_run_shell(command, shell=True)
 
-    command += " ./" + wheelhouse_dir
+    command += " " + wheelhouse_dir
     with pytest.raises(subprocess.CalledProcessError):
         check_run_shell(command, shell=True)
 
@@ -60,9 +60,10 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
 
     os.chdir(wheelhouse_dir)
     with open('index.html', 'r') as f:
-        html=f.read()
+        html = f.read()
     assert html == html_expected
 
+    os.chdir(os.path.dirname(__file__))
     shutil.rmtree(work_dir)
 
 
