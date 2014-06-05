@@ -15,11 +15,10 @@ import subprocess
 def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
 
     pkg_list = [
-        "Flask-0.10-py27-none-any.whl",
-        "Jinja2-2.7.2-py27-none-any.whl",
-        "MarkupSafe-0.23-cp27-none-linux_armv7l.whl",
-        "Werkzeug-0.9.4-py27-none-any.whl",
-        "itsdangerous-0.24-py27-none-any.whl"
+        "A_PKG-0-py27-none-any.whl",
+        "B_PKG-0-py27-none-any.whl",
+        "C_PKG-0-py27-none-any.whl",
+        "D_PKG-0-py27-none-any.whl",
     ]
 
     html_expected = """\
@@ -27,11 +26,10 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
 <head><title>Index of http://thirdparty-packages.braincorporation.net/python-wheels</title></head>
 <body bgcolor="white">
 <h1>Index of http://thirdparty-packages.braincorporation.net/python-wheels</h1><hr><pre><a href="../">../</a>
-<a href="Flask-0.10-py27-none-any.whl">Flask-0.10-py27-none-any.whl</a>
-<a href="Jinja2-2.7.2-py27-none-any.whl">Jinja2-2.7.2-py27-none-any.whl</a>
-<a href="MarkupSafe-0.23-cp27-none-linux_armv7l.whl">MarkupSafe-0.23-cp27-none-linux_armv7l.whl</a>
-<a href="Werkzeug-0.9.4-py27-none-any.whl">Werkzeug-0.9.4-py27-none-any.whl</a>
-<a href="itsdangerous-0.24-py27-none-any.whl">itsdangerous-0.24-py27-none-any.whl</a>
+<a href="A_PKG-0-py27-none-any.whl">A_PKG-0-py27-none-any.whl</a>
+<a href="B_PKG-0-py27-none-any.whl">B_PKG-0-py27-none-any.whl</a>
+<a href="C_PKG-0-py27-none-any.whl">C_PKG-0-py27-none-any.whl</a>
+<a href="D_PKG-0-py27-none-any.whl">D_PKG-0-py27-none-any.whl</a>
 </pre><hr></body>
 </html>
 """
@@ -59,7 +57,7 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
     check_run_shell(command, shell=True)
 
     os.chdir(wheelhouse_dir)
-    with open('index.html', 'rU') as f:
+    with open('index.html', 'r') as f:
         html = f.read()
     logging.info('"""' + html + '"""')
     assert html == html_expected

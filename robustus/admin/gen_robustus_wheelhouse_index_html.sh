@@ -46,7 +46,7 @@ echo "Found $N_WHEELS wheel(s) in directory \"$WHEELHOUSE_DIR_PATH\"."
 <head><title>Index of $WHEELHOUSE_URL</title></head>
 <body bgcolor="white">
 <h1>Index of $WHEELHOUSE_URL</h1><hr><pre><a href="../">../</a>
-$(ls -1 *.whl | sed -e 's/.*/<a href="&">&<\/a>/')
+$(ls -1 *.whl | sort | sed -e 's/.*/<a href="&">&<\/a>/')
 </pre><hr></body>
 </html>
 DELIMITER
