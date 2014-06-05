@@ -525,7 +525,7 @@ class Robustus(object):
         :return: path to archive or None if not found
         """
 
-        if not platform.machine()
+        if not platform.machine():
             logging.warn('Cannot determine architecture from "platform.machine()".')
             return None
 
