@@ -9,6 +9,7 @@ import glob
 import importlib
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -515,17 +516,22 @@ class Robustus(object):
 
         raise RequirementException('Failed to find package archive %s-%s' % (package, version))
 
-    def download_precompiled_archive(self, package, version):
+    def download_compiled_archive(self, package, version):
         """
-        Download precompiled package archive, look for locations specified using --find-links. Store archive in current
+        Download compiled package archive, look for locations specified using --find-links. Store archive in current
         working folder.
         :param package: package name
         :param version: package version
         :return: path to archive or None if not found
         """
-        logging.info('Searching for precompiled package archive %s-%s' % (package, version))
-        archive_base_name = '%s-%s' % (package, version)
-        extensions = ['.precomp.tar.gz', '.precomp.tar.bz2', '.precomp.zip']
+
+        if not platform.machine()
+            logging.warn('Cannot determine architecture from "platform.machine()".')
+            return None
+
+        archive_base_name = '%s-%s-%s' % (package, version, platform.machine())
+        logging.info('Searching for compiled package archive %s' % archive_base_name)
+        extensions = ['.compiled.tar.gz', '.compiled.tar.bz2', '.compiled.zip']
         for index in self.settings['find_links']:
             for archive_name in [archive_base_name + ext for ext in extensions]:
                 try:
@@ -534,7 +540,7 @@ class Robustus(object):
                 except urllib2.URLError:
                     pass
 
-        logging.info('Failed to find precompiled package archive %s-%s' % (package, version))
+        logging.info('Failed to find compiled package archive %s' % archive_base_name)
         return None
 
     def download_cache_from_amazon(self, filename, bucket_name, key, secret):

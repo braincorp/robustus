@@ -67,16 +67,11 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             opencv_archive_name = None
                 
             try:
-                # NOTE: This architecture check is a temporary measure.  In a later version
-                # of Robustus, the remote location searched will contain precompiled archives
-                # for only the current architecture.
-                if platform.machine() == 'armv7l':
-                    opencv_archive = robustus.download_precompiled_archive('OpenCV', requirement_specifier.version)
-
+                opencv_archive = robustus.download_compiled_archive('OpenCV', requirement_specifier.version)
                 if opencv_archive:
                     opencv_archive_name = unpack(opencv_archive)
 
-                    logging.info('Initializing precompiled OpenCV')
+                    logging.info('Initializing compiled OpenCV')
                     # install into wheelhouse
                     safe_move(opencv_archive_name, cv_install_dir)
                 else:
