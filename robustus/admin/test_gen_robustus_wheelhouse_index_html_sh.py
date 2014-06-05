@@ -59,8 +59,9 @@ def test_gen_robustus_wheelhouse_index_html_sh(tmpdir):
     check_run_shell(command, shell=True)
 
     os.chdir(wheelhouse_dir)
-    with open('index.html', 'r') as f:
+    with open('index.html', 'rU') as f:
         html = f.read()
+    logging.info('"""' + html + '"""')
     assert html == html_expected
 
     os.chdir(os.path.dirname(__file__))
