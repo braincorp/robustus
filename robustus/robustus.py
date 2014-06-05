@@ -196,7 +196,7 @@ class Robustus(object):
         """
         logging.info('Attempting to install package from remote wheel')
         installed = False
-        find_links_url = self.default_package_locations[0] + '/python-wheels/index.html', # TEMPORARY.
+        find_links_url = self.default_package_locations[0] + '/python-wheels/index.html',  # TEMPORARY.
         dtemp_path = tempfile.mkdtemp()
         return_code = run_shell([self.pip_executable,
                                  'install',
@@ -217,7 +217,7 @@ class Robustus(object):
                     file_name = os.path.basename(file_path)
                     file_name_new = file_name.rpartition('%2F')[-1]
                     file_path_new = os.path.join(self.cache, file_name_new)
-                    shutil.move(file_path, file_path_new) # NOTE: Allow overwrites.
+                    shutil.move(file_path, file_path_new)  # NOTE: Allow overwrites.
         else:
             installed = False
             logging.info('pip failed to install requirement %s from remote wheels cache %s.'
@@ -226,7 +226,6 @@ class Robustus(object):
         safe_remove(dtemp_path)
 
         return installed
-
 
     def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
@@ -279,7 +278,7 @@ class Robustus(object):
                                      '--use-wheel',
                                      '--find-links=%s' % self.cache,
                                      requirement_specifier.freeze()],
-                                     verbose=self.settings['verbosity'] >= 2)
+                                    verbose=self.settings['verbosity'] >= 2)
             if return_code != 0:
                 raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
                                            % (requirement_specifier.freeze(), self.cache))
