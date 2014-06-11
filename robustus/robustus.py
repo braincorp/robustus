@@ -368,14 +368,16 @@ class Robustus(object):
         self._perrepo(cmd_str)
 
     def _perrepo(self, cmd_str):
+        verbose = self.settings['verbosity'] > 0
         run_shell('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s'
-                  % (self._activate_path(), cmd_str), shell=True)
+                  % (self._activate_path(), cmd_str), shell=True, verbose=verbose)
 
         for d in os.listdir(os.path.join(self.env, 'src')):
             full_path = os.path.join(self.env, 'src', d)
             if os.path.isdir(full_path):
                 logging.info('Running command in %s' % full_path)
-                run_shell('cd "%s" && . "%s" && %s' % (full_path, self._activate_path(), cmd_str), shell=True)
+                run_shell('cd "%s" && . "%s" && %s' % (full_path, self._activate_path(),
+                                                       cmd_str), shell=True, verbose=verbose)
 
     def _activate_path(self):
         """Return the path to the virtual env activate file."""
