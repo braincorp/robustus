@@ -42,6 +42,20 @@ def _install_ros_deps(robustus):
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     ver, dist = requirement_specifier.version.split('.')
 
+    if platform.machine() == 'armv7l':
+    
+        # NOTE: I'm not sure where to put this path.
+        ros_install_dir = os.path.join('/opt/bstem/bstem.ros', 'ros-install-%s' % requirement_specifier.version)
+        if os.path.isdir(ros_install_dir):
+            # check distro
+            if (ver == 'hydro' and dist == 'ros_comm'):
+                # Add ROS settings to activate file
+                logging.info('Using ROS system install %s' % ros_install_dir)
+                add_source_ref(robustus, os.path.join(ros_install_dir, 'setup.sh'))
+                return
+            else: 
+                raise logging.warn('armv7l only uses hydro.ros_comm as a ROS system install.\n')
+    
     # check distro
     if ver != 'hydro':
         logging.warn('Robustus is only tested to install ROS hydro.\n'
