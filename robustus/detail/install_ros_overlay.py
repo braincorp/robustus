@@ -95,7 +95,10 @@ def _ros_dep(env_source, robustus):
     """Run rosdep to install any dependencies (or error)."""
 
     logging.info('Running rosdep to install dependencies')
-    rosdep = os.path.join(robustus.env, 'bin/rosdep')
+    if platform.machine() == 'armv7l':
+        rosdep = os.path.join('rosdep')
+    else:
+        rosdep = os.path.join(robustus.env, 'bin/rosdep')
     retcode = run_shell(rosdep +
                         ' install -r --from-paths src --ignore-src -y',
                         shell=True,
