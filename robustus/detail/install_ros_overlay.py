@@ -96,11 +96,23 @@ def _ros_dep(env_source, robustus):
     """Run rosdep to install any dependencies (or error)."""
 
     logging.info('Running rosdep to install dependencies')
+
     if platform.machine() == 'armv7l':
+        # init rosdep, rosdep can already be initialized resulting in error, that's ok
+        os.system('sudo rosdep init') # NOTE: This is called by the "bstem.ros" Debian control scripts.
+
+        # update ros dependencies # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
+        retcode = run_shell('rosdep update',
+                            shell=True,
+                            verbose=robustus.settings['verbosity'] >= 1)
+        if retcode != 0:
+            raise RequirementException('Failed to update ROS dependencies')
+
         os.system('sudo apt-get update') # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
         rosdep = os.path.join('sudo rosdep')
     else:
         rosdep = os.path.join(robustus.env, 'bin/rosdep')
+
     retcode = run_shell(rosdep +
                         ' install -r --from-paths src --ignore-src -y',
                         shell=True,
