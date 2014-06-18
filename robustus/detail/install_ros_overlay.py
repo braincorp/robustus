@@ -8,6 +8,7 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
+import platform
 import importlib
 import ros_utils
 from utility import run_shell, add_source_ref, check_module_available
