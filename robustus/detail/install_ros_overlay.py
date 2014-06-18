@@ -97,7 +97,8 @@ def _ros_dep(env_source, robustus):
 
     logging.info('Running rosdep to install dependencies')
     if platform.machine() == 'armv7l':
-        rosdep = os.path.join('rosdep')
+        os.system('sudo apt-get update') # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
+        rosdep = os.path.join('sudo rosdep')
     else:
         rosdep = os.path.join(robustus.env, 'bin/rosdep')
     retcode = run_shell(rosdep +
