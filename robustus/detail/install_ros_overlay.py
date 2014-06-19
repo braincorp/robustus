@@ -98,9 +98,15 @@ def _ros_dep(env_source, robustus):
     logging.info('Running rosdep to install dependencies')
 
     if platform.machine() == 'armv7l':
-        # install dependencies, may throw
+        # install dependencies in venv, may throw
+        # NOTE: This should not be necessary for the ROS packages.
         robustus.execute(['install',
+                          'catkin_pkg==0.1.24',
+                          'rosinstall==0.6.30',
+                          'rosinstall_generator==0.1.4',
+                          'wstool==0.0.4',
                           'empy==3.3.2',
+                          'rosdep==0.10.27',
                           'sip'])
 
         # init rosdep, rosdep can already be initialized resulting in error, that's ok
