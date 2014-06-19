@@ -98,6 +98,11 @@ def _ros_dep(env_source, robustus):
     logging.info('Running rosdep to install dependencies')
 
     if platform.machine() == 'armv7l':
+        # install dependencies, may throw
+        robustus.execute(['install',
+                          'empy==3.3.2',
+                          'sip'])
+
         # init rosdep, rosdep can already be initialized resulting in error, that's ok
         os.system('sudo rosdep init') # NOTE: This is called by the "bstem.ros" Debian control scripts.
 
