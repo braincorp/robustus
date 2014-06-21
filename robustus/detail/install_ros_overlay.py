@@ -138,32 +138,41 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     
     try:
         cwd = os.getcwd()
+        prefix = "ros-installed-overlay"
         suffix = ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())
-        overlay_install_folder = os.path.join(robustus.cache, 'ros-installed-overlay-%s'
-                                              % suffix)
+        overlay_install_folder = os.path.join(robustus.cache, '%s-%s'
+                                              % (prefix, suffix))
 
         if not os.path.isdir(overlay_install_folder):
-            env_source = os.path.join(robustus.env, 'bin/activate')
-            overlay_src_folder = _make_overlay_folder(robustus, suffix)
-            os.chdir(overlay_src_folder)
+            overlay_archive = robustus.download_compiled_archive(prefix, suffix)
+            if overlay_archive:
+                overlay_archive_name = unpack(overlay_archive)
 
-            logging.info('Building ros overlay in %s with versions %s'
-                         ' install folder %s' % (overlay_src_folder, str(packages),
-                                                 overlay_install_folder))
+                logging.info('Initializing compiled ROS overlay')
+                # install into wheelhouse
+                safe_move(overlay_archive_name, overlay_install_folder)
+            else:
+                env_source = os.path.join(robustus.env, 'bin/activate')
+                overlay_src_folder = _make_overlay_folder(robustus, suffix)
+                os.chdir(overlay_src_folder)
 
-            os.mkdir(os.path.join(overlay_src_folder, 'src'))
-            _get_sources(packages)
-            _ros_dep(env_source, robustus)
+                logging.info('Building ros overlay in %s with versions %s'
+                             ' install folder %s' % (overlay_src_folder, str(packages),
+                                                     overlay_install_folder))
 
-            opencv_cmake_dir = _opencv_cmake_path(robustus)
-            ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
-                                 ' --install-space %s --install' %
-                                 (env_source, opencv_cmake_dir, overlay_install_folder) +
-                                 ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1 ',
-                                 shell=True,
-                                 verbose=robustus.settings['verbosity'] >= 1)
-            if ret_code != 0:
-                raise RequirementException('Error during catkin_make')
+                os.mkdir(os.path.join(overlay_src_folder, 'src'))
+                _get_sources(packages)
+                _ros_dep(env_source, robustus)
+
+                opencv_cmake_dir = _opencv_cmake_path(robustus)
+                ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
+                                     ' --install-space %s --install' %
+                                     (env_source, opencv_cmake_dir, overlay_install_folder) +
+                                     ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1 ',
+                                     shell=True,
+                                     verbose=robustus.settings['verbosity'] >= 1)
+                if ret_code != 0:
+                    raise RequirementException('Error during catkin_make')
         else:
             logging.info('ROS overlay cached %s' % overlay_install_folder)
 
