@@ -88,7 +88,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if not in_cache() and not ignore_index:
             if not os.path.isdir(ros_src_dir):
                 os.makedirs(ros_src_dir)
-                os.chdir(ros_src_dir)
+            os.chdir(ros_src_dir)
 
             rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
             retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
@@ -126,8 +126,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                 verbose=robustus.settings['verbosity'] >= 1)
             if retcode != 0:
                 raise RequirementException('Failed to create catkin workspace for ROS')
+
+            logging.info('Removing ROS source/build directory %s' % ros_src_dir)
+            os.chdir(ros_install_dir) # NOTE: If this directory is not accessible, something is wrong.
+            shutil.rmtree(ros_src_dir, ignore_errors=False)
         else:
-            logging.info('Using ROS from cache %s' % ros_src_dir)
+            logging.info('Using ROS from cache %s' % ros_install_dir)
 
         os.chdir(cwd)
 
