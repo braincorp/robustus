@@ -66,9 +66,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                      'Still, it will try to install required distribution "%s"' % requirement_specifier.version)
 
     # install dependencies, may throw
-    #                  'catkin_pkg==0.2.2',
     robustus.execute(['install',
-                      'catkin_pkg==0.1.24',
+                      'catkin_pkg==0.2.2',
                       'rosinstall==0.6.30',
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
