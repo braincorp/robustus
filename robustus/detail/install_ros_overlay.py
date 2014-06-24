@@ -11,7 +11,7 @@ import sys
 import platform
 import importlib
 import ros_utils
-from utility import unpack, safe_move, run_shell, add_source_ref, check_module_available
+from utility import unpack, safe_remove, safe_move, run_shell, add_source_ref, check_module_available
 
 
 def _make_overlay_folder(robustus, req_hash):
