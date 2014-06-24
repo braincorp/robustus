@@ -27,7 +27,9 @@ def _install_ros_deps(robustus):
         os.system('sudo apt-get update')
 
     # init rosdep, rosdep can already be initialized resulting in error, that's ok
+    logging.info('BEGIN: Ignore \"ERROR: default sources list file already exists\"...\n')
     os.system('sudo ' + rosdep + ' init')
+    logging.info('END: Ignore \"ERROR: default sources list file already exists\".\n')
 
     # update ros dependencies
     retcode = run_shell(rosdep + ' update',
@@ -64,8 +66,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                      'Still, it will try to install required distribution "%s"' % requirement_specifier.version)
 
     # install dependencies, may throw
+    #                  'catkin_pkg==0.2.2',
     robustus.execute(['install',
-                      'catkin_pkg==0.2.2',
+                      'catkin_pkg==0.1.24',
                       'rosinstall==0.6.30',
                       'rosinstall_generator==0.1.4',
                       'wstool==0.0.4',
@@ -75,7 +78,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     ros_src_dir = os.path.join(robustus.env, 'ros-src-%s' % requirement_specifier.version)
     req_name = 'ros-install-%s' % requirement_specifier.version
-    req_hash = ros_utils.hash_path(robustus.env) # NOTE: "install_ros_overlay.py" uses "ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())".
+    req_hash = ros_utils.hash_path(robustus.env)
     ros_install_dir = os.path.join(robustus.cache, '%s-%s' % (req_name, req_hash))
 
     def in_cache():
