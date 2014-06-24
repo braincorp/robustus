@@ -137,9 +137,31 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     packages = requirement_specifier.version.split(',')
     
     try:
+        env_source = os.path.join(robustus.env, 'bin/activate')
+
+        # NOTE: If ROS is not installed, the following returns an empty string.
+        def get_ros_install_dir(env_source):
+            ret_code, output = run_shell('. "%s" && python -c "import ros ; print ros.__file__"' % env_source, shell=True, return_output=True)
+            if ret_code != 0:
+                logging.info('get_ros_install_dir() failed: ret_code is %d: %s' % (ret_code, output))
+                return ''
+            if len(output.splitlines()) != 1:
+                logging.info('get_ros_install_dir() failed: Too many lines in output: %s' % output)
+                return ''
+            output_dirname = os.path.dirname(output)
+            ros_install_dir = os.path.abspath(os.path.join(output_dirname, os.pardir, os.pardir, os.pardir, os.pardir))
+            if not os.path.isdir(ros_install_dir):
+                logging.info('get_ros_install_dir() failed: ros_install_dir not a directory: %s' % ros_install_dir)
+                return ''
+            return ros_install_dir
+
+        ros_install_dir = ros_utils.get_ros_install_dir(env_source)
+
         cwd = os.getcwd()
         req_name = "ros-installed-overlay"
-        req_hash = ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())
+        ver_hash = requirement_specifier.version_hash()
+        logging.info('Hashing ROS overlay on (robustus.env, ver_hash, ros_install_dir) = ("%s", "%s", "%s")' % (robustus.env, ver_hash, ros_install_dir))
+        req_hash = ros_utils.hash_path(robustus.env, ver_hash, ros_install_dir)
         overlay_install_folder = os.path.join(robustus.cache, '%s-%s'
                                               % (req_name, req_hash))
 
@@ -153,7 +175,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 safe_move(overlay_archive_name, overlay_install_folder)
                 safe_remove(overlay_archive)
             else:
-                env_source = os.path.join(robustus.env, 'bin/activate')
                 overlay_src_folder = _make_overlay_folder(robustus, req_hash)
                 os.chdir(overlay_src_folder)
 

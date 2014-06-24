@@ -236,7 +236,7 @@ def safe_remove(path):
         shutil.rmtree(path)
 
 
-def run_shell(command, verbose=False, **kwargs):
+def run_shell(command, verbose=False, return_output=False, **kwargs):
     """
     Run command logging accordingly to the verbosity level.
     """
@@ -268,6 +268,9 @@ def run_shell(command, verbose=False, **kwargs):
         # print log in case of failure
         if not oc.verbose and p.returncode != 0:
             logging.error('Failed with output:\n%s' % oc.read_captured_output())
+
+        if return_output:
+            return p.returncode, oc.read_captured_output()
 
     return p.returncode
 
