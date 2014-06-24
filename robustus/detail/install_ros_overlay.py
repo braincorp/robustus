@@ -14,8 +14,8 @@ import ros_utils
 from utility import unpack, safe_move, run_shell, add_source_ref, check_module_available
 
 
-def _make_overlay_folder(robustus, suffix):
-    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-' + suffix)
+def _make_overlay_folder(robustus, req_hash):
+    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-' + req_hash)
     if not os.path.isdir(overlay_folder):
         os.makedirs(overlay_folder)
 
@@ -138,22 +138,23 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     
     try:
         cwd = os.getcwd()
-        prefix = "ros-installed-overlay"
-        suffix = ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())
+        req_name = "ros-installed-overlay"
+        req_hash = ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())
         overlay_install_folder = os.path.join(robustus.cache, '%s-%s'
-                                              % (prefix, suffix))
+                                              % (req_name, req_hash))
 
         if not os.path.isdir(overlay_install_folder):
-            overlay_archive = robustus.download_compiled_archive(prefix, suffix)
+            overlay_archive = robustus.download_compiled_archive(req_name, req_hash)
             if overlay_archive:
                 overlay_archive_name = unpack(overlay_archive)
 
                 logging.info('Initializing compiled ROS overlay')
                 # install into wheelhouse
                 safe_move(overlay_archive_name, overlay_install_folder)
+                safe_remove(overlay_archive)
             else:
                 env_source = os.path.join(robustus.env, 'bin/activate')
-                overlay_src_folder = _make_overlay_folder(robustus, suffix)
+                overlay_src_folder = _make_overlay_folder(robustus, req_hash)
                 os.chdir(overlay_src_folder)
 
                 logging.info('Building ros overlay in %s with versions %s'

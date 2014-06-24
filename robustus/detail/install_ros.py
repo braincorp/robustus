@@ -54,7 +54,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 add_source_ref(robustus, os.path.join(ros_install_dir, 'setup.sh'))
                 return
             else: 
-                raise logging.warn('armv7l only uses hydro.ros_comm as a ROS system install.\n')
+                logging.warn('armv7l only uses hydro.ros_comm as a ROS system install.\n')
+        else: 
+           logging.warn('No suitable ROS system install found.\n')
     
     # check distro
     if ver != 'hydro':
@@ -72,7 +74,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                       'sip'])
 
     ros_src_dir = os.path.join(robustus.env, 'ros-src-%s' % requirement_specifier.version)
-    ros_install_dir = os.path.join(robustus.cache, 'ros-install-%s-%s' % (requirement_specifier.version, ros_utils.hash_path(robustus.env)))
+    req_name = 'ros-install-%s' % requirement_specifier.version
+    req_hash = ros_utils.hash_path(robustus.env) # NOTE: "install_ros_overlay.py" uses "ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())".
+    ros_install_dir = os.path.join(robustus.cache, '%s-%s' % (req_name, req_hash))
 
     def in_cache():
         return os.path.isdir(ros_install_dir)
@@ -84,52 +88,63 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
         logging.info('ROS install dir %s' % ros_install_dir)
 
-        # build ros if necessary
+        # download and install compiled non-system ROS or, if necessary, build ROS
         if not in_cache() and not ignore_index:
-            if not os.path.isdir(ros_src_dir):
-                os.makedirs(ros_src_dir)
-            os.chdir(ros_src_dir)
+            ros_archive = robustus.download_compiled_archive(req_name, req_hash)
+            if ros_archive:
+                ros_archive_name = unpack(ros_archive)
 
-            rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
-            retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
-                                + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
-                                shell=True,
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                raise RequirementException('Failed to generate rosinstall file')
+                logging.info('Initializing compiled ROS in Robustus wheelhouse')
+                # install into wheelhouse
+                safe_move(ros_archive_name, ros_install_dir)
+                safe_remove(ros_archive)
+            else:
+                logging.info('Building ROS in Robustus wheelhouse')
 
-            wstool = os.path.join(robustus.env, 'bin/wstool')
-            retcode = run_shell(wstool + ' init -j2 src %s-%s-wet.rosinstall' % (dist, ver),
-                                shell=True,
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                raise RequirementException('Failed to build ROS')
-
-            # resolve dependencies
-            retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
-                                shell=True,
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                if platform.machine() == 'armv7l':
-                    # Due to the lack of LISP machine for ARM we expect some failures
-                    logging.info("No LISP on ARM. Expected not all dependencies to be installed.")
-                else:
-                    raise RequirementException('Failed to resolve ROS dependencies')
-
-            # create catkin workspace
-            py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
-            catkin_make_isolated = os.path.join(ros_src_dir, 'src/catkin/bin/catkin_make_isolated')
-            retcode = run_shell('. ' + py_activate_file + ' && ' +
-                                catkin_make_isolated +
-                                ' --install-space %s --install' % ros_install_dir,
-                                shell=True,
-                                verbose=robustus.settings['verbosity'] >= 1)
-            if retcode != 0:
-                raise RequirementException('Failed to create catkin workspace for ROS')
-
-            logging.info('Removing ROS source/build directory %s' % ros_src_dir)
-            os.chdir(ros_install_dir) # NOTE: If this directory is not accessible, something is wrong.
-            shutil.rmtree(ros_src_dir, ignore_errors=False)
+                if not os.path.isdir(ros_src_dir):
+                    os.makedirs(ros_src_dir)
+                os.chdir(ros_src_dir)
+    
+                rosinstall_generator = os.path.join(robustus.env, 'bin/rosinstall_generator')
+                retcode = run_shell(rosinstall_generator + ' %s --rosdistro %s' % (dist, ver)
+                                    + ' --deps --wet-only > %s-%s-wet.rosinstall' % (dist, ver),
+                                    shell=True,
+                                    verbose=robustus.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('Failed to generate rosinstall file')
+    
+                wstool = os.path.join(robustus.env, 'bin/wstool')
+                retcode = run_shell(wstool + ' init -j2 src %s-%s-wet.rosinstall' % (dist, ver),
+                                    shell=True,
+                                    verbose=robustus.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('Failed to build ROS')
+    
+                # resolve dependencies
+                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
+                                    shell=True,
+                                    verbose=robustus.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    if platform.machine() == 'armv7l':
+                        # Due to the lack of LISP machine for ARM we expect some failures
+                        logging.info("No LISP on ARM. Expected not all dependencies to be installed.")
+                    else:
+                        raise RequirementException('Failed to resolve ROS dependencies')
+    
+                # create catkin workspace
+                py_activate_file = os.path.join(robustus.env, 'bin', 'activate')
+                catkin_make_isolated = os.path.join(ros_src_dir, 'src/catkin/bin/catkin_make_isolated')
+                retcode = run_shell('. ' + py_activate_file + ' && ' +
+                                    catkin_make_isolated +
+                                    ' --install-space %s --install' % ros_install_dir,
+                                    shell=True,
+                                    verbose=robustus.settings['verbosity'] >= 1)
+                if retcode != 0:
+                    raise RequirementException('Failed to create catkin workspace for ROS')
+    
+                logging.info('Removing ROS source/build directory %s' % ros_src_dir)
+                os.chdir(ros_install_dir) # NOTE: If this directory is not accessible, something is wrong.
+                shutil.rmtree(ros_src_dir, ignore_errors=False)
         else:
             logging.info('Using ROS from cache %s' % ros_install_dir)
 
