@@ -9,7 +9,7 @@ from requirement import RequirementException
 import shutil
 import sys
 import platform
-from utility import run_shell, add_source_ref
+from utility import unpack, safe_move, run_shell, add_source_ref
 import ros_utils
 
 
