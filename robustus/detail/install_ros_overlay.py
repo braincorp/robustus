@@ -136,6 +136,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert requirement_specifier.name == 'ros_overlay'
     packages = requirement_specifier.version.split(',')
     
+    cwd = os.getcwd()
     try:
         env_source = os.path.join(robustus.env, 'bin/activate')
 
@@ -155,9 +156,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                 return ''
             return ros_install_dir
 
-        ros_install_dir = ros_utils.get_ros_install_dir(env_source)
+        ros_install_dir = get_ros_install_dir(env_source)
 
-        cwd = os.getcwd()
         req_name = "ros-installed-overlay"
         ver_hash = requirement_specifier.version_hash()
         logging.info('Hashing ROS overlay on (robustus.env, ver_hash, ros_install_dir) = ("%s", "%s", "%s")' % (robustus.env, ver_hash, ros_install_dir))
