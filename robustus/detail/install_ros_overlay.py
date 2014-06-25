@@ -101,7 +101,7 @@ def _ros_dep(env_source, robustus):
         # install dependencies in venv, may throw
         # NOTE: This should not be necessary for the ROS packages.
         robustus.execute(['install',
-                          'catkin_pkg==0.1.24',
+                          'catkin_pkg==0.2.2',
                           'rosinstall==0.6.30',
                           'rosinstall_generator==0.1.4',
                           'wstool==0.0.4',
