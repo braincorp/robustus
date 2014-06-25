@@ -110,7 +110,9 @@ def _ros_dep(env_source, robustus):
                           'sip'])
 
         # init rosdep, rosdep can already be initialized resulting in error, that's ok
+        logging.info('BEGIN: Ignore \"ERROR: default sources list file already exists\"...\n')
         os.system('sudo rosdep init') # NOTE: This is called by the "bstem.ros" Debian control scripts.
+        logging.info('END: Ignore \"ERROR: default sources list file already exists\".\n')
 
         # update ros dependencies # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
         retcode = run_shell('rosdep update',
