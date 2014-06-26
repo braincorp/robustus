@@ -32,7 +32,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             raise RequirementException('System-wide SIP is missing, run: brew install sip')  
     elif sys.platform.startswith('linux'):
         if os.path.isfile('/usr/lib/python2.7/dist-packages/sipconfig.py'):
-            logging.info('Linking pyside on centos')
+            logging.info('Linking SIP on Linux')
             ln('/usr/lib/python2.7/dist-packages/sipconfig.py',
                os.path.join(robustus.env, 'lib/python2.7/site-packages/sipconfig.py'),
                force = True)
@@ -42,4 +42,4 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         else:
             raise RequirementException('System-wide SIP is missing, run: sudo apt-get install python-sip')
     else:
-        raise RequirementException('SIP not support on this platform')
+        raise RequirementException('SIP not supported on this platform')

@@ -8,13 +8,14 @@ import os
 from requirement import RequirementException
 import shutil
 import sys
+import platform
 import importlib
 import ros_utils
-from utility import run_shell, add_source_ref, check_module_available
+from utility import unpack, safe_remove, safe_move, run_shell, add_source_ref, check_module_available
 
 
-def _make_overlay_folder(robustus, suffix):
-    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-' + suffix)
+def _make_overlay_folder(robustus, req_hash):
+    overlay_folder = os.path.join(robustus.env, 'ros-overlay-source-' + req_hash)
     if not os.path.isdir(overlay_folder):
         os.makedirs(overlay_folder)
 
@@ -95,7 +96,35 @@ def _ros_dep(env_source, robustus):
     """Run rosdep to install any dependencies (or error)."""
 
     logging.info('Running rosdep to install dependencies')
-    rosdep = os.path.join(robustus.env, 'bin/rosdep')
+
+    if platform.machine() == 'armv7l':
+        # install dependencies in venv, may throw
+        robustus.execute(['install',
+                          'catkin_pkg==0.2.2',
+                          'rosinstall==0.6.30',
+                          'rosinstall_generator==0.1.4',
+                          'wstool==0.0.4',
+                          'empy==3.3.2',
+                          'rosdep==0.10.27',
+                          'sip'])
+
+        # init rosdep, rosdep can already be initialized resulting in error, that's ok
+        logging.info('BEGIN: Ignore \"ERROR: default sources list file already exists\"...\n')
+        os.system('sudo rosdep init')  # NOTE: This is called by the "bstem.ros" Debian control scripts.
+        logging.info('END: Ignore \"ERROR: default sources list file already exists\".\n')
+
+        # update ros dependencies  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
+        retcode = run_shell('rosdep update',
+                            shell=True,
+                            verbose=robustus.settings['verbosity'] >= 1)
+        if retcode != 0:
+            raise RequirementException('Failed to update ROS dependencies')
+
+        os.system('sudo apt-get update')  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
+        rosdep = os.path.join('sudo rosdep')
+    else:
+        rosdep = os.path.join(robustus.env, 'bin/rosdep')
+
     retcode = run_shell(rosdep +
                         ' install -r --from-paths src --ignore-src -y',
                         shell=True,
@@ -108,34 +137,65 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     assert requirement_specifier.name == 'ros_overlay'
     packages = requirement_specifier.version.split(',')
     
+    cwd = os.getcwd()
     try:
-        cwd = os.getcwd()
-        suffix = ros_utils.hash_path(robustus.env, requirement_specifier.version_hash())
-        overlay_install_folder = os.path.join(robustus.cache, 'ros-installed-overlay-%s'
-                                              % suffix)
+        env_source = os.path.join(robustus.env, 'bin/activate')
+
+        # NOTE: If ROS is not installed, the following returns an empty string.
+        def get_ros_install_dir(env_source):
+            ret_code, output = run_shell('. "%s" && python -c "import ros ; print ros.__file__"' % env_source, shell=True, return_output=True)
+            if ret_code != 0:
+                logging.info('get_ros_install_dir() failed: ret_code is %d: %s' % (ret_code, output))
+                return ''
+            if len(output.splitlines()) != 1:
+                logging.info('get_ros_install_dir() failed: Too many lines in output: %s' % output)
+                return ''
+            output_dirname = os.path.dirname(output)
+            ros_install_dir = os.path.abspath(os.path.join(output_dirname, os.pardir, os.pardir, os.pardir, os.pardir))
+            if not os.path.isdir(ros_install_dir):
+                logging.info('get_ros_install_dir() failed: ros_install_dir not a directory: %s' % ros_install_dir)
+                return ''
+            return ros_install_dir
+
+        ros_install_dir = get_ros_install_dir(env_source)
+
+        req_name = "ros-installed-overlay"
+        ver_hash = requirement_specifier.version_hash()
+        logging.info('Hashing ROS overlay on (robustus.env, ver_hash, ros_install_dir) = ("%s", "%s", "%s")' % (robustus.env, ver_hash, ros_install_dir))
+        req_hash = ros_utils.hash_path(robustus.env, ver_hash, ros_install_dir)
+        overlay_install_folder = os.path.join(robustus.cache, '%s-%s'
+                                              % (req_name, req_hash))
 
         if not os.path.isdir(overlay_install_folder):
-            env_source = os.path.join(robustus.env, 'bin/activate')
-            overlay_src_folder = _make_overlay_folder(robustus, suffix)
-            os.chdir(overlay_src_folder)
+            overlay_archive = robustus.download_compiled_archive(req_name, req_hash)
+            if overlay_archive:
+                overlay_archive_name = unpack(overlay_archive)
 
-            logging.info('Building ros overlay in %s with versions %s'
-                         ' install folder %s' % (overlay_src_folder, str(packages),
-                                                 overlay_install_folder))
+                logging.info('Initializing compiled ROS overlay')
+                # install into wheelhouse
+                safe_move(overlay_archive_name, overlay_install_folder)
+                safe_remove(overlay_archive)
+            else:
+                overlay_src_folder = _make_overlay_folder(robustus, req_hash)
+                os.chdir(overlay_src_folder)
 
-            os.mkdir(os.path.join(overlay_src_folder, 'src'))
-            _get_sources(packages)
-            _ros_dep(env_source, robustus)
+                logging.info('Building ros overlay in %s with versions %s'
+                             ' install folder %s' % (overlay_src_folder, str(packages),
+                                                     overlay_install_folder))
 
-            opencv_cmake_dir = _opencv_cmake_path(robustus)
-            ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
-                                 ' --install-space %s --install' %
-                                 (env_source, opencv_cmake_dir, overlay_install_folder) +
-                                 ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1 ',
-                                 shell=True,
-                                 verbose=robustus.settings['verbosity'] >= 1)
-            if ret_code != 0:
-                raise RequirementException('Error during catkin_make')
+                os.mkdir(os.path.join(overlay_src_folder, 'src'))
+                _get_sources(packages)
+                _ros_dep(env_source, robustus)
+
+                opencv_cmake_dir = _opencv_cmake_path(robustus)
+                ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
+                                     ' --install-space %s --install' %
+                                     (env_source, opencv_cmake_dir, overlay_install_folder) +
+                                     ' --force-cmake --cmake-args -DCATKIN_ENABLE_TESTING=1 ',
+                                     shell=True,
+                                     verbose=robustus.settings['verbosity'] >= 1)
+                if ret_code != 0:
+                    raise RequirementException('Error during catkin_make')
         else:
             logging.info('ROS overlay cached %s' % overlay_install_folder)
 
