@@ -20,8 +20,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             if not os.path.exists(src):
                 raise RequirementException('Required packages for system-wide PyGtk missing, %s not found' % f)
             ln(src, os.path.join(site_packages_dir, f), force=True)
-        write_file(os.path.join(site_packages_dir, 'pygtk.pth'),
-                   'w',
-                   os.path.join(site_packages_dir, 'gtk-2.0'))
+        pygtk_pth = os.path.join(site_packages_dir, 'pygtk.pth')
+        if not os.path.exists(pygtk_pth):
+            write_file(os.path.join(pygtk_pth),
+                       'w',
+                       os.path.join(site_packages_dir, 'gtk-2.0'))
     else:
         raise RequirementException('System-wide PyGtk is missing')   
