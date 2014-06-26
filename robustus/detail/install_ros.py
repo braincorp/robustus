@@ -145,7 +145,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     raise RequirementException('Failed to create catkin workspace for ROS')
     
                 logging.info('Removing ROS source/build directory %s' % ros_src_dir)
-                os.chdir(ros_install_dir) # NOTE: If this directory is not accessible, something is wrong.
+                os.chdir(ros_install_dir)  # NOTE: If this directory is not accessible, something is wrong.
                 shutil.rmtree(ros_src_dir, ignore_errors=False)
         else:
             logging.info('Using ROS from cache %s' % ros_install_dir)
