@@ -58,7 +58,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             else: 
                 logging.warn('armv7l only uses hydro.ros_comm as a ROS system install.\n')
         else: 
-           logging.warn('No suitable ROS system install found.\n')
+            logging.warn('No suitable ROS system install found.\n')
     
     # check distro
     if ver != 'hydro':
