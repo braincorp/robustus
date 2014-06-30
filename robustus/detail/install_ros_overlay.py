@@ -140,6 +140,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     cwd = os.getcwd()
     try:
         env_source = os.path.join(robustus.env, 'bin/activate')
+        _ros_dep(env_source, robustus)
 
         # NOTE: If ROS is not installed, the following returns an empty string.
         def get_ros_install_dir(env_source):
@@ -185,7 +186,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
                 os.mkdir(os.path.join(overlay_src_folder, 'src'))
                 _get_sources(packages)
-                _ros_dep(env_source, robustus)
 
                 opencv_cmake_dir = _opencv_cmake_path(robustus)
                 ret_code = run_shell('. "%s" && export OpenCV_DIR="%s" && catkin_make_isolated'
