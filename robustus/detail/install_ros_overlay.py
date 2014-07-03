@@ -114,8 +114,8 @@ def _ros_dep_init(env_source, robustus):
 
     # update ros dependencies  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
     retcode = run_shell('rosdep update',
-                         shell=True,
-                         verbose=robustus.settings['verbosity'] >= 1)
+                        shell=True,
+                        verbose=robustus.settings['verbosity'] >= 1)
     if retcode != 0:
         raise RequirementException('Failed to update ROS dependencies')
 
