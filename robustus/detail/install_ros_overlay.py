@@ -92,35 +92,42 @@ def _opencv_cmake_path(robustus):
     return cmake_path
 
 
+def _ros_dep_init(env_source, robustus):
+    """Initialize virtual environment for running rosdep to install any dependencies (or error)."""
+
+    logging.info('Initializing virtual Python environment for running rosdep to install dependencies')
+
+    # install dependencies in venv, may throw
+    robustus.execute(['install',
+                      'catkin_pkg==0.2.2',
+                      'rosinstall==0.6.30',
+                      'rosinstall_generator==0.1.4',
+                      'wstool==0.0.4',
+                      'empy==3.3.2',
+                      'rosdep==0.10.27',
+                      'sip'])
+
+    # init rosdep, rosdep can already be initialized resulting in error, that's ok
+    logging.info('BEGIN: Ignore \"ERROR: default sources list file already exists\"...\n')
+    os.system('sudo rosdep init')  # NOTE: This is called by the "bstem.ros" Debian control scripts.
+    logging.info('END: Ignore \"ERROR: default sources list file already exists\".\n')
+
+    # update ros dependencies  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
+    retcode = run_shell('rosdep update',
+                        shell=True,
+                        verbose=robustus.settings['verbosity'] >= 1)
+    if retcode != 0:
+        raise RequirementException('Failed to update ROS dependencies')
+
+    os.system('sudo apt-get update')  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
+
+
 def _ros_dep(env_source, robustus):
     """Run rosdep to install any dependencies (or error)."""
 
     logging.info('Running rosdep to install dependencies')
 
     if platform.machine() == 'armv7l':
-        # install dependencies in venv, may throw
-        robustus.execute(['install',
-                          'catkin_pkg==0.2.2',
-                          'rosinstall==0.6.30',
-                          'rosinstall_generator==0.1.4',
-                          'wstool==0.0.4',
-                          'empy==3.3.2',
-                          'rosdep==0.10.27',
-                          'sip'])
-
-        # init rosdep, rosdep can already be initialized resulting in error, that's ok
-        logging.info('BEGIN: Ignore \"ERROR: default sources list file already exists\"...\n')
-        os.system('sudo rosdep init')  # NOTE: This is called by the "bstem.ros" Debian control scripts.
-        logging.info('END: Ignore \"ERROR: default sources list file already exists\".\n')
-
-        # update ros dependencies  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
-        retcode = run_shell('rosdep update',
-                            shell=True,
-                            verbose=robustus.settings['verbosity'] >= 1)
-        if retcode != 0:
-            raise RequirementException('Failed to update ROS dependencies')
-
-        os.system('sudo apt-get update')  # NOTE: This cannot be called by the "bstem.ros" Debian control scripts.
         rosdep = os.path.join('sudo rosdep')
     else:
         rosdep = os.path.join(robustus.env, 'bin/rosdep')
@@ -140,6 +147,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     cwd = os.getcwd()
     try:
         env_source = os.path.join(robustus.env, 'bin/activate')
+        _ros_dep_init(env_source, robustus)
 
         # NOTE: If ROS is not installed, the following returns an empty string.
         def get_ros_install_dir(env_source):
