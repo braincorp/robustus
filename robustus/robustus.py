@@ -197,7 +197,6 @@ class Robustus(object):
 
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
-
     def install_satisfactory_requirement_from_remote(self, requirement_specifier):
         """
         If wheel for satisfactory requirement found on remote, install it.
