@@ -179,13 +179,22 @@ class Robustus(object):
         with open(os.path.join(args.env, Robustus.settings_file_path), 'w') as file:
             file.write(str(settings))
 
-        # install robustus
+        # Install Robustus in the Python virtual environment if its "setup.py" is available.
+        # If Robustus has already been installed in the virtual environment, running "setup.py"
+        # should be harmless.  This is required to pass the "test_robustus" test.
         cwd = os.getcwd()
         script_dir = os.path.dirname(os.path.realpath(__file__))
         setup_dir = os.path.abspath(os.path.join(script_dir, os.path.pardir))
+        logging.info('python_executable = %s' % python_executable)
+        logging.info('script_dir = %s' % script_dir)
+        logging.info('setup_dir = %s' % setup_dir)
         os.chdir(setup_dir)
-        run_shell([python_executable, 'setup.py', 'install'], settings['verbosity'] >= 1)
+        if os.path.exists('setup.py'):
+            run_shell([python_executable, 'setup.py', 'install'], settings['verbosity'] >= 1)
+        else:
+            logging.warn('Cannot find setup.py in %s.  Continuing...' % setup_dir)
         os.chdir(cwd)
+
         logging.info('Robustus initialized environment with cache located at %s' % settings['cache'])
 
     def install_satisfactory_requirement_from_remote(self, requirement_specifier):
