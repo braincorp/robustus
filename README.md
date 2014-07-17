@@ -121,3 +121,10 @@ environment (such as git updates etc.).
     robustus perrepo [--not-base] operation
 
 supports this.
+
+A shortcut
+
+    robustus reset
+
+will reset all the editable repos (including the base repo) to master, discarding any changes.
+By default this will warn you first (unless overridden with `-f`).

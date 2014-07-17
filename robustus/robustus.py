@@ -1,5 +1,5 @@
 # =============================================================================
-# COPYRIGHT 2013 Brain Corporation.
+# COPYRIGHT 2013-14 Brain Corporation.
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
@@ -16,7 +16,7 @@ import sys
 import tempfile
 from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
-from detail.utility import ln, run_shell, download, safe_remove, unpack
+from detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
 import urllib2
 # for doctests
 import detail
@@ -375,6 +375,18 @@ class Robustus(object):
         # Use git to find the top-level working folder and run the command
         cmd_str = ' '.join(args.command)
         self._perrepo(cmd_str)
+
+    def reset(self, args):
+        if not args.force:
+            # Make sure that the user is sure
+            print 'Warning: this will delete any local changes you have made to the repos in this project. Press y to go ahead.'
+            if get_single_char().lower() != 'y':
+                print 'Aborting'
+                return
+
+        self._perrepo('git checkout -f')
+        self._perrepo('git checkout master')
+        self._perrepo('git pull origin master')
 
     def _perrepo(self, cmd_str):
         verbose = self.settings['verbosity'] > 0
@@ -740,6 +752,11 @@ class Robustus(object):
         perrepo_parser.add_argument('command', nargs=argparse.REMAINDER)
         perrepo_parser.set_defaults(func=Robustus.perrepo)
 
+        reset_parser = subparsers.add_parser('reset',
+                                             help='Reset all repos to clean master state')
+        reset_parser.add_argument('-f', '--force', action='store_true', default = False)
+        reset_parser.set_defaults(func=Robustus.reset)
+
         tag = subparsers.add_parser('tag',
                                     help='Tag all editable repos and push tags')
         tag.add_argument('tag', action='store')
@@ -753,7 +770,7 @@ class Robustus(object):
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)
 
-        download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path,'
+        download_cache_parser = subparsers.add_parser('download-cache', help='download cache fom server or path,'
                                                                              'if robustus cache is not empty,'
                                                                              'cached packages will be added to existing ones')
         download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')

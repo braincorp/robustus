@@ -76,9 +76,9 @@ def test_robustus(tmpdir):
     shutil.rmtree(test_env)
 
 
-def test_pereditable(tmpdir):
-    """Create a package with some editable requirements and check
-    that perrepo runs as expected."""
+def create_editable_environment(tmpdir):
+    """Create an environment with an editable (shared between some tests) and
+    chdir into it."""
     base_dir = str(tmpdir.mkdir('test_perrepo_env'))
     test_env = os.path.join(base_dir, 'env')
     working_dir = os.path.join(base_dir, 'working_dir')
@@ -97,13 +97,35 @@ def test_pereditable(tmpdir):
         file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n')
 
     run_shell([robustus_executable, 'install', '-r', test_requirements])
+    return working_dir, test_env, robustus_executable
 
+
+def test_pereditable(tmpdir):
+    """Create a package with some editable requirements and check
+    that perrepo runs as expected."""
+    working_dir, test_env, robustus_executable = create_editable_environment(tmpdir)
     # Now check that robustus behaves as expected
     run_shell([robustus_executable, 'perrepo', 'touch', 'foo'])
     assert os.path.exists(os.path.join(working_dir, 'foo'))
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'foo'))
 
 
+def test_reset(tmpdir):
+    """Try reset the environment"""
+    working_dir, test_env, robustus_executable = create_editable_environment(tmpdir)
+
+    # Change a file in the repo and check it is reset
+    changed_filepath = os.path.join(test_env, 'src', 'ardrone', 'README')
+    original_content = open(changed_filepath, 'r').read()
+
+    f = open(changed_filepath, 'w')
+    f.write('junk')
+    f.close()
+
+    run_shell([robustus_executable, 'reset', '-f'])
+    assert original_content == open(changed_filepath, 'r').read()
+
+    
 def test_install_with_tag(tmpdir):
     """Create a package with some editable requirements and install using a tag."""
     base_dir = str(tmpdir.mkdir('test_perrepo_env'))
