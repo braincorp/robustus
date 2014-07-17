@@ -384,7 +384,7 @@ class Robustus(object):
                 print 'Aborting'
                 return
 
-        self._perrepo('git checkout --')
+        self._perrepo('git checkout -f')
         self._perrepo('git checkout master')
         self._perrepo('git pull origin master')
 
@@ -753,7 +753,7 @@ class Robustus(object):
         perrepo_parser.set_defaults(func=Robustus.perrepo)
 
         reset_parser = subparsers.add_parser('reset',
-                                            help='Reset all repos to clean master state')
+                                             help='Reset all repos to clean master state')
         reset_parser.add_argument('-f', '--force', action='store_true', default = False)
         reset_parser.set_defaults(func=Robustus.reset)
 
