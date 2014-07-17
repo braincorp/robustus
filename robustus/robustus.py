@@ -1,5 +1,5 @@
 # =============================================================================
-# COPYRIGHT 2013 Brain Corporation.
+# COPYRIGHT 2013-14 Brain Corporation.
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
@@ -376,6 +376,17 @@ class Robustus(object):
         cmd_str = ' '.join(args.command)
         self._perrepo(cmd_str)
 
+    def reset(self, args):
+        if not args.forced:
+            # Make sure that the user is sure
+            print 'Warning: this will delete any local changes you have made to the repos in this project. Press y to go ahead.'
+            if get_single_char().lower() != 'y':
+                print 'Aborting'
+
+        self._perrepo('git checkout --')
+        self._perrepo('git checkout master')
+        self._perrepo('git pull origin master')
+
     def _perrepo(self, cmd_str):
         verbose = self.settings['verbosity'] > 0
         run_shell('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s'
@@ -740,6 +751,10 @@ class Robustus(object):
         perrepo_parser.add_argument('command', nargs=argparse.REMAINDER)
         perrepo_parser.set_defaults(func=Robustus.perrepo)
 
+        reset_parser = subparsers.add_parser('reset',
+                                            help='Reset all repos to clean master state')
+        reset_parser.add_argument('-f', '--force', action='store_true', default = False)
+
         tag = subparsers.add_parser('tag',
                                     help='Tag all editable repos and push tags')
         tag.add_argument('tag', action='store')
@@ -753,7 +768,7 @@ class Robustus(object):
         freeze_parser = subparsers.add_parser('freeze', help='list cached binary packages')
         freeze_parser.set_defaults(func=Robustus.freeze)
 
-        download_cache_parser = subparsers.add_parser('download-cache', help='download cache from server or path,'
+        download_cache_parser = subparsers.add_parser('download-cache', help='download cache fom server or path,'
                                                                              'if robustus cache is not empty,'
                                                                              'cached packages will be added to existing ones')
         download_cache_parser.add_argument('url', help='cache url (directory, *.tar.gz, *.tar.bz or *.zip)')
