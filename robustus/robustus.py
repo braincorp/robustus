@@ -382,6 +382,7 @@ class Robustus(object):
             print 'Warning: this will delete any local changes you have made to the repos in this project. Press y to go ahead.'
             if get_single_char().lower() != 'y':
                 print 'Aborting'
+                return
 
         self._perrepo('git checkout --')
         self._perrepo('git checkout master')
