@@ -14,6 +14,9 @@ import zipfile
 import logging
 import urllib2
 import os
+import sys
+import tty
+import termios
 
 
 def add_source_ref(robustus, source_path):
@@ -341,3 +344,15 @@ def fix_rpath(robustus, env, executable, rpath):
         else:
             new_rpath = rpath
         return run_shell('%s --set-rpath %s %s' % (patchelf_executable, new_rpath, executable), shell=True)
+
+
+def get_single_char():
+    """Get a single character of input from stdin (without waiting for a newline)."""
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch

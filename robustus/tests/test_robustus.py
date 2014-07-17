@@ -118,9 +118,9 @@ def test_reset(tmpdir):
     changed_filepath = os.path.join(test_env, 'src', 'ardrone', 'README')
     original_content = open(changed_filepath, 'r').read()
 
-    open(changed_filepath, 'w')
-    change.write('junk')
-    change.close()
+    f = open(changed_filepath, 'w')
+    f.write('junk')
+    f.close()
 
     run_shell([robustus_executable, 'reset', '-f'])
     assert original_content == open(changed_filepath, 'r').read()

@@ -16,7 +16,7 @@ import sys
 import tempfile
 from detail import Requirement, RequirementException, read_requirement_file
 from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
-from detail.utility import ln, run_shell, download, safe_remove, unpack
+from detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
 import urllib2
 # for doctests
 import detail
@@ -377,7 +377,7 @@ class Robustus(object):
         self._perrepo(cmd_str)
 
     def reset(self, args):
-        if not args.forced:
+        if not args.force:
             # Make sure that the user is sure
             print 'Warning: this will delete any local changes you have made to the repos in this project. Press y to go ahead.'
             if get_single_char().lower() != 'y':
@@ -754,6 +754,7 @@ class Robustus(object):
         reset_parser = subparsers.add_parser('reset',
                                             help='Reset all repos to clean master state')
         reset_parser.add_argument('-f', '--force', action='store_true', default = False)
+        reset_parser.set_defaults(func=Robustus.reset)
 
         tag = subparsers.add_parser('tag',
                                     help='Tag all editable repos and push tags')
