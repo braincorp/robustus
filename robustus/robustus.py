@@ -407,7 +407,7 @@ class Robustus(object):
     def install(self, args):
         # grab index locations
         if args.find_links is not None:
-            self.settings['find_links'] += args.find_links
+            self.settings['find_links'] = args.find_links
 
         # determine whether to do cloning of editable non-versioned requirements
         self.settings['update_editables'] = args.update_editables
@@ -548,6 +548,9 @@ class Robustus(object):
         :param version: package version
         :return: path to archive or None if not found
         """
+        
+        if self.settings['no_remote_cache']:
+            return None
 
         if not platform.machine():
             logging.warn('Cannot determine architecture from "platform.machine()".')
