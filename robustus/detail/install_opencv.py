@@ -67,8 +67,11 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             opencv_archive_name = None
                 
             try:
-                opencv_archive = robustus.download_compiled_archive('OpenCV', requirement_specifier.version)
-                if opencv_archive:
+                opencv_archive = None
+                if not robustus.settings['no_remote_cache']:
+                    opencv_archive = robustus.download_compiled_archive('OpenCV', requirement_specifier.version)
+
+                if opencv_archive is not None:
                     opencv_archive_name = unpack(opencv_archive)
 
                     logging.info('Initializing compiled OpenCV')
