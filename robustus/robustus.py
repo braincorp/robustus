@@ -205,37 +205,35 @@ class Robustus(object):
         False otherwise.
         """
         logging.info('Attempting to install package from remote wheel')
-        installed = False
-        find_links_url = self.default_package_locations[0] + '/python-wheels/index.html',  # TEMPORARY.
-        dtemp_path = tempfile.mkdtemp()
-        return_code = run_shell([self.pip_executable,
-                                 'install',
-                                 '--download-cache=%s' % dtemp_path,
-                                 '--no-index',
-                                 '--use-wheel',
-                                 '--find-links=%s' % find_links_url,
-                                 requirement_specifier.freeze()],
-                                verbose=self.settings['verbosity'] >= 2)
-        if return_code == 0:
-            installed = True
-            # The following downloads the wheels of the requirment (and those of
-            # dependencies) into a pip download cache and moves (renames) the downloaded
-            # wheels into the local Robustus cache.  Regarding the need for this see "Wheels
-            # for Dependencies" "http://lucumr.pocoo.org/2014/1/27/python-on-wheels/".
-            for file_path in glob.glob(os.path.join(dtemp_path, 'http*.whl')):
-                if os.path.isfile(file_path):
-                    file_name = os.path.basename(file_path)
-                    file_name_new = file_name.rpartition('%2F')[-1]
-                    file_path_new = os.path.join(self.cache, file_name_new)
-                    shutil.move(file_path, file_path_new)  # NOTE: Allow overwrites.
-        else:
-            installed = False
-            logging.info('pip failed to install requirement %s from remote wheels cache %s.'
-                         % (requirement_specifier.freeze(), find_links_url))
+        for find_link in self.settings['find_links']:
+            find_links_url = find_link + '/python-wheels/index.html',  # TEMPORARY.
+            dtemp_path = tempfile.mkdtemp()
+            return_code = run_shell([self.pip_executable,
+                                     'install',
+                                     '--download-cache=%s' % dtemp_path,
+                                     '--no-index',
+                                     '--use-wheel',
+                                     '--find-links=%s' % find_links_url,
+                                     requirement_specifier.freeze()],
+                                    verbose=self.settings['verbosity'] >= 2)
+            if return_code == 0:
+                # The following downloads the wheels of the requirment (and those of
+                # dependencies) into a pip download cache and moves (renames) the downloaded
+                # wheels into the local Robustus cache.  Regarding the need for this see "Wheels
+                # for Dependencies" "http://lucumr.pocoo.org/2014/1/27/python-on-wheels/".
+                for file_path in glob.glob(os.path.join(dtemp_path, 'http*.whl')):
+                    if os.path.isfile(file_path):
+                        file_name = os.path.basename(file_path)
+                        file_name_new = file_name.rpartition('%2F')[-1]
+                        file_path_new = os.path.join(self.cache, file_name_new)
+                        shutil.move(file_path, file_path_new)  # NOTE: Allow overwrites.
+                safe_remove(dtemp_path)
+                return True
+            else:
+                logging.info('pip failed to install requirement %s from remote wheels cache %s.'
+                             % (requirement_specifier.freeze(), find_links_url))
 
-        safe_remove(dtemp_path)
-
-        return installed
+        return False
 
     def install_through_wheeling(self, requirement_specifier, rob_file, ignore_index):
         """
@@ -250,7 +248,9 @@ class Robustus(object):
         installed = False
         if self.find_satisfactory_requirement(requirement_specifier) is None:
             # Pip does not download the wheels of dependencies unless it installs.
-            installed = self.install_satisfactory_requirement_from_remote(requirement_specifier)
+            installed = False
+            if not self.settings['no_remote_cache']:
+                installed = self.install_satisfactory_requirement_from_remote(requirement_specifier)
             if not installed:
                 logging.info('Wheel not found, downloading package')
                 return_code = run_shell([self.pip_executable,
@@ -410,7 +410,8 @@ class Robustus(object):
             self.settings['find_links'] += args.find_links
 
         # determine whether to do cloning of editable non-versioned requirements
-        self.settings['update_editables'] = args.update_editables
+        self.settings['update_editables'] = args.
+        self.settings['no_remote_cache'] = args.no_remote_cache
 
         tag = args.tag
         if tag is not None:
@@ -745,6 +746,9 @@ class Robustus(object):
         install_parser.add_argument('--tag',
                                     action='store',
                                     help='Install editables using tag or branch')
+        install_parser.add_argument('--no-remote-cache',
+                                    action='store_true',
+                                    help='Do not use remote cache for downloading of wheels')
         install_parser.set_defaults(func=Robustus.install)
 
         perrepo_parser = subparsers.add_parser('perrepo',
@@ -832,4 +836,5 @@ def execute(argv):
 
 
 if __name__ == '__main__':
-    execute(sys.argv[1:])
+    #execute(sys.argv[1:])
+    execute(['install', 'opencv', '--no-remote-cache'])
