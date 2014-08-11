@@ -232,6 +232,7 @@ class Robustus(object):
             else:
                 logging.info('pip failed to install requirement %s from remote wheels cache %s.'
                              % (requirement_specifier.freeze(), find_links_url))
+                safe_remove(dtemp_path)
 
         return False
 
