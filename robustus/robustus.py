@@ -410,7 +410,7 @@ class Robustus(object):
             self.settings['find_links'] += args.find_links
 
         # determine whether to do cloning of editable non-versioned requirements
-        self.settings['update_editables'] = args.
+        self.settings['update_editables'] = args.update_editables
         self.settings['no_remote_cache'] = args.no_remote_cache
 
         tag = args.tag
@@ -836,5 +836,4 @@ def execute(argv):
 
 
 if __name__ == '__main__':
-    #execute(sys.argv[1:])
-    execute(['install', 'opencv', '--no-remote-cache'])
+    execute(sys.argv[1:])
