@@ -46,27 +46,28 @@ In order to list binary packages cached in robustus cache you can use freeze com
 
     robustus freeze
 
-You may also want to reuse existing binary package cache. You can do that by
-downloading cache directory before installing packages. Robustus has convenience
-command to do that. Cache can be stored as a directory or *.tar.gz, *.tar.bz or
-*.zip archive.
+### Remote caching
+If package is not found in local cache, robustus by default will try to find a compiled package
+in a remote location. 
+Remote cache website should have a page python-wheels/index.html that provides links to 
+cached packages. Filename of the cached file corresponds to a wheel file created by pip
+with a mentioning of architecture and platform.
+Examples:
+    scipy-0.13.3-cp27-none-linux_armv7l.whl
+    pytest-2.3.5-py27-none-any.whl
 
-    robustus download-cache <cache url>
+Custom installable packages (e.g. opencv) may also be stored on a remote cache server with
+a custom filename that should be managed inside a package install script.
 
-In the same manner you can upload cache.
-  
-    robustus upload-cache <cache url>
-    robustus --cache ~/wheelhouse upload-cache <cache url>
+Remote cache is by default set to http://thirdparty-packages.braincorporation.net.
 
-Make sure that binary package cache is suitable for your platform. It is highly
-recommended to use cached packages only on the machine there they have been compiled.
-If robustus cache is not empty external packages will be added to robustus cache.
+To change remote cache location use --find-links flag:
 
-To upload/download from amazon S3 cloud you should also specify bucket name, key and secret key.
+    robustus install tornado==3.2.1 --find-links http://my_custom_remote_cache.net
 
-    robustus upload-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key> --public
-    robustus download-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key>
-    robustus download-cache https://s3.amazonaws.com/<bucket_name>/cache.tar.bz
+To ignore remote cache use --no-remote-cache flag:
+
+    robustus install tornado==3.2.1 --no-remote-cache
 
 ### Cache Format
 
@@ -128,3 +129,27 @@ A shortcut
 
 will reset all the editable repos (including the base repo) to master, discarding any changes.
 By default this will warn you first (unless overridden with `-f`).
+
+
+///Deprecated:
+You may also want to reuse existing binary package cache. You can do that by
+downloading cache directory before installing packages. Robustus has convenience
+command to do that. Cache can be stored as a directory or *.tar.gz, *.tar.bz or
+*.zip archive.
+
+    robustus download-cache <cache url>
+
+In the same manner you can upload cache.
+  
+    robustus upload-cache <cache url>
+    robustus --cache ~/wheelhouse upload-cache <cache url>
+
+Make sure that binary package cache is suitable for your platform. It is highly
+recommended to use cached packages only on the machine there they have been compiled.
+If robustus cache is not empty external packages will be added to robustus cache.
+
+To upload/download from amazon S3 cloud you should also specify bucket name, key and secret key.
+
+    robustus upload-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key> --public
+    robustus download-cache cache.tar.bz -b <bucket_name> -k <key> -s <secret_key>
+    robustus download-cache https://s3.amazonaws.com/<bucket_name>/cache.tar.bz
