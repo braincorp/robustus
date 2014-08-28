@@ -149,7 +149,36 @@ def test_install_with_tag(tmpdir):
 
     # Now check that robustus behaves as expected
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test-tag'))
-    
+
+
+def test_install_with_branch_testing(tmpdir):
+    """Create a package with some editable requirements and install using a branch
+    and check that one repo with the branch gets checked out using the branch
+    and the other ends up on master (this is how testing is often done)."""
+
+    base_dir = str(tmpdir.mkdir('test_perrepo_env'))
+    test_env = os.path.join(base_dir, 'env')
+    working_dir = os.path.join(base_dir, 'working_dir')
+
+    # create env and install some packages
+    logging.info('creating ' + test_env)
+    os.mkdir(working_dir)
+    os.chdir(working_dir)
+    os.system('git init .')
+    robustus.execute(['env', test_env])
+
+    os.chdir(working_dir)
+    robustus_executable = os.path.join(test_env, 'bin/robustus')
+    test_requirements = os.path.join(working_dir, 'requirements.txt')
+    with open(test_requirements, 'w') as file:
+        file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n-e git+https://github.com/braincorp/filecacher.git@master#egg=filecacher\n')
+
+    run_shell([robustus_executable, 'install', '--tag', 'test-branch', '-r', test_requirements])
+
+    # Now check that robustus behaves as expected
+    assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test_branch.file'))
+
+
 
 if __name__ == '__main__':
     test_doc_tests()
