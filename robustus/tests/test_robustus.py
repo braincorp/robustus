@@ -173,7 +173,7 @@ def test_install_with_branch_testing(tmpdir):
     with open(test_requirements, 'w') as file:
         file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\n-e git+https://github.com/braincorp/filecacher.git@master#egg=filecacher\n')
 
-    run_shell([robustus_executable, 'install', '--tag', 'test-branch', '-r', test_requirements])
+    run_shell([robustus_executable, 'install', '--tag', 'test-branch', '-r', test_requirements, '--ignore-missing-refs'])
 
     # Now check that robustus behaves as expected
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test_branch.file'))

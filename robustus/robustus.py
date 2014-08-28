@@ -297,7 +297,8 @@ class Robustus(object):
     def install_requirement(self, requirement_specifier, ignore_index, tag):
         logging.info('Installing ' + requirement_specifier.freeze())
         if tag:
-            logging.info('with tag %s' % tag)
+            logging.info('with tag %s, ignore_missing_refs %s' % (tag,
+                                                                 self.settings['ignore_missing_refs']))
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip
@@ -413,10 +414,12 @@ class Robustus(object):
         # determine whether to do cloning of editable non-versioned requirements
         self.settings['update_editables'] = args.update_editables
         self.settings['no_remote_cache'] = args.no_remote_cache
+        self.settings['ignore_missing_refs'] = args.ignore_missing_refs
 
         tag = args.tag
         if tag is not None:
-            logging.info('Installing with tag %s' % tag)
+            logging.info('Installing with tag %s ignore_missing_refs=%s' %
+                         (tag, str(self.settings['ignore_missing_refs'])))
 
         # construct requirements list
         specifiers = args.packages
@@ -425,7 +428,8 @@ class Robustus(object):
         requirements = expand_requirements_specifiers(specifiers)
         if args.requirement is not None:
             for requirement_file in args.requirement:
-                requirements += read_requirement_file(requirement_file, tag)
+                requirements += read_requirement_file(requirement_file, tag,
+                                                      ignore_missing_refs = self.settings['ignore_missing_refs'])
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
@@ -750,6 +754,9 @@ class Robustus(object):
         install_parser.add_argument('--tag',
                                     action='store',
                                     help='Install editables using tag or branch')
+        install_parser.add_argument('--ignore-missing-refs',
+                                    action='store_true',
+                                    help='Warn only but no error if a tag is missing (use with --tag)')
         install_parser.add_argument('--no-remote-cache',
                                     action='store_true',
                                     help='Do not use remote cache for downloading of wheels')
