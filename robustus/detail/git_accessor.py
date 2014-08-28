@@ -8,6 +8,7 @@ import shutil
 import os
 from utility import check_run_shell
 import subprocess
+import logging
 
 
 class GitAccessor(object):
@@ -30,6 +31,7 @@ class GitAccessor(object):
                     raise
         else:
             check_run_shell(['git', 'clone', '--depth', '1', repo_link, tmp_dir], shell=False)
+
         with open(os.path.join(tmp_dir, path_to_file)) as file:
             lines = file.readlines()
         shutil.rmtree(tmp_dir)
