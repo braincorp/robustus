@@ -298,7 +298,7 @@ class Robustus(object):
         logging.info('Installing ' + requirement_specifier.freeze())
         if tag:
             logging.info('with tag %s, ignore_missing_refs %s' % (tag,
-                                                                 self.settings['ignore_missing_refs']))
+                                                                  self.settings['ignore_missing_refs']))
 
         if requirement_specifier.url is not None or requirement_specifier.path is not None:
             # install reqularly using pip

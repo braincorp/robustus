@@ -179,7 +179,6 @@ def test_install_with_branch_testing(tmpdir):
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test_branch.file'))
 
 
-
 if __name__ == '__main__':
     test_doc_tests()
     pytest.main('-s %s -n0' % __file__)
