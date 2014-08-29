@@ -387,7 +387,7 @@ def _split_egg_and_url(url):
 
 
 def _obtain_requirements_from_remote_package(git_accessor, original_req,
-                                             override_tag=None):
+                                             override_tag=None, ignore_missing_refs = False):
     url = original_req.url.geturl()[4:]
     url, name = _split_egg_and_url(url)
 
@@ -405,7 +405,8 @@ def _obtain_requirements_from_remote_package(git_accessor, original_req,
         tag = override_tag
 
     logging.info('Obtaining requirements from remote package %s(%s)' % (link, tag))
-    return git_accessor.access(link, tag, 'requirements.txt')
+    return git_accessor.access(link, tag, 'requirements.txt',
+                               ignore_missing_refs = ignore_missing_refs)
 
 
 def _obtain_requirements_from_local_package(original_req):
@@ -419,7 +420,7 @@ def _obtain_requirements_from_local_package(original_req):
 
 
 def do_requirement_recursion(git_accessor, original_req, visited_sites = None,
-                             tag=None):
+                             tag=None, ignore_missing_refs = False):
     '''
     Recursive extraction of requirements from -e git+.. pip links.
     @return: list
@@ -439,7 +440,8 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None,
                 return [original_req]
             else:
                 req_file_content = _obtain_requirements_from_remote_package(
-                    git_accessor, original_req, override_tag=tag)
+                    git_accessor, original_req, override_tag=tag,
+                    ignore_missing_refs = ignore_missing_refs)
         else:
             req_file_content = _obtain_requirements_from_local_package(original_req)
     
@@ -479,7 +481,7 @@ def _filter_requirements_lines(lines):
     return filtered_lines
 
 
-def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None, tag=None):
+def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None, tag=None, ignore_missing_refs = False):
     '''
     Nice dirty hack to have a clean workflow:)
     In order to process hierarchical dependencies, we assume that -e git+ links
@@ -491,6 +493,8 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
     However we loosing wheeling capability - robustus will never get control
     back if pip started to process dependencies from egg_info.
     '''
+    print 'expand_requirements_specifiers', specifiers_list
+
     if visited_sites is None:
         visited_sites = {}
 
@@ -506,16 +510,18 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
         r = RequirementSpecifier(specifier=line)
         if r.freeze() not in [ritem.freeze() for ritem in requirements]:
             requirements += do_requirement_recursion(git_accessor, r, visited_sites,
-                                                     tag=tag)
+                                                     tag=tag,
+                                                     ignore_missing_refs = ignore_missing_refs)
             requirements = remove_duplicate_requirements(requirements)
 
     return requirements
 
 
-def read_requirement_file(requirement_file, tag):
+def read_requirement_file(requirement_file, tag, ignore_missing_refs = False):
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
-    return expand_requirements_specifiers(specifiers_list, tag=tag)
+    return expand_requirements_specifiers(specifiers_list, tag=tag,
+                                          ignore_missing_refs = ignore_missing_refs)
 
 
 def remove_duplicate_requirements(requirements_list):

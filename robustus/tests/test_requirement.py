@@ -42,7 +42,8 @@ def test_requirement_recursion_single_retreive():
     reqs = do_requirement_recursion(mock_git, RequirementSpecifier(
         specifier='-e git+ssh://git@github.com/company/my_package@branch_name#egg=my_package'))
     mock_git.access.assert_called_with('ssh://git@github.com/company/my_package',
-                                       'branch_name', 'requirements.txt')
+                                       'branch_name', 'requirements.txt',
+                                       ignore_missing_refs = False)
     assert(len(reqs) == 3)
     assert(reqs[0].freeze() == 'numpy==1')
     assert(reqs[1].freeze() == 'scipy==2')
@@ -52,7 +53,7 @@ def test_requirement_recursion_single_retreive():
 def test_requirement_recursion_two_levels():
  
     class MockGit(object):
-        def access(self, link, branch, path):
+        def access(self, link, branch, path, ignore_missing_refs = False):
             assert(path == 'requirements.txt')
             assert(link == 'https://github.com/company/my_package' or 
                    link == 'ssh://git@github.com/company/my_package')
@@ -169,7 +170,7 @@ def test_requirement_recursion_do_not_fetch_twice():
         def __init__(self):
             self._traverse_to_internal_count = 0
  
-        def access(self, link, branch, path):
+        def access(self, link, branch, path, ignore_missing_refs = False):
             assert(path == 'requirements.txt')
             assert(branch == 'master')
             if link == 'https://github.com/company/my_package':
