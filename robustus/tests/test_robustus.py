@@ -182,7 +182,7 @@ def test_install_with_branch_testing(tmpdir):
 
     assert os.path.exists(os.path.join(test_env, 'src', 'filecacher', 'requirements.txt'))
     assert os.path.exists(os.path.join(test_env, 'lib', 'python2.7', 'site-packages',
-                                       'filecache.egg-link'))
+                                       'filecacher.egg-link'))
 
 
 if __name__ == '__main__':
