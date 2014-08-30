@@ -294,6 +294,13 @@ class Robustus(object):
                 raise RequirementException('pip failed to install requirement %s from wheels cache %s.'
                                            % (requirement_specifier.freeze(), self.cache))
 
+    def _pip_install_requirement(self, requirement_specifier):
+        command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
+        logging.info('Got url-based requirement. '
+                     'Fall back to pip shell command:%s' % (command,))
+        ret_code = run_shell(command, shell=True, verbose=self.settings['verbosity'] >= 1)
+        return ret_code
+
     def install_requirement(self, requirement_specifier, ignore_index, tag):
         logging.info('Installing ' + requirement_specifier.freeze())
         if tag:
@@ -319,12 +326,16 @@ class Robustus(object):
             # extra parsing to extract -e flag into separate argument.
             if tag and requirement_specifier.editable:
                 logging.info('Overriding editable branch with tag %s' % tag)
+                original_url = requirement_specifier.url
                 requirement_specifier.override_branch(tag)
 
-            command = ' '.join([self.pip_executable, 'install', requirement_specifier.freeze()])
-            logging.info('Got url-based requirement. '
-                         'Fall back to pip shell command:%s' % (command,))
-            ret_code = run_shell(command, shell=True, verbose=self.settings['verbosity'] >= 1)
+            ret_code = self._pip_install_requirement(requirement_specifier)
+
+            if ret_code != 0 and tag and self.settings['ignore_missing_refs']:
+                logging.info('Tag or branch doesn\t exist for this package, using default')
+                requirement_specifier.url = original_url
+                ret_code = self._pip_install_requirement(requirement_specifier)
+
             if ret_code != 0:
                 return  # do not print done, do not add package to the list of cached packages
         else:

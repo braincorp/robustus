@@ -177,6 +177,12 @@ def test_install_with_branch_testing(tmpdir):
 
     # Now check that robustus behaves as expected
     assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test_branch.file'))
+    assert os.path.exists(os.path.join(test_env, 'lib', 'python2.7', 'site-packages',
+                                       'python-ardrone.egg-link'))
+
+    assert os.path.exists(os.path.join(test_env, 'src', 'filecacher', 'requirements.txt'))
+    assert os.path.exists(os.path.join(test_env, 'lib', 'python2.7', 'site-packages',
+                                       'filecacher.egg-link'))
 
 
 if __name__ == '__main__':
