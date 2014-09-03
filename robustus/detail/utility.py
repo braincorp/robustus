@@ -17,7 +17,6 @@ import os
 import sys
 import tty
 import termios
-from requirement import RequirementSpecifier
 
 
 def add_source_ref(robustus, source_path):
@@ -321,6 +320,9 @@ def fix_rpath(robustus, env, executable, rpath):
     Add rpath to list of rpaths of given executable. For osx also add @rpath/
     prefix to dependent library names (absolute paths are not prefixed).
     """
+    # Install here to avoid circular dependency
+    from robustus.detail.requirement import RequirementSpecifier
+
     if sys.platform.startswith('darwin'):
         # extract list o dependent library names
         otool_output = subprocess.check_output(['otool', '-L', executable])
