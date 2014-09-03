@@ -171,7 +171,7 @@ def test_install_with_branch_testing(tmpdir):
     robustus_executable = os.path.join(test_env, 'bin/robustus')
     test_requirements = os.path.join(working_dir, 'requirements.txt')
     with open(test_requirements, 'w') as file:
-        file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\nmock==0.8.0\npatchelf==6fb4cdb\n-e git+https://github.com/braincorp/filecacher.git@master#egg=filecacher\n')
+        file.write('-e git+https://github.com/braincorp/robustus-test-repo.git@master#egg=ardrone\nmock==0.8.0\nopencv==2.4.8\n-e git+https://github.com/braincorp/filecacher.git@master#egg=filecacher\n')
 
     run_shell([robustus_executable, 'install', '--tag', 'test-branch', '-r', test_requirements, '--ignore-missing-refs'], verbose = True)
 

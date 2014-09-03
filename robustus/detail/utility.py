@@ -17,6 +17,7 @@ import os
 import sys
 import tty
 import termios
+from requirement import RequirementSpecifier
 
 
 def add_source_ref(robustus, source_path):
