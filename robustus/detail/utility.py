@@ -336,7 +336,9 @@ def fix_rpath(robustus, env, executable, rpath):
         patchelf_executable = os.path.join(env, 'bin/patchelf')
         if not os.path.isfile(patchelf_executable):
             logging.info('patchelf is not installed. Installing')
-            robustus.execute(['install', 'patchelf==6fb4cdb'])
+            robustus.install_requirement(RequirementSpecifier(name = 'patchelf',
+                                                              version = '6fb4cdb'),
+                                         ignore_index = False, tag = None)
 
         old_rpath = subprocess.check_output([patchelf_executable, '--print-rpath', executable])
         if len(old_rpath) > 1:
