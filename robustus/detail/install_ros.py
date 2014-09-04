@@ -13,6 +13,16 @@ from utility import unpack, safe_remove, safe_move, run_shell, add_source_ref
 import ros_utils
 
 
+def _get_distribution():
+    '''
+    Because of the bug in travis, platform.linux_distribution() doesn't really work
+    '''
+    if 'TRAVIS' in os.environ:
+        return 'precise'
+    else:
+        return platform.linux_distribution()[2]
+
+
 def _install_ros_deps(robustus):
     rosdep = os.path.join(robustus.env, 'bin/rosdep')
     if rosdep is None:
@@ -20,10 +30,8 @@ def _install_ros_deps(robustus):
 
     # add ros package sources
     if sys.platform.startswith('linux') and not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
-        print('babuu', platform.linux_distribution())
-        ubuntu_distr = 'precise' #platform.linux_distribution()[2]
         os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu %s main"'
-                  ' > /etc/apt/sources.list.d/ros-latest.list\'' % ubuntu_distr)
+                  ' > /etc/apt/sources.list.d/ros-latest.list\'' % _get_distribution())
         os.system('wget http://packages.ros.org/ros.key -O - | sudo apt-key add -')
         os.system('sudo apt-get update')
 
@@ -124,7 +132,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     raise RequirementException('Failed to build ROS')
     
                 # resolve dependencies
-                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y --os=ubuntu:precise' % ver,
+                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y --os=ubuntu:%s' %
+                                    (ver, _get_distribution()),
                                     shell=True,
                                     verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:
@@ -142,7 +151,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                     ' --install-space %s --install' % ros_install_dir,
                                     shell=True,
                                     verbose=robustus.settings['verbosity'] >= 1)
-                raise Exception('vvvvv', robustus.settings['verbosity'])
+
                 if retcode != 0:
                     raise RequirementException('Failed to create catkin workspace for ROS')
     
