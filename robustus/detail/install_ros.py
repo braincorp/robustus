@@ -20,6 +20,7 @@ def _install_ros_deps(robustus):
 
     # add ros package sources
     if sys.platform.startswith('linux') and not os.path.isfile('/etc/apt/sources.list.d/ros-latest.list'):
+        print('babuu', platform.linux_distribution())
         ubuntu_distr = 'precise' #platform.linux_distribution()[2]
         os.system('sudo sh -c \'echo "deb http://packages.ros.org/ros/ubuntu %s main"'
                   ' > /etc/apt/sources.list.d/ros-latest.list\'' % ubuntu_distr)
