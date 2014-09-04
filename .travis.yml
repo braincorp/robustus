@@ -17,4 +17,4 @@ install:
   - sudo apt-get install -y --force-yes python-gst0.10 python-cairo python-gobject-2
   - source use_repo.sh
 script:
-  - py.test -s
+  - "./test"

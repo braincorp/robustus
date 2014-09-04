@@ -1,2 +1,13 @@
-#!/bin/bash
-py.test --junitxml=testresults.xml
+#!/bin/sh
+# exit on the first failure
+set -e
+
+echo "--------------------------------------------------"
+echo "-------------RUNNINING PEP8 ONLY------------------"
+echo "--------------------------------------------------"
+py.test --pep8 -m pep8
+
+echo "--------------------------------------------------"
+echo "-------------RUNNINING FULL TEST SUITE -----------"
+echo "--------------------------------------------------"
+py.test
