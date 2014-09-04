@@ -46,7 +46,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     if platform.machine() == 'armv7l':
     
-        # NOTE: I'm not sure where to put this path.
+        # specific code to link ros on bstem
         ros_install_dir = os.path.join('/opt/bstem/bstem.ros', 'ros-install-%s' % requirement_specifier.version)
         if os.path.isdir(ros_install_dir):
             # check distro
@@ -123,7 +123,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     raise RequirementException('Failed to build ROS')
     
                 # resolve dependencies
-                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y' % ver,
+                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y --os=ubuntu:precise' % ver,
                                     shell=True,
                                     verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:
