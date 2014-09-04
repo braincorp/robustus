@@ -18,6 +18,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     # The reason we do this hack for now is to avoid installing qt sdk on bstem
     # So, on bstem and linux machines we will need to sudo apt-get install python-sip
     # On Mac machines use brew
+    raise Exception('abap', str(sys.platform))
     assert 'TRAVIS' not in os.environ
     # Create links to system-wide PySide
     if sys.platform.startswith('darwin'):
