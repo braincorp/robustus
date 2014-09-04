@@ -142,6 +142,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                     ' --install-space %s --install' % ros_install_dir,
                                     shell=True,
                                     verbose=robustus.settings['verbosity'] >= 1)
+                raise Exception('vvvvv', robustus.settings['verbosity'])
                 if retcode != 0:
                     raise RequirementException('Failed to create catkin workspace for ROS')
     
