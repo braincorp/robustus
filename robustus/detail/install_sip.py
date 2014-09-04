@@ -14,12 +14,10 @@ from utility import ln
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    # If we are not on Travis, we only link to system-wide PySide (for now), and return
+    # We only link to system-wide PySide (for now), and return
     # The reason we do this hack for now is to avoid installing qt sdk on bstem
     # So, on bstem and linux machines we will need to sudo apt-get install python-sip
     # On Mac machines use brew
-    #raise Exception('abap', str(sys.platform))
-    #assert 'TRAVIS' not in os.environ
     # Create links to system-wide PySide
     if sys.platform.startswith('darwin'):
         if os.path.isfile('/usr/local/lib/python2.7/site-packages/sipconfig.py'):
