@@ -12,9 +12,9 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     if sys.platform.startswith('darwin'):
         # to make scipy compile on OS X, this flag might be neccesary to
         # allow dynamic linking
-        logging.info('Changing LDFLAGS on OS X to compile scipy')
+        logging.info('Changing LDFLAGS on OS X to compile scipy: CC -> clang, CXX-> clang++')
         os.environ['CC'] = 'clang'
-        os.environ['CXX'] = 'clang'
+        os.environ['CXX'] = 'clang++'
         try:
             old_ld_flags = os.environ['LDFLAGS']
         except KeyError:
