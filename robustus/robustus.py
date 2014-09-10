@@ -302,7 +302,18 @@ class Robustus(object):
         return ret_code
 
     def install_requirement(self, requirement_specifier, ignore_index, tag):
-        logging.info('Installing ' + requirement_specifier.freeze())
+        attempts = 2
+        for a in range(attempts):
+            result = self._install_requirement_attempt(requirement_specifier, ignore_index, tag, a)
+            if result:
+                return
+
+    def _install_requirement_attempt(self, requirement_specifier, ignore_index, tag, attempt_number):
+        if attempt_number == 0:
+            logging.info('Installing %s' % (requirement_specifier.freeze(),))
+        else:
+            logging.info('Installing %s (attempt %d)' % (requirement_specifier.freeze(), attempt_number + 1))
+
         if tag:
             logging.info('with tag %s, ignore_missing_refs %s' % (tag,
                                                                   self.settings['ignore_missing_refs']))
@@ -320,7 +331,7 @@ class Robustus(object):
                                  'To update editable dependency, please remove folder and run again.' %
                                  (requirement_specifier.freeze(),
                                   os.path.join(self.env, 'src', requirement_specifier.name)))
-                    return
+                    return False
 
             # here we have to run via shell because requirement can be editable and then it will require
             # extra parsing to extract -e flag into separate argument.
@@ -337,7 +348,7 @@ class Robustus(object):
                 ret_code = self._pip_install_requirement(requirement_specifier)
 
             if ret_code != 0:
-                return  # do not print done, do not add package to the list of cached packages
+                return False  # do not print done, do not add package to the list of cached packages
         else:
             rob = os.path.join(self.cache, requirement_specifier.rob_filename())
             if os.path.isfile(rob):
@@ -350,23 +361,29 @@ class Robustus(object):
                 rob_file = open(rob, 'w')
 
             try:
-                # try to use specific install script
-                install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name.lower())
-                install_module.install(self, requirement_specifier, rob_file, ignore_index)
-            except ImportError:
-                self.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
-            except RequirementException as exc:
-                logging.error(exc.message)
+                try:
+                    # try to use specific install script
+                    install_module = importlib.import_module('robustus.detail.install_%s' % requirement_specifier.name.lower())
+                    install_module.install(self, requirement_specifier, rob_file, ignore_index)
+                except ImportError:
+                    self.install_through_wheeling(requirement_specifier, rob_file, ignore_index)                
+            except Exception as exc:
+                logging.warn(exc.message)
                 rob_file.close()
                 logging.warn('Robustus will delete the corresponding %s file in order '
                              'to recreate the wheel in the future. Please run again.' % str(rob))
+                
+                # remove specifier from cached packages
+                self.cached_packages = [r for r in self.cached_packages
+                                        if r.freeze() != requirement_specifier.freeze()]
                 os.remove(rob)
-                return
+                return False
 
         # add requirement to the list of cached packages
         if self.find_satisfactory_requirement(requirement_specifier) is None:
             self.cached_packages.append(requirement_specifier)
         logging.info('Done')
+        return True
 
     def find_satisfactory_requirement(self, requirement_specifier):
         for requirement in self.cached_packages:
