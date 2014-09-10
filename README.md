@@ -69,6 +69,15 @@ To ignore remote cache use --no-remote-cache flag:
 
     robustus install tornado==3.2.1 --no-remote-cache
 
+
+### Trouble shooting remote cache  
+Sometimes package version are not avialable in the remote wheelhouse. If you are having issues installing pip / python packages, try the following:  
+* Open a new shell, outside of the virtual environment  
+* $ rm ~/.robustus_rc/{package}.rob (Look around the directory, name will not match exactly)
+* $ pip install package==version (e.g. pep8==1.4.6)  
+* Navigate to this repo and re-run source use_repo.sh  
+
+
 ### Cache Format
 
 Robustus cache is a directory with binary package archives. Packages under distutils are compressed
