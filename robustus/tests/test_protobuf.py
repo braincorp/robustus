@@ -17,5 +17,3 @@ def test_protobuf_installation(tmpdir):
 
 if __name__ == '__main__':
     pytest.main('-s %s -n0' % __file__)
-    #import tempfile
-    #test_protobuf_installation(tempfile)
