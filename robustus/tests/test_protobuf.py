@@ -10,7 +10,7 @@ from robustus.detail import perform_standard_test
 def test_protobuf_installation(tmpdir):
     tmpdir.chdir()
 
-    protobuf_imports = ['import protobuf']
+    protobuf_imports = ['import google.protobuf']
 
     perform_standard_test('protobuf==2.6.0', protobuf_imports, [], [])
 
