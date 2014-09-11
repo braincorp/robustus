@@ -368,7 +368,7 @@ class Robustus(object):
                 except ImportError:
                     self.install_through_wheeling(requirement_specifier, rob_file, ignore_index)                
             except Exception as exc:
-                logging.warn(exc.message)
+                logging.warn('Exception during installation: %s' % str(exc))
                 rob_file.close()
                 logging.warn('Robustus will delete the corresponding %s file in order '
                              'to recreate the wheel in the future. Please run again.' % str(rob))

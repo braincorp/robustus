@@ -6,7 +6,7 @@
 import logging
 import os
 from requirement import RequirementException
-from utility import unpack, safe_remove, run_shell
+from utility import unpack, safe_remove, run_shell, ln 
 import shutil
 import subprocess
 
@@ -35,4 +35,13 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.chdir(robustus.cache)
         shutil.rmtree(src_dir)
 
+    venv_install_folder = os.path.join(robustus.env, 'protobuf')
+    if os.path.exists(venv_install_folder):
+        shutil.rmtree(venv_install_folder) 
+    shutil.copytree(install_dir, venv_install_folder)
+    executable_path = os.path.join(install_dir, 'bin', 'protoc')
+    ln(executable_path, os.path.join(robustus.env, 'bin', 'protoc'), force=True)
     os.chdir(cwd)
+
+    # now install python part
+    robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
