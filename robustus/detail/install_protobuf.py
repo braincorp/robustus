@@ -12,7 +12,6 @@ import subprocess
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
-    raise Exception('PROTOBUF STATIC')
     cwd = os.getcwd()
     os.chdir(robustus.cache)
 
@@ -30,9 +29,23 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.chdir(src_dir)
         os.mkdir(install_dir)
 
-        subprocess.call(['./configure', '--disable-shared', '--prefix', install_dir])
-        subprocess.call('make', shell=True)
-        subprocess.call('make install', shell=True)
+        old_cflags = os.environ['CFLAGS']
+        os.environ['CFLAGS'] = '-fPIC'
+        retcode = run_shell(['./configure', '--disable-shared', '--prefix', install_dir],
+                            verbose=robustus.settings['verbosity'] >= 1)
+        os.environ['CFLAGS'] = old_cflags
+
+        if retcode:
+            raise RequirementException('Failed to configure protobuf compilation')
+        retcode = run_shell('make', shell=True,
+                            verbose=robustus.settings['verbosity'] >= 1)
+        if retcode:
+            raise RequirementException('Failed compile protobuf')
+
+        retcode = run_shell('make install', shell=True)
+        if retcode:
+            raise RequirementException('Failed install protobuf')
+
         os.chdir(robustus.cache)
         shutil.rmtree(src_dir)
 
