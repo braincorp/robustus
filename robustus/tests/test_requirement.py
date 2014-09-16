@@ -12,7 +12,7 @@ import tempfile
 import os
 
 
-#FIXME: use from robustus.detail.requirement import ...
+# FIXME: use from robustus.detail.requirement import ...
 do_requirement_recursion = robustus.detail.requirement.do_requirement_recursion
 RequirementSpecifier = robustus.detail.requirement.RequirementSpecifier
 RequirementException = robustus.detail.requirement.RequirementException

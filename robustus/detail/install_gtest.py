@@ -20,7 +20,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         archive_name = 'gtest-%s.zip' % requirement_specifier.version
         subprocess.call(['wget', '-c', 'https://googletest.googlecode.com/files/%s' % (archive_name,)])
         
-        #raise Exception(os.getcwd())
         subprocess.call(['unzip', archive_name])
         
         # move sources to a folder in order to use a clean name for installation
