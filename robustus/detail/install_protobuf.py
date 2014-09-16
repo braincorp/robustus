@@ -12,6 +12,7 @@ import subprocess
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
+    raise Exception('PROTOBUF STATIC')
     cwd = os.getcwd()
     os.chdir(robustus.cache)
 
