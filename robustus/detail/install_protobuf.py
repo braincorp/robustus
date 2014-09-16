@@ -16,6 +16,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     os.chdir(robustus.cache)
 
     install_dir = os.path.join(robustus.cache, 'protobuf-%s' % requirement_specifier.version)
+    
+    # always recompile protobuf because it has been cached buggy
     # if not os.path.isdir(install_dir) and not ignore_index:
     if True:
         archive_name = 'protobuf-%s.tar.gz' % requirement_specifier.version
