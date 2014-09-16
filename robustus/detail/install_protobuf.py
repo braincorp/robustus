@@ -18,8 +18,10 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     install_dir = os.path.join(robustus.cache, 'protobuf-%s' % requirement_specifier.version)
     if not os.path.isdir(install_dir) and not ignore_index:
         archive_name = 'protobuf-%s.tar.gz' % requirement_specifier.version
-        subprocess.call(['wget', '-c', 'https://protobuf.googlecode.com/svn/rc/%s' % (archive_name,)])
-        subprocess.call(['tar', 'zxvf', archive_name])
+        run_shell(['wget', '-c', 'https://protobuf.googlecode.com/svn/rc/%s' % (archive_name,)],
+                  verbose=robustus.settings['verbosity'] >= 1)
+        run_shell(['tar', 'zxvf', archive_name],
+                  verbose=robustus.settings['verbosity'] >= 1)
 
         # move sources to a folder in order to use a clean name for installation
         src_dir = 'protobuf-%s' % requirement_specifier.version
@@ -29,11 +31,11 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.chdir(src_dir)
         os.mkdir(install_dir)
 
-        old_cflags = os.environ['CFLAGS']
-        os.environ['CFLAGS'] = '-fPIC'
-        retcode = run_shell(['./configure', '--disable-shared', '--prefix', install_dir],
+        retcode = run_shell(['./configure', '--disable-shared',
+                             'CFLAGS=-fPIC',
+                             'CXXFLAGS=-fPIC',
+                             '--prefix', install_dir],
                             verbose=robustus.settings['verbosity'] >= 1)
-        os.environ['CFLAGS'] = old_cflags
 
         if retcode:
             raise RequirementException('Failed to configure protobuf compilation')
