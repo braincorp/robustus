@@ -29,7 +29,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         os.chdir(src_dir)
         os.mkdir(install_dir)
 
-        subprocess.call(['./configure', '--prefix', install_dir])
+        subprocess.call(['./configure', '--disable-shared', '--prefix', install_dir])
         subprocess.call('make', shell=True)
         subprocess.call('make install', shell=True)
         os.chdir(robustus.cache)
