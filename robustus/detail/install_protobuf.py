@@ -9,7 +9,6 @@ from requirement import RequirementException
 from utility import unpack, safe_remove, run_shell, ln 
 import shutil
 import subprocess
-from robustus.detail.utility import safe_move
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
