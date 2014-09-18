@@ -132,8 +132,12 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     raise RequirementException('Failed to build ROS')
     
                 # resolve dependencies
-                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y --os=ubuntu:%s' %
-                                    (ver, _get_distribution()),
+                if sys.platform.startswith('darwin'):
+                    ros_os_param = ''
+                else:
+                    ros_os_param = '--os=ubuntu:%s' % _get_distribution()
+                retcode = run_shell(rosdep + ' install -r --from-paths src --ignore-src --rosdistro %s -y %s' %
+                                    (ver, ros_os_param),
                                     shell=True,
                                     verbose=robustus.settings['verbosity'] >= 1)
                 if retcode != 0:

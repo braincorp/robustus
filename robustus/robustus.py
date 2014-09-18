@@ -302,7 +302,7 @@ class Robustus(object):
         return ret_code
 
     def install_requirement(self, requirement_specifier, ignore_index, tag):
-        attempts = 2
+        attempts = self.settings['attempts']
         for a in range(attempts):
             result = self._install_requirement_attempt(requirement_specifier, ignore_index, tag, a)
             if result:
@@ -448,6 +448,8 @@ class Robustus(object):
         if tag is not None:
             logging.info('Installing with tag %s ignore_missing_refs=%s' %
                          (tag, str(self.settings['ignore_missing_refs'])))
+
+        self.settings['attempts'] = args.attempts
 
         # construct requirements list
         specifiers = args.packages
@@ -788,6 +790,12 @@ class Robustus(object):
         install_parser.add_argument('--no-remote-cache',
                                     action='store_true',
                                     help='Do not use remote cache for downloading of wheels')
+        install_parser.add_argument('--attempts',
+                                    action='store',
+                                    type=int,
+                                    help='Number of attempts to install a package.'
+                                         'Usefull when working with a bad network when network errors are possible',
+                                    default = 2)
         install_parser.set_defaults(func=Robustus.install)
 
         perrepo_parser = subparsers.add_parser('perrepo',
