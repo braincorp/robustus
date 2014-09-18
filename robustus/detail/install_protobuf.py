@@ -17,6 +17,16 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
 
     install_dir = os.path.join(robustus.cache, 'protobuf-%s' % requirement_specifier.version)
 
+    # try to download precompiled protobuf from the remote cache first
+    if not os.path.isdir(install_dir) and not ignore_index:
+        protobuf_archive = robustus.download_compiled_archive('protobuf', requirement_specifier.version)
+        if protobuf_archive is not None:
+            unpack(protobuf_archive)
+            logging.info('Initializing compiled protobuf')
+            # install into wheelhouse
+            if not os.path.exists(install_dir):
+                raise RequirementException("Failed to unpack precompiled protobuf archive")
+
     if not os.path.isdir(install_dir) and not ignore_index:
         archive_name = 'protobuf-%s.tar.gz' % requirement_specifier.version
         if os.path.exists(archive_name):
