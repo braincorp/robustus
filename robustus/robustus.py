@@ -335,15 +335,27 @@ class Robustus(object):
 
             # here we have to run via shell because requirement can be editable and then it will require
             # extra parsing to extract -e flag into separate argument.
-            if tag and requirement_specifier.editable:
+            if tag and requirement_specifier.editable and requirement_specifier.path is None:
                 logging.info('Overriding editable branch with tag %s' % tag)
                 original_url = requirement_specifier.url
                 requirement_specifier.override_branch(tag)
 
             ret_code = self._pip_install_requirement(requirement_specifier)
-
+            
+            # special case for path-based requirements - we need to call 'git checkout'
+            if ret_code == 0 and tag and requirement_specifier.editable and requirement_specifier.path is not None:
+                cwd = os.getcwd()
+                os.chdir(requirement_specifier.path)
+                logging.info('Checking out editable branch with tag %s' % tag)
+                local_checkout_code = os.system('git checkout %s' % tag)
+                os.chdir(cwd)
+                if local_checkout_code!=0 and self.settings['ignore_missing_refs']:
+                    logging.info('Tag or branch doesnt exist for this package, using default')
+                else:
+                    return False
+                
             if ret_code != 0 and tag and self.settings['ignore_missing_refs']:
-                logging.info('Tag or branch doesn\t exist for this package, using default')
+                logging.info('Tag or branch doesnt exist for this package, using default')
                 requirement_specifier.url = original_url
                 ret_code = self._pip_install_requirement(requirement_specifier)
 
