@@ -148,7 +148,7 @@ def test_install_with_tag(tmpdir):
     run_shell([robustus_executable, 'install', '--tag', 'test-tag', '-r', test_requirements])
  
     # Now check that robustus behaves as expected
-    assert os.path.exists(os.path.join(test_env, 'src', 'ardrone', 'test-tag'))
+    assert os.path.exists(os.path.join(test_env, 'src', 'robustus-test-repo', 'test-tag'))
 
 
 def test_install_with_branch_testing(tmpdir):
