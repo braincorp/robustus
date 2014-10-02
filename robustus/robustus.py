@@ -170,8 +170,10 @@ class Robustus(object):
             ln('/usr/lib/liblapack.so', lapack_so, True)
             os.environ['LAPACK'] = os.path.join(args.env, 'lib')
 
-        # readline must be come before everything else
-        run_shell([easy_install_executable, '-q', 'readline==6.2.2'], settings['verbosity'] >= 1)
+        if sys.platform.startswith('darwin'):
+            # on Mac, install readline before everything else
+            # Ubuntu already has readline in the system python library
+            run_shell([easy_install_executable, '-q', 'readline==6.2.2'], settings['verbosity'] >= 1)
 
         # compose settings file
         logging.info('Write .robustus config file')
