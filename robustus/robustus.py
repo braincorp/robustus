@@ -140,12 +140,12 @@ class Robustus(object):
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
 
         # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
-        run_shell([pip_executable, 'install', 'pip==1.4.1', '--upgrade'], settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'pip==1.5.6', '--upgrade'], settings['verbosity'] >= 1)
         # some sloppy maintained packages (like ROS) require outdated distribute for installation
         # and we need to install it before setuptools
-        run_shell([pip_executable, 'install', 'distribute==0.7.3'], settings['verbosity'] >= 1)
-        run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], settings['verbosity'] >= 1)
-        run_shell([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'], settings['verbosity'] >= 1)
+        #run_shell([pip_executable, 'install', 'distribute==0.7.3'], settings['verbosity'] >= 1)
+        #run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], settings['verbosity'] >= 1)
+        #run_shell([pip_executable, 'install', 'wheel==0.22.0', '--upgrade'], settings['verbosity'] >= 1)
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
