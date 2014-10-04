@@ -48,11 +48,11 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
     
         # Need links to shared libraries
-#         pyside_setup_dir = os.path.join(robustus.cache, 'pyside-setup-master')
-#         if not os.path.isdir(pyside_setup_dir) and not ignore_index:
-#             os.chdir(robustus.cache)
-#             pyside_setup_archive = robustus.download('pyside-setup', 'master')
-#             unpack(pyside_setup_archive)
+        pyside_setup_dir = os.path.join(robustus.cache, 'pyside-setup-master')
+        if not os.path.isdir(pyside_setup_dir) and not ignore_index:
+            os.chdir(robustus.cache)
+            pyside_setup_archive = robustus.download('pyside-setup', 'master')
+            unpack(pyside_setup_archive)
 #     
 #         cwd = os.getcwd()
 #         try:
