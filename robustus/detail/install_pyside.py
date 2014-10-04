@@ -17,7 +17,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     # If we are not on Travis, we only link to system-wide PySide (for now), and return
     # The reason we do this hack for now is to avoid installing qt sdk on bstem
     # So, on bstem and linux machines we will need to sudo apt-get install python-pyside
-    # On Mac machines: to be updated soon! 
+    raise RequirementException('Sorrrrry!')
     if 'TRAVIS' not in os.environ: 
         # Create links to system-wide PySide
         if sys.platform.startswith('darwin'):
