@@ -1,0 +1,1 @@
+This file exists only in test_git_accessor branch and is used to test accessor on non-master branch.
