@@ -17,7 +17,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     # If we are not on Travis, we only link to system-wide PySide (for now), and return
     # The reason we do this hack for now is to avoid installing qt sdk on bstem
     # So, on bstem and linux machines we will need to sudo apt-get install python-pyside
-    # On Mac machines: to be updated soon! 
     if 'TRAVIS' not in os.environ: 
         # Create links to system-wide PySide
         if sys.platform.startswith('darwin'):
@@ -48,15 +47,15 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         # Install through wheeling
         robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
     
-        # Need links to shared libraries
-        pyside_setup_dir = os.path.join(robustus.cache, 'pyside-setup-master')
-        if not os.path.isdir(pyside_setup_dir) and not ignore_index:
-            os.chdir(robustus.cache)
-            pyside_setup_archive = robustus.download('pyside-setup', 'master')
-            unpack(pyside_setup_archive)
-    
         cwd = os.getcwd()
         try:
+            # Need links to shared libraries
+            pyside_setup_dir = os.path.join(robustus.cache, 'pyside-setup-master')
+            if not os.path.isdir(pyside_setup_dir) and not ignore_index:
+                os.chdir(robustus.cache)
+                pyside_setup_archive = robustus.download('pyside-setup', 'master')
+                unpack(pyside_setup_archive)
+
             # run postinstall
             if not os.path.isdir(pyside_setup_dir):
                 raise RequirementException('can\'t find pyside-%s in robustus cache' % requirement_specifier.version)
