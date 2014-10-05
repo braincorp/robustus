@@ -143,9 +143,10 @@ class Robustus(object):
         run_shell([pip_executable, 'install', 'pip==1.5.6', '--upgrade'], settings['verbosity'] >= 1)
         run_shell([pip_executable, 'install', 'wheel==0.24.0', '--upgrade'], settings['verbosity'] >= 1)
         # some sloppy maintained packages (like ROS) require outdated distribute for installation
-        # and we need to install it before setuptools
-        #run_shell([pip_executable, 'install', 'distribute==0.7.3'], settings['verbosity'] >= 1)
-        #run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], settings['verbosity'] >= 1)
+        # and we need to install it before setuptools. For those there used to be the following lines here:
+        # run_shell([pip_executable, 'install', 'distribute==0.7.3'], settings['verbosity'] >= 1)
+        # run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], settings['verbosity'] >= 1)
+        # that are gone now, but please consider uncommenting those if new problems with ROS appear.
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
