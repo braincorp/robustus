@@ -470,7 +470,7 @@ class Robustus(object):
         specifiers = args.packages
         if args.editable is not None:
             specifiers += ['-e ' + r for r in args.editable]
-        requirements = expand_requirements_specifiers(specifiers)
+        requirements = expand_requirements_specifiers(specifiers, tag=tag)
         if args.requirement is not None:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file, tag,
