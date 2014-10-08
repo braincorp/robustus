@@ -470,7 +470,11 @@ class Robustus(object):
         specifiers = args.packages
         if args.editable is not None:
             specifiers += ['-e ' + r for r in args.editable]
-        requirements = expand_requirements_specifiers(specifiers)
+        # NOTE: If "tag=tag" is not passed to "expand_requirements_specifiers", then the
+        # "requirements.txt" files expanded will be those on the default/"master" branch
+        # (i.e., default kwarg "tag=None") not the branch/tag indicated by value of "tag".
+        requirements = expand_requirements_specifiers(specifiers, tag=tag,
+                                                      ignore_missing_refs=self.settings['ignore_missing_refs'])
         if args.requirement is not None:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file, tag,
