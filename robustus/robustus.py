@@ -20,6 +20,7 @@ from detail.utility import ln, run_shell, download, safe_remove, unpack, get_sin
 import urllib2
 # for doctests
 import detail
+import git
 
 
 class RobustusException(Exception):
@@ -496,10 +497,19 @@ class Robustus(object):
         if sys.platform.startswith('darwin'):
             os.environ['CFLAGS'] = '-Qunused-arguments'
             os.environ['CPPFLAGS'] = '-Qunused-arguments'
-
+        
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index, tag)
+
+        # Display the branch of the currently installed repos.
+        src_dirs = [os.path.join(os.getcwd(), 'venv', 'src', r.base_name().replace('_', '-')) for r in requirements if r.editable]
+        logging.info('{0} Running on the following branches: {0}'.format('='*10))
+        for directory in src_dirs:
+            _, name_of_repo = os.path.split(directory)
+            active_branch = git.Repo(directory).active_branch
+            logging.info('  %s: %s'%(name_of_repo, active_branch))
+        logging.info('='*56)
 
     def search_pkg_config_locations(self, locations=None):
         """
