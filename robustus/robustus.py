@@ -507,7 +507,10 @@ class Robustus(object):
         logging.info('{0} Running on the following branches: {0}'.format('='*10))
         for directory in src_dirs:
             _, name_of_repo = os.path.split(directory)
-            active_branch = git.Repo(directory).active_branch
+            try:
+                active_branch = git.Repo(directory).active_branch
+            except Exception as err:
+                active_branch = '<Could not find active branch - %s: %s>'%(err.__class__.__name__, err.message)
             logging.info('  %s: %s'%(name_of_repo, active_branch))
         logging.info('='*56)
 
