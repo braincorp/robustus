@@ -21,6 +21,7 @@ import urllib2
 # for doctests
 import detail
 import git
+import re
 
 
 class RobustusException(Exception):
@@ -510,7 +511,8 @@ class Robustus(object):
             _, name_of_repo = os.path.split(directory)
             try:
                 os.chdir(directory)
-                active_branch =subprocess.check_output('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', shell=True)
+                msg =subprocess.check_output('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', shell=True)
+                active_branch = re.search('origin/\w*', msg).group(0)
                 # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
             except Exception as err:
                 active_branch = '<Could not find active branch - %s: %s>'%(err.__class__.__name__, err.message)
