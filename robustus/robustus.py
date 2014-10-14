@@ -20,7 +20,6 @@ from detail.utility import ln, run_shell, download, safe_remove, unpack, get_sin
 import urllib2
 # for doctests
 import detail
-import git
 import re
 
 
