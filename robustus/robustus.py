@@ -505,13 +505,17 @@ class Robustus(object):
         # Display the branch of the currently installed repos.
         src_dirs = [os.path.join(os.getcwd(), 'venv', 'src', r.base_name().replace('_', '-')) for r in requirements if r.editable]
         logging.info('{0} Running on the following branches: {0}'.format('='*10))
+        old_dir = os.getcwd()
         for directory in src_dirs:
             _, name_of_repo = os.path.split(directory)
             try:
-                active_branch = git.Repo(directory).active_branch
+                os.chdir(directory)
+                active_branch =subprocess.check_output('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', shell=True)
+                # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
             except Exception as err:
                 active_branch = '<Could not find active branch - %s: %s>'%(err.__class__.__name__, err.message)
             logging.info('  %s: %s'%(name_of_repo, active_branch))
+        os.chdir(old_dir)
         logging.info('='*56)
 
     def search_pkg_config_locations(self, locations=None):
