@@ -20,6 +20,7 @@ from detail.utility import ln, run_shell, download, safe_remove, unpack, get_sin
 import urllib2
 # for doctests
 import detail
+import re
 
 
 class RobustusException(Exception):
@@ -349,7 +350,7 @@ class Robustus(object):
             if ret_code == 0 and tag and requirement_specifier.editable and requirement_specifier.path is not None:
                 cwd = os.getcwd()
                 os.chdir(requirement_specifier.path)
-                logging.info('Checking out editable branch with tag %s' % tag)
+                logging.info('Checking out editable branch in directory "%s" with tag %s' % (requirement_specifier.path, tag))
                 local_checkout_code = os.system('git checkout %s' % tag)
                 os.chdir(cwd)
                 if local_checkout_code!=0 and self.settings['ignore_missing_refs']:
@@ -496,10 +497,27 @@ class Robustus(object):
         if sys.platform.startswith('darwin'):
             os.environ['CFLAGS'] = '-Qunused-arguments'
             os.environ['CPPFLAGS'] = '-Qunused-arguments'
-
+        
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index, tag)
+
+        # Display the branch of the currently installed repos.
+        src_dirs = [os.path.join(os.getcwd(), 'venv', 'src', r.base_name().replace('_', '-')) for r in requirements if r.editable]
+        logging.info('{0} Running on the following branches: {0}'.format('='*10))
+        old_dir = os.getcwd()
+        for directory in src_dirs:
+            _, name_of_repo = os.path.split(directory)
+            try:
+                os.chdir(directory)
+                msg =subprocess.check_output('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', shell=True)
+                active_branch = re.search('origin/\w*', msg).group(0)
+                # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
+            except Exception as err:
+                active_branch = '<Could not find active branch - %s: %s>' % (err.__class__.__name__, err.message)
+            logging.info('  %s: %s' % (name_of_repo, active_branch))
+        os.chdir(old_dir)
+        logging.info('='*56)
 
     def search_pkg_config_locations(self, locations=None):
         """
