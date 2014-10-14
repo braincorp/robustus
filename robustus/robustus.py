@@ -498,8 +498,6 @@ class Robustus(object):
             os.environ['CFLAGS'] = '-Qunused-arguments'
             os.environ['CPPFLAGS'] = '-Qunused-arguments'
         
-        import pdb; pdb.set_trace()
-        
         # install
         for requirement_specifier in requirements:
             self.install_requirement(requirement_specifier, args.no_index, tag)
