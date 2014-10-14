@@ -14,9 +14,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from robustus.detail import Requirement, RequirementException, read_requirement_file
-from robustus.detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
-from robustus.detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
+from detail import Requirement, RequirementException, read_requirement_file
+from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
+from detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
 import urllib2
 # for doctests
 import detail
