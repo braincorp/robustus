@@ -14,9 +14,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from detail import Requirement, RequirementException, read_requirement_file
-from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
-from detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
+from robustus.detail import Requirement, RequirementException, read_requirement_file
+from robustus.detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
+from robustus.detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
 import urllib2
 # for doctests
 import detail
@@ -510,12 +510,12 @@ class Robustus(object):
             _, name_of_repo = os.path.split(directory)
             try:
                 os.chdir(directory)
-                msg = run_shell('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', output=True)
+                msg = run_shell('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', return_output=True)
                 active_branch = re.search('origin/\w*', msg).group(0)
                 # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
             except Exception as err:
-                active_branch = '<Could not find active branch - %s: %s>'%(err.__class__.__name__, err.message)
-            logging.info('  %s: %s'%(name_of_repo, active_branch))
+                active_branch = '<Could not find active branch - %s: %s>' % (err.__class__.__name__, err.message)
+            logging.info('  %s: %s' % (name_of_repo, active_branch))
         os.chdir(old_dir)
         logging.info('='*56)
 
