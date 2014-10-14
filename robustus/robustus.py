@@ -350,7 +350,7 @@ class Robustus(object):
             if ret_code == 0 and tag and requirement_specifier.editable and requirement_specifier.path is not None:
                 cwd = os.getcwd()
                 os.chdir(requirement_specifier.path)
-                logging.info('Checking out editable branch with tag %s' % tag)
+                logging.info('Checking out editable branch in directory "%s" with tag %s' % (requirement_specifier.path, tag))
                 local_checkout_code = os.system('git checkout %s' % tag)
                 os.chdir(cwd)
                 if local_checkout_code!=0 and self.settings['ignore_missing_refs']:
