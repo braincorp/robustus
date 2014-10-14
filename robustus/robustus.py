@@ -510,7 +510,7 @@ class Robustus(object):
             _, name_of_repo = os.path.split(directory)
             try:
                 os.chdir(directory)
-                msg =subprocess.check_output('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', shell=True)
+                msg = run_shell('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', output=True)
                 active_branch = re.search('origin/\w*', msg).group(0)
                 # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
             except Exception as err:
