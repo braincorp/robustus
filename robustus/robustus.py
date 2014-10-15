@@ -438,7 +438,6 @@ class Robustus(object):
 
     def _perrepo(self, cmd_str):
         verbose = self.settings['verbosity'] > 0
-        import pdb; pdb.set_trace()
         run_shell('cd "$(git rev-parse --show-toplevel)" && . "%s" && %s'
                   % (self._activate_path(), cmd_str), shell=True, verbose=verbose)
 
