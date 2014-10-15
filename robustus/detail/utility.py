@@ -244,7 +244,6 @@ def run_shell(command, verbose=False, return_output=False, **kwargs):
     Run command logging accordingly to the verbosity level.
     """
     logging.info('Running shell command: %s' % command)
-    import pdb; pdb.set_trace()
     # some problem using temporary files to capture output
     with OutputCapture(verbose) as oc, tempfile.TemporaryFile('w+') as stdout:
         # there is problem with PIPE in case of large output, so use logfile
