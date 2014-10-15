@@ -353,7 +353,14 @@ class Robustus(object):
                 cwd = os.getcwd()
                 os.chdir(requirement_specifier.path)
                 logging.info('Checking out editable branch in directory "%s" with tag %s' % (requirement_specifier.path, tag))
-                local_checkout_code = os.system('git checkout -b {0} origin/{0}'.format(tag))
+                
+                # Check if branch exists locally - should never be the case on Travis.
+                local_checkout_code = os.system('git checkout {0}'.format(tag)) \
+                    if subprocess.check_output('git branch --list %s' % tag, shell=True) else \
+                    os.system('git checkout -b {0} origin/{0}'.format(tag))
+                # Note: We are aware that "git checkout" alone will checkout a remote branch if none exists locally.  
+                # We are doing this because of a suspected bug in robustus.
+                
                 os.chdir(cwd)
                 if local_checkout_code!=0 and self.settings['ignore_missing_refs']:
                     logging.info('Tag or branch doesnt exist for this package, using default')
