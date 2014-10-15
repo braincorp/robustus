@@ -21,7 +21,9 @@ import urllib2
 # for doctests
 import detail
 import re
-import robustus
+
+
+__version__ = '0.0.2'
 
 
 class RobustusException(Exception):
@@ -462,7 +464,7 @@ class Robustus(object):
     def install(self, args):
         # grab index locations
         
-        logging.info('Starting Robustus install using robustus version %s' % robustus.__version__)
+        logging.info('Starting Robustus install using robustus version %s' % __version__)
         
         if args.find_links is not None:
             self.settings['find_links'] = args.find_links
