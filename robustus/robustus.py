@@ -415,7 +415,7 @@ class Robustus(object):
 
     def checkout(self, args):
         self._perrepo('git fetch origin')
-        self._perrepo('git checkout %s' % args.tag)
+        self._perrepo('git checkout -b {0} origin/{0}'.format(args.tag))
 
     def perrepo(self, args):
         # Use git to find the top-level working folder and run the command
