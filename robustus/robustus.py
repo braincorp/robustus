@@ -37,6 +37,7 @@ class Robustus(object):
     # FIXME: not so great to hardcode braincorp address here, but in other way
     # we need to modify other repositories use_repo.sh which use robustus
     default_package_locations = ['http://thirdparty-packages.braincorporation.net']
+    VERSION = 1.0
 
     def __init__(self, args):
         """
@@ -307,6 +308,7 @@ class Robustus(object):
 
     def install_requirement(self, requirement_specifier, ignore_index, tag):
         attempts = self.settings['attempts']
+        logging.info('='*30)  # Nicely separate installation of different packages in console output
         for a in range(attempts):
             result = self._install_requirement_attempt(requirement_specifier, ignore_index, tag, a)
             if result:
@@ -351,7 +353,7 @@ class Robustus(object):
                 cwd = os.getcwd()
                 os.chdir(requirement_specifier.path)
                 logging.info('Checking out editable branch in directory "%s" with tag %s' % (requirement_specifier.path, tag))
-                local_checkout_code = os.system('git checkout %s' % tag)
+                local_checkout_code = os.system('git checkout -b {0} origin/{0}'.format(tag))
                 os.chdir(cwd)
                 if local_checkout_code!=0 and self.settings['ignore_missing_refs']:
                     logging.info('Tag or branch doesnt exist for this package, using default')
@@ -452,6 +454,9 @@ class Robustus(object):
 
     def install(self, args):
         # grab index locations
+        
+        logging.info('Starting Robustus install using robustus version %s' % Robustus.VERSION)
+        
         if args.find_links is not None:
             self.settings['find_links'] = args.find_links
 
