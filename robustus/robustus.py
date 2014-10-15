@@ -21,6 +21,7 @@ import urllib2
 # for doctests
 import detail
 import re
+import robustus
 
 
 class RobustusException(Exception):
@@ -37,7 +38,6 @@ class Robustus(object):
     # FIXME: not so great to hardcode braincorp address here, but in other way
     # we need to modify other repositories use_repo.sh which use robustus
     default_package_locations = ['http://thirdparty-packages.braincorporation.net']
-    VERSION = 1.0
 
     def __init__(self, args):
         """
@@ -462,7 +462,7 @@ class Robustus(object):
     def install(self, args):
         # grab index locations
         
-        logging.info('Starting Robustus install using robustus version %s' % Robustus.VERSION)
+        logging.info('Starting Robustus install using robustus version %s' % robustus.__version__)
         
         if args.find_links is not None:
             self.settings['find_links'] = args.find_links
