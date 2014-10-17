@@ -529,6 +529,20 @@ class Robustus(object):
                 # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
             except Exception as err:
                 active_branch = '<Could not find active branch - %s: %s>' % (err.__class__.__name__, err.message)
+                
+                # Debug what the hell is wrong
+                commands_to_try = ['git status', 'git branch -r', 'git branch']
+                for cmd in commands_to_try:
+                    logging.info('-'*20)
+                    logging.info('Trying command "%s"...' % cmd)
+                    try: 
+                        msg = subprocess.check_output(cmd, shell=True)
+                        logging.info(msg)
+                        logging.info('...Success')
+                    except Exception as err:
+                        logging.info('... Failed with error - %s: %s' % (err.__class__.__name__, err.message))
+                logging.info('-'*20)
+                
             logging.info('  %s: %s' % (name_of_repo, active_branch))
         os.chdir(old_dir)
         logging.info('='*56)
