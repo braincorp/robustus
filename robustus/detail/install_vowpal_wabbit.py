@@ -1,5 +1,5 @@
 # =============================================================================
-# COPYRIGHT 2013 Brain Corporation.
+# COPYRIGHT 2014 Brain Corporation.
 # License under MIT license (see LICENSE file)
 # =============================================================================
 
