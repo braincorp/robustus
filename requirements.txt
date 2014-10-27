@@ -1,6 +1,4 @@
 mock==1.0.1
-wabbit_wappa==0.2.0
-vowpal_wabbit==7.7
 
 # Test functionality
 pep8==1.4.6
