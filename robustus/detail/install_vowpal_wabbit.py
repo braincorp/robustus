@@ -56,7 +56,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         if retcode:
             raise RequirementException('Failed to compile Vowpal Wabbit')
             
-        retcode = run_shell('cp vowpalwabbit/active_interactor vowpalwabbit/vw %s'%(install_dir, ), shell=True)
+        retcode = run_shell('cp vowpalwabbit/active_interactor vowpalwabbit/vw %s' % (install_dir, ), shell=True)
         if retcode:
             raise RequirementException('Failed install Vowpal Wabbit')
 
