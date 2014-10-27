@@ -72,4 +72,4 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     os.chdir(cwd)
 
     # now install python part
-    robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
+    #robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
