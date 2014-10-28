@@ -41,7 +41,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         shutil.rmtree(venv_install_folder)
 
     # copy to venv/bin
-    venv_bin_folder = os.path.join(venv_install_folder, "bin")
+    venv_bin_folder = os.path.join(robustus.env, "bin")
     shutil.copy(os.path.join(install_dir, 'active_interactor'), venv_bin_folder)
     shutil.copy(os.path.join(install_dir, 'vw'), venv_bin_folder)
 
