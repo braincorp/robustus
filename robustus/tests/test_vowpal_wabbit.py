@@ -10,6 +10,7 @@ from robustus.detail import perform_standard_test
 def test_vowpal_wabbit_installation(tmpdir):
     tmpdir.chdir()
 
+    # Test existence of module, and ability to call VW subprocess
     wabbit_imports = ['import wabbit_wappa']
 
     perform_standard_test('wabbit_wappa==0.2.0', wabbit_imports, [], [])
