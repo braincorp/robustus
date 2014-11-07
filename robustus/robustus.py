@@ -355,19 +355,31 @@ class Robustus(object):
                 cwd = os.getcwd()
                 os.chdir(requirement_specifier.path)
                 logging.info('Checking out editable branch in directory "%s" with tag %s' % (requirement_specifier.path, tag))
-                
+
                 # Check if branch exists locally - should never be the case on Travis.
-                local_checkout_code = os.system('git checkout {0}'.format(tag)) \
-                    if subprocess.check_output('git branch --list %s' % tag, shell=True) else \
-                    os.system('git checkout -b {0} origin/{0}'.format(tag))
-                # Note: We are aware that "git checkout" alone will checkout a remote branch if none exists locally.  
-                # We are doing this because of a suspected bug in robustus.
-                
+                if not subprocess.check_output('git branch --list %s' % tag, shell=True):
+                    '''
+                    If the branch doesn't exist locally, we fetch it.
+                    Note: it may seem more natural to do:
+                        
+                        git checkout -b {branch} origin/{branch}
+                    
+                    but that produces a git error:
+                    
+                        fatal: git checkout: updating paths is incompatible with switching branches.
+                        Did you intend to checkout 'origin/{branch}' which can not be resolved as commit?
+                    
+                    See http://stackoverflow.com/questions/945654/git-checkout-on-a-remote-branch-does-not-work
+                    '''
+                    os.system('git fetch origin {0}:{0}'.format(tag))
+
+                local_checkout_code = os.system('git checkout {0}'.format(tag))
                 os.chdir(cwd)
-                if local_checkout_code!=0 and self.settings['ignore_missing_refs']:
-                    logging.info('Tag or branch doesnt exist for this package, using default')
-                else:
-                    return False
+                if local_checkout_code!=0:
+                    if self.settings['ignore_missing_refs']:
+                        logging.info('Tag or branch doesnt exist for this package, using default')
+                    else:
+                        return False
                 
             if ret_code != 0 and tag and self.settings['ignore_missing_refs']:
                 logging.info('Tag or branch doesnt exist for this package, using default')
