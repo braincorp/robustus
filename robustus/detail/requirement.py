@@ -497,6 +497,7 @@ def _filter(string):
 
     return string
 
+
 def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None, tag=None, ignore_missing_refs = False):
     '''
     Nice dirty hack to have a clean workflow:)
@@ -562,10 +563,11 @@ def parse_visited(visited_sites):
             child = _filter(child)
 
             # If contains '==', '>=' or 'tar.gz', this is a package name
-            if not child in visited and \
-                child.find('==') != -1 or child.find('>=') != -1 or child.find('tar.gz') != -1:
-                package_from[child].add(current_node)
+            if not child in visited and child.find('==') != -1 or child.find('>=') != -1 \
+               or child.find('tar.gz') != -1:
+                    package_from[child].add(current_node)
     return package_from
+
 
 def generate_dependency_list(visited_sites):
     '''
@@ -590,10 +592,10 @@ def generate_dependency_list(visited_sites):
     for package in all_packages:
         if package.find('tar.gz') != -1:
             package_ = package
-            version  = "[^check package name^]"
+            version = "[^check package name^]"
         else:
             # Ignore > specifier
-            package_ = package.replace('>','=')
+            package_ = package.replace('>', '=')
             package_, version = package_.split('==')
 
         package_version_from[package_][version] = package_from_versioned[package]
@@ -608,7 +610,6 @@ def generate_dependency_list(visited_sites):
             for includer in package_version_from[key][version]:
                 result += '\t\t%s\n' %(includer)
     return result
-
 
 
 def remove_duplicate_requirements(requirements_list):
