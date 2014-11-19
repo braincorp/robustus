@@ -510,6 +510,7 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
     However we loosing wheeling capability - robustus will never get control
     back if pip started to process dependencies from egg_info.
     '''
+    print "GIT ACCESSOR ",  git_accessor
 
     if visited_sites is None:
         visited_sites = {}
@@ -534,10 +535,11 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
 
 
 def read_requirement_file(requirement_file, tag, ignore_missing_refs = False, **kwargs):
+    print kwargs
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
     return expand_requirements_specifiers(specifiers_list, tag=tag,
-                                          ignore_missing_refs = ignore_missing_refs, *kwargs)
+                                          ignore_missing_refs = ignore_missing_refs, **kwargs)
 
 
 def parse_visited(visited_sites):
