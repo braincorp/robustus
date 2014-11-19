@@ -534,7 +534,6 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
 
 
 def read_requirement_file(requirement_file, tag, ignore_missing_refs = False, **kwargs):
-    print kwargs
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
     return expand_requirements_specifiers(specifiers_list, tag=tag,
