@@ -9,7 +9,7 @@ import urlparse
 from git_accessor import GitAccessor
 import logging
 import urllib
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import string
 import hashlib
 
@@ -444,7 +444,8 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None,
                     ignore_missing_refs = ignore_missing_refs)
         else:
             req_file_content = _obtain_requirements_from_local_package(original_req)
-    
+        # why is req_file_content not cleaned before adding it to visited_sites?
+
         visited_sites[original_req.freeze()] = req_file_content
 
     if req_file_content is None:
@@ -462,7 +463,6 @@ def _filter_requirements_lines(lines):
     lines = [l for l in lines if not(l.isspace() or (len(l) < 2))]
     lines = [l for l in lines if not(l[0] == '#')]
     lines = [l.strip() for l in lines]
-      
     filtered_lines = []
     concatenation = ''
     for l in lines:
@@ -481,6 +481,21 @@ def _filter_requirements_lines(lines):
         filtered_lines.append(concatenation)
     return filtered_lines
 
+
+def _filter(string):
+    """
+    Remove comments and empty lines
+    :param string:
+    :return: cleaned string
+    """
+    string = string.strip()
+    if not len(string):
+        return ""
+    # Filter comment lines
+    if (string[0] == '#'):
+        return ""
+
+    return string
 
 def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited_sites = None, tag=None, ignore_missing_refs = False):
     '''
@@ -517,11 +532,83 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
     return requirements
 
 
-def read_requirement_file(requirement_file, tag, ignore_missing_refs = False):
+def read_requirement_file(requirement_file, tag, ignore_missing_refs = False, **kwargs):
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
     return expand_requirements_specifiers(specifiers_list, tag=tag,
-                                          ignore_missing_refs = ignore_missing_refs)
+                                          ignore_missing_refs = ignore_missing_refs, *kwargs)
+
+
+def parse_visited(visited_sites):
+    """
+    Parse <Dict<list>> visited_sites and determine which packages (+ versions) are included from which repos.
+
+    :param visited_sites: return by argument visited_sites dict from expand_requirements_specifiers()
+    :return: defaultdict<set> that maps packages to all repos that included them
+    """
+
+    check_list = visited_sites.keys()
+    visited = []
+
+    # Stores where package was included from
+    package_from = defaultdict(set)
+
+    while len(check_list):
+        current_node = check_list.pop(0)
+
+        visited.append(current_node)
+
+        for child in visited_sites[current_node]:
+            child = _filter(child)
+
+            # If contains '==', '>=' or 'tar.gz', this is a package name
+            if not child in visited and \
+                child.find('==') != -1 or child.find('>=') != -1 or child.find('tar.gz') != -1:
+                package_from[child].add(current_node)
+    return package_from
+
+def generate_dependency_list(visited_sites):
+    '''
+    Generate list of all packages that were included, and
+    where they were included from, specified by version.
+
+    TODO: ros_overlay is special - figure out how
+          to deal with this properly.
+
+    TODO: Ideally, to be installed versions should
+          be highlighted.
+    '''
+
+    package_from_versioned = parse_visited(visited_sites)
+
+    all_packages = package_from_versioned.keys()
+
+    package_version_from = defaultdict(dict)
+
+    result = ''
+
+    for package in all_packages:
+        if package.find('tar.gz') != -1:
+            package_ = package
+            version  = "[^check package name^]"
+        else:
+            # Ignore > specifier
+            package_ = package.replace('>','=')
+            package_, version = package_.split('==')
+
+        package_version_from[package_][version] = package_from_versioned[package]
+
+    # Print packages in alphabetical order (a-z)
+    sorted_packages = sorted(package_version_from.keys(), key=str.lower)
+
+    for key in sorted_packages:
+        result += '\n %s\n' % (key)
+        for version in package_version_from[key].keys():
+            result += '\t version %s, included from:\n' % (version)
+            for includer in package_version_from[key][version]:
+                result += '\t\t%s\n' %(includer)
+    return result
+
 
 
 def remove_duplicate_requirements(requirements_list):

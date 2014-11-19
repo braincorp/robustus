@@ -4,6 +4,7 @@
 # =============================================================================
 
 import argparse
+import collections
 import fnmatch
 import glob
 import importlib
@@ -15,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 from detail import Requirement, RequirementException, read_requirement_file
-from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers
+from detail.requirement import remove_duplicate_requirements, expand_requirements_specifiers, generate_dependency_list
 from detail.utility import ln, run_shell, download, safe_remove, unpack, get_single_char
 import urllib2
 # for doctests
@@ -500,15 +501,19 @@ class Robustus(object):
         # NOTE: If "tag=tag" is not passed to "expand_requirements_specifiers", then the
         # "requirements.txt" files expanded will be those on the default/"master" branch
         # (i.e., default kwarg "tag=None") not the branch/tag indicated by value of "tag".
-        requirements = expand_requirements_specifiers(specifiers, tag=tag,
+        visited_sites = collections.OrderedDict()
+        requirements = expand_requirements_specifiers(specifiers, tag=tag,visited_sites=visited_sites,
                                                       ignore_missing_refs=self.settings['ignore_missing_refs'])
         if args.requirement is not None:
             for requirement_file in args.requirement:
                 requirements += read_requirement_file(requirement_file, tag,
-                                                      ignore_missing_refs = self.settings['ignore_missing_refs'])
+                                                      ignore_missing_refs = self.settings['ignore_missing_refs'],
+                                                      visited_sites=visited_sites)
 
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
+
+        logging.info('This are all packages that were specified: \n' + generate_dependency_list(visited_sites))
 
         requirements = remove_duplicate_requirements(requirements)
 
