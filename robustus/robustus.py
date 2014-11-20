@@ -502,7 +502,7 @@ class Robustus(object):
         # "requirements.txt" files expanded will be those on the default/"master" branch
         # (i.e., default kwarg "tag=None") not the branch/tag indicated by value of "tag".
         visited_sites = collections.OrderedDict()
-        requirements = expand_requirements_specifiers(specifiers, tag=tag,visited_sites=visited_sites,
+        requirements = expand_requirements_specifiers(specifiers, tag=tag, visited_sites=visited_sites,
                                                       ignore_missing_refs=self.settings['ignore_missing_refs'])
         if args.requirement is not None:
             for requirement_file in args.requirement:
@@ -513,8 +513,6 @@ class Robustus(object):
         if len(requirements) == 0:
             raise RobustusException('You must give at least one requirement to install (see "robustus install -h")')
 
-        logging.info('This are all packages that were specified: \n' + generate_dependency_list(visited_sites))
-
         requirements = remove_duplicate_requirements(requirements)
 
         logging.info('Here are all packages cached in robustus:\n' +
@@ -522,6 +520,9 @@ class Robustus(object):
 
         logging.info('Here are all the requirements robustus is going to install:\n' +
                      '\n'.join([r.freeze() for r in requirements]) + '\n')
+
+        logging.info('These are all packages that were specified: \n' +
+                     generate_dependency_list(visited_sites, selected_requirements=requirements))
 
         # workaround for xcode 5.1 upgrade. clang fails if there are unused arguments
         # specified during installation of some packages (cython, pygame, etc).
