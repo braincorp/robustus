@@ -444,8 +444,8 @@ def do_requirement_recursion(git_accessor, original_req, visited_sites = None,
                     ignore_missing_refs = ignore_missing_refs)
         else:
             req_file_content = _obtain_requirements_from_local_package(original_req)
-        # why is req_file_content not cleaned before adding it to visited_sites?
 
+        # why is req_file_content not cleaned before adding it to visited_sites?
         visited_sites[original_req.freeze()] = req_file_content
 
     if req_file_content is None:
@@ -492,7 +492,7 @@ def _filter(string):
     if not len(string):
         return ""
     # Filter comment lines
-    if (string[0] == '#'):
+    if string[0] == '#':
         return ""
 
     return string
@@ -533,15 +533,16 @@ def expand_requirements_specifiers(specifiers_list, git_accessor = None, visited
     return requirements
 
 
-def read_requirement_file(requirement_file, tag, ignore_missing_refs = False, **kwargs):
+def read_requirement_file(requirement_file, tag, ignore_missing_refs = False, visited_sites=None):
     with open(requirement_file, 'r') as req_file:
         specifiers_list = req_file.readlines()
 
-    if 'visited_sites' in kwargs:
-        kwargs['visited_sites'][requirement_file] = specifiers_list
+    if visited_sites is not None:
+        visited_sites[requirement_file] = specifiers_list
 
     return expand_requirements_specifiers(specifiers_list, tag=tag,
-                                          ignore_missing_refs = ignore_missing_refs, **kwargs)
+                                          ignore_missing_refs=ignore_missing_refs,
+                                          visited_sites=visited_sites)
 
 
 def parse_visited(visited_sites):
