@@ -18,6 +18,7 @@ RequirementSpecifier = robustus.detail.requirement.RequirementSpecifier
 RequirementException = robustus.detail.requirement.RequirementException
 remove_duplicate_requirements = robustus.detail.requirement.remove_duplicate_requirements
 expand_requirements_specifiers = robustus.detail.requirement.expand_requirements_specifiers
+generate_dependency_list = robustus.detail.requirement.generate_dependency_list
 _filter_requirements_lines = robustus.detail.requirement._filter_requirements_lines
 
 
@@ -197,6 +198,50 @@ def test_requirement_recursion_do_not_fetch_twice():
     assert(reqs[4].freeze() == '-e git+https://github.com/company/my_package@master#egg=my_package')
  
     assert(mock_git._traverse_to_internal_count == 1)
+
+
+def test_dependency_list_generator():
+    from collections import OrderedDict
+
+    class MockGit(object):
+        def __init__(self):
+            self._traverse_to_internal_count = 0
+
+        def access(self, link, branch, path, ignore_missing_refs = False):
+            assert(path == 'requirements.txt')
+            assert(branch == 'master')
+            if link == 'https://github.com/company/my_package':
+                return ['-e git+https://github.com/company/my_package2@master#egg=my_package2',
+                        '-e git+https://github.com/company/my_package3@master#egg=my_package3',
+                        'numpy==1']
+            elif link == 'https://github.com/company/my_package2':
+                return ['-e git+https://github.com/company/inernal_package@master#egg=inernal_package',
+                        'scipy==12.1']
+            elif link == 'https://github.com/company/my_package3':
+                return ['-e git+https://github.com/company/inernal_package@master#egg=inernal_package']
+            elif link == 'https://github.com/company/inernal_package':
+                self._traverse_to_internal_count += 1
+                return ['numpy==1']
+            else:
+                raise Exception('Unknown path name %s' % link)
+
+    mock_git = MockGit()
+
+    visited_sites = OrderedDict()
+    reqs = do_requirement_recursion(mock_git, RequirementSpecifier(
+        specifier='-e git+https://github.com/company/my_package@master#egg=my_package'),
+        visited_sites=visited_sites)
+    reqs = remove_duplicate_requirements(reqs)
+
+    result = generate_dependency_list(visited_sites, selected_requirements=reqs)
+
+    expected = "\nnumpy\n\t [to be installed] version 1, included from:\n"
+    expected += "\t\t-e git+https://github.com/company/my_package@master#egg=my_package\n"
+    expected += "\t\t-e git+https://github.com/company/inernal_package@master#egg=inernal_package\n"
+    expected += "\nscipy\n\t [to be installed] version 12.1, included from:\n"
+    expected += "\t\t-e git+https://github.com/company/my_package2@master#egg=my_package2\n"
+
+    assert(result.strip() == expected.strip())
 
 
 def test_filter_requirements_lines():

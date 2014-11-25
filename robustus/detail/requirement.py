@@ -617,7 +617,7 @@ def generate_dependency_list(visited_sites, selected_requirements=None):
         marked_requirements = dict((r.name, r.version) for r in selected_requirements)
 
     for key in sorted_packages:
-        result += '\n %s\n' % (key)
+        result += '\n%s\n' % (key)
         for version in package_version_from[key].keys():
             marked_for_install = ""
             if key in marked_requirements and marked_requirements[key] == version:
