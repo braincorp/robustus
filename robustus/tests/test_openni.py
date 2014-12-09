@@ -8,10 +8,11 @@ from robustus.detail import perform_standard_test
 
 
 def test_openni_installation(tmpdir):
-    #tmpdir.chdir()
-    imports = ['from primesense import openni2']
-    dependencies = ['OpenNI==2.2-beta2']
-    perform_standard_test('primesense==2.2.0.30-5', imports, [], dependencies)
+    tmpdir.chdir()
+    # ok if sensor is not connected, should fail if library not found
+    exprs = ['from primesense import openni2', 'openni2.initialize()']
+    dependencies = ['OpenNI']
+    perform_standard_test('primesense==2.2.0.30-5', exprs, [], dependencies)
 
 
 if __name__ == '__main__':
