@@ -1,6 +1,7 @@
 import logging
 import os
 
+
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     robustus.install_through_wheeling(requirement_specifier, rob_file, ignore_index)
     # patch file, so it'll be able to find primesense shared library
