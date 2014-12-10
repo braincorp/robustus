@@ -11,7 +11,7 @@ import sys
 def test_openni_installation(tmpdir):
     tmpdir.chdir()
     # ok if sensor is not connected, should fail if library not found
-    exprs = []  #['from primesense import openni2\nopenni2.initialize()']
+    exprs = []  # ['from primesense import openni2\nopenni2.initialize()']
     if sys.platform == "linux" or sys.platform == "linux2":
         files = ['lib/libOpenNI2.so']
     else:
