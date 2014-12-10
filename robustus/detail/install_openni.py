@@ -90,4 +90,3 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
         subprocess.call(['sudo', 'udevadm', 'control', '--reload-rules'])
     else:
         raise RequirementException('can\'t find OpenNI2-%s in robustus cache' % requirement_specifier.version)
-

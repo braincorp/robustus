@@ -17,4 +17,3 @@ def test_openni_installation(tmpdir):
 
 if __name__ == '__main__':
     pytest.main('-s %s -n0' % __file__)
-
