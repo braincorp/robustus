@@ -8,6 +8,8 @@ install:
   - sudo apt-get install -y --force-yes libsdl-dev
   # sdformat dependencies
   - sudo apt-get install -y --force-yes libtinyxml-dev
+  # primesense dependencies
+  - sudo apt-get install -y libusb-1.0.0-dev libudev-dev graphviz doxygen
   # Gazebo dependencies
   - sudo apt-get install -y --force-yes build-essential libboost-all-dev pkg-config
   - sudo apt-get install -y --force-yes libprotoc-dev libprotobuf-dev protobuf-compiler libqt4-dev libtar-dev
