@@ -12,3 +12,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
     with open(file_to_patch, "wt") as f:
         f.write(content.replace("_default_dll_directories.append(\".\")",
                                 "_default_dll_directories += ['.\', os.path.join(os.path.dirname(sys.executable), os.path.pardir, 'lib')]"))
+    # remove cached file if exists
+    pyc = os.path.splitext(file_to_patch)[0] + '.pyc'
+    if os.path.exists(pyc):
+        os.remove(pyc)
