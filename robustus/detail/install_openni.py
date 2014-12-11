@@ -15,7 +15,7 @@ import subprocess
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     ni_install_dir = os.path.join(robustus.cache, 'OpenNI2')
     if requirement_specifier.version is not None:
-        ni_install_dir += requirement_specified.version
+        ni_install_dir += requirement_specifier.version
 
     def in_cache():
         return os.path.isfile(os.path.join(ni_install_dir, 'libOpenNI2.so'))
