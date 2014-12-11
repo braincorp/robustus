@@ -204,6 +204,8 @@ class RequirementSpecifier(Requirement):
         ('numpy', '1.7.2', False, True)
         >>> RequirementSpecifier()._from_specifier('   numpy == 1.7.2  ')
         ('numpy', '1.7.2', False, False)
+        >>> RequirementSpecifier()._from_specifier('OpenNI==2.2-beta2')
+        ('OpenNI', '2.2-beta2', False, False)
         >>> RequirementSpecifier()._from_specifier('   numpy >= 1.7.2  ')
         ('numpy', '1.7.2', True, False)
         >>> RequirementSpecifier()._from_specifier('   numpy == 1.7.2  # comment')
@@ -278,7 +280,7 @@ class RequirementSpecifier(Requirement):
             self.editable = False
         else:
             # check if requirement is in <package>[==|>=]<version> format
-            mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.]+))?\s*(?:#.*)?$', specifier)
+            mo = re.match(r'^([\w-]+)\s*(?:([>=]=)?\s*([\w.-]+))?\s*(?:#.*)?$', specifier)
             if mo is None:
                 raise RequirementException('invalid requirement specified "%s"' % specifier)
             self.name, self.version = mo.group(1, 3)
