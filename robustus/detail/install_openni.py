@@ -6,11 +6,10 @@
 import logging
 import os
 import platform
-from utility import run_shell, cp, fix_rpath
+from utility import run_shell, cp, fix_rpath, safe_remove
 from requirement import RequirementException
 import shutil
 import subprocess
-import sys
 
 
 def install(robustus, requirement_specifier, rob_file, ignore_index):
@@ -66,8 +65,8 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
             shutil.copytree(release_dir, ni_install_dir)
             cp(os.path.join(ni_clone_dir, 'Packaging/Linux/primesense-usb.rules'), ni_install_dir)
         finally:
-            safe_remove(ni_clone_dir)
             os.chdir(cwd)
+            safe_remove(ni_clone_dir)
 
     # copy files to venv
     if in_cache():
