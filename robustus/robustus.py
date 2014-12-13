@@ -263,10 +263,12 @@ class Robustus(object):
             if not installed:
                 logging.info('Wheel not found, downloading package')
                 cmd = [self.pip_executable, 'install', '--download', self.cache, requirement_specifier.freeze()]
+                if len(self.settings['allow_external']) > 0:
+                    cmd.append('--allow-external ' + ' '.join(self.settings['allow_external']))
                 if self.settings['allow_all_external']:
                     cmd.append('--allow-all-external')
-                if self.settings['allow_all_unverified']:
-                    cmd.append('--allow-all-unverified')
+                if len(self.settings['allow_unverified']) > 0:
+                    cmd.append('--allow-unverified ' + ' '.join(self.settings['allow_unverified']))
                 return_code = run_shell(cmd, verbose=self.settings['verbosity'] >= 2)
                 if return_code != 0:
                     raise RequirementException('pip failed to download requirement %s' % requirement_specifier.freeze())
@@ -486,8 +488,9 @@ class Robustus(object):
         self.settings['update_editables'] = args.update_editables
         self.settings['no_remote_cache'] = args.no_remote_cache
         self.settings['ignore_missing_refs'] = args.ignore_missing_refs
+        self.settings['allow_external'] = args.allow_external
         self.settings['allow_all_external'] = args.allow_all_external
-        self.settings['allow_all_unverified'] = args.allow_all_unverified
+        self.settings['allow_unverified'] = args.allow_unverified
 
         tag = args.tag
         if tag is not None:
@@ -881,12 +884,17 @@ class Robustus(object):
                                     help='Number of attempts to install a package.'
                                          'Usefull when working with a bad network when network errors are possible',
                                     default = 2)
+        install_parser.add_argument('--allow-external',
+                                    action='store',
+                                    nargs='+',
+                                    help='allow pip to install selected external packages')
         install_parser.add_argument('--allow-all-external',
                                     action='store_true',
                                     help='allow pip to install external packages')
-        install_parser.add_argument('--allow-all-unverified',
-                                    action='store_true',
-                                    help='allow pip to install unverified packages')
+        install_parser.add_argument('--allow-unverified',
+                                    action='store',
+                                    nargs='+',
+                                    help='allow pip to install selected unverified packages')
         install_parser.set_defaults(func=Robustus.install)
 
         perrepo_parser = subparsers.add_parser('perrepo',
