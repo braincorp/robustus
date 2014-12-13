@@ -887,6 +887,7 @@ class Robustus(object):
         install_parser.add_argument('--allow-external',
                                     action='store',
                                     nargs='+',
+                                    default=[],
                                     help='allow pip to install selected external packages')
         install_parser.add_argument('--allow-all-external',
                                     action='store_true',
@@ -894,6 +895,7 @@ class Robustus(object):
         install_parser.add_argument('--allow-unverified',
                                     action='store',
                                     nargs='+',
+                                    default=[],
                                     help='allow pip to install selected unverified packages')
         install_parser.set_defaults(func=Robustus.install)
 
