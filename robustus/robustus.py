@@ -264,11 +264,11 @@ class Robustus(object):
                 logging.info('Wheel not found, downloading package')
                 cmd = [self.pip_executable, 'install', '--download', self.cache, requirement_specifier.freeze()]
                 if len(self.settings['allow_external']) > 0:
-                    cmd += ['--allow-external '] + self.settings['allow_external']
+                    cmd += ['--allow-external'] + self.settings['allow_external']
                 if self.settings['allow_all_external']:
                     cmd.append('--allow-all-external')
                 if len(self.settings['allow_unverified']) > 0:
-                    cmd += ['--allow-unverified '] + self.settings['allow_unverified']
+                    cmd += ['--allow-unverified'] + self.settings['allow_unverified']
                 return_code = run_shell(cmd, verbose=self.settings['verbosity'] >= 2)
                 if return_code != 0:
                     raise RequirementException('pip failed to download requirement %s' % requirement_specifier.freeze())
