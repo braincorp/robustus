@@ -10,8 +10,8 @@ from robustus.detail import perform_standard_test
 def test_pyaudio_installation(tmpdir):
     tmpdir.chdir()
     exprs = ['import pyaudio']
-    options = ['--allow-external', 'PyAudio', '--allow-unverified', 'PyAudio']
-    perform_standard_test('PyAudio==0.2.8', exprs, [], [], options=options)
+    install_options = ['--allow-external', 'PyAudio', '--allow-unverified', 'PyAudio']
+    perform_standard_test('PyAudio==0.2.8', exprs, [], [], install_options=install_options)
 
 
 if __name__ == '__main__':
