@@ -5,6 +5,7 @@
 
 import argparse
 import collections
+import distutils.core
 import fnmatch
 import glob
 import importlib
@@ -587,7 +588,7 @@ class Robustus(object):
 
         return list(pkg_files_dirs)
 
-    def install_cmake_package(self, requirement_specifier, cmake_options, ignore_index):
+    def install_cmake_package(self, requirement_specifier, cmake_options, ignore_index, clone_url=None, install_dir=None):
         """
         Build and install cmake package into cache & copy it to env.
         """
@@ -600,13 +601,34 @@ class Robustus(object):
         if not in_cache() and not ignore_index:
             cwd = os.getcwd()
             archive = None
-            archive_name = None
+            download_dir = None
             try:
-                archive = self.download(requirement_specifier.name, requirement_specifier.version)
-                archive_name = unpack(archive)
+                if clone_url is not None:
+                    retcode = run_shell(['git', 'clone', clone_url],
+                                        verbose=self.settings['verbosity'] >= 1)
+                    if retcode != 0:
+                        raise RequirementException('Failed to clone %s' % clone_url)
+                    download_dir = os.path.abspath(requirement_specifier.name)
+                    os.chdir(download_dir)
+
+                    # checkout specific version (branch)
+                    if requirement_specifier.version is not None:
+                        retcode = run_shell(['git', 'checkout', '-b', requirement_specifier.version,
+                                             '--track', 'origin/%s' % requirement_specifier.version],
+                                            verbose=self.settings['verbosity'] >= 1)
+                        if retcode != 0:
+                            raise RequirementException('Failed to checkout branch %s in %s' % (requirement_specifier.version,
+                                                                                               requirement_specifier.name))
+
+                    # update submodules if any
+                    run_shell(['git', 'submodule', 'update', '--init'],
+                              verbose=self.settings['verbosity'] >= 1)
+                else:
+                    archive = self.download(requirement_specifier.name, requirement_specifier.version)
+                    download_dir = unpack(archive)
+                    os.chdir(download_dir)
 
                 logging.info('Building %s' % requirement_specifier.name)
-                os.chdir(archive_name)
                 env = os.environ.copy()
                 env['PKG_CONFIG_PATH'] = ','.join(self.search_pkg_config_locations())
                 retcode = run_shell(['cmake', '.', '-DCMAKE_INSTALL_PREFIX=%s' % pkg_cache_dir] + cmake_options,
@@ -622,20 +644,27 @@ class Robustus(object):
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('%s "make install" failed' % requirement_specifier.name)
+            except:
+                safe_remove(pkg_cache_dir)
+                raise
             finally:
-                safe_remove(archive)
-                safe_remove(archive_name)
                 os.chdir(cwd)
+                safe_remove(archive)
+                safe_remove(download_dir)
 
         pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
                                                                 requirement_specifier.version))
         if in_cache():
-            # install gazebo somewhere into venv
-            if os.path.exists(pkg_install_dir):
-                shutil.rmtree(pkg_install_dir)
-            shutil.copytree(pkg_cache_dir, pkg_install_dir)
+            if install_dir is not None:
+                if os.path.exists(install_dir):
+                    shutil.rmtree(install_dir)
+                shutil.copytree(pkg_cache_dir, install_dir)
+            else:
+                # install directly into venv
+                install_dir = self.env
+                distutils.dir_util.copy_tree(pkg_cache_dir, install_dir, update=1)
         else:
-            raise RequirementException('can\'t find gazebo-%s in robustus cache' % requirement_specifier.version)
+            raise RequirementException('can\'t find %s-%s in robustus cache' % (requirement_specifier.name, requirement_specifier.version))
 
         return pkg_install_dir
 

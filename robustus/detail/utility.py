@@ -278,11 +278,11 @@ def run_shell(command, verbose=False, return_output=False, **kwargs):
     return p.returncode
 
 
-def check_run_shell(command, verbose=False, **kwargs):
+def check_run_shell(command, verbose=False, return_output=False, **kwargs):
     """
     run_shell with provided args, on failure raise subprocess.CalledProcessError
     """
-    ret = run_shell(command, verbose, **kwargs)
+    ret = run_shell(command, verbose, return_output, **kwargs)
     if ret != 0:
         raise subprocess.CalledProcessError(ret, command)
 
