@@ -652,8 +652,6 @@ class Robustus(object):
                 safe_remove(archive)
                 safe_remove(download_dir)
 
-        pkg_install_dir = os.path.join(self.env, 'lib/%s-%s' % (requirement_specifier.name,
-                                                                requirement_specifier.version))
         if in_cache():
             if install_dir is not None:
                 if os.path.exists(install_dir):
@@ -662,11 +660,12 @@ class Robustus(object):
             else:
                 # install directly into venv
                 install_dir = self.env
-                distutils.dir_util.copy_tree(pkg_cache_dir, install_dir, update=1)
+                distutils.dir_util._path_created = {}
+                distutils.dir_util.copy_tree(pkg_cache_dir, install_dir)
         else:
             raise RequirementException('can\'t find %s-%s in robustus cache' % (requirement_specifier.name, requirement_specifier.version))
 
-        return pkg_install_dir
+        return install_dir
 
     def freeze(self, args):
         for requirement in self.cached_packages:
