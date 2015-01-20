@@ -8,6 +8,8 @@ import os
 from robustus.detail import perform_standard_test
 
 
+@pytest.mark.skipif("'TRAVIS' in os.environ",
+                    reason="travis doesn't have access to brainos_core")
 def test_brainos_core_installation(tmpdir):
     tmpdir.chdir()
     perform_standard_test('brainos_core==develop', ['import brainos2'], ['bin/brainosd'])
