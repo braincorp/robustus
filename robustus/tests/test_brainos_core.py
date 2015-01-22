@@ -9,10 +9,10 @@ from robustus.detail import perform_standard_test
 
 
 @pytest.mark.skipif("'TRAVIS' in os.environ",
-                    reason="passes locally, fails on travis, but we most likely won't need it ever")
-def test_sdformat_installation(tmpdir):
+                    reason="travis doesn't have access to brainos_core")
+def test_brainos_core_installation(tmpdir):
     tmpdir.chdir()
-    perform_standard_test('sdformat==1.4.11', [], ['lib/x86_64-linux-gnu/libsdformat.so'])
+    perform_standard_test('brainos_core==develop', ['import brainos2'], ['bin/brainosd'])
 
 if __name__ == '__main__':
     pytest.main('-s %s -n0' % os.path.abspath(__file__))
