@@ -553,7 +553,7 @@ class Robustus(object):
                 active_branch = re.search('origin/\w*', msg).group(0)
                 # http://stackoverflow.com/questions/6657690/python-getoutput-equivalent-in-subprocess
             except Exception as err:
-                active_branch = '<Could not find active branch - %s: %s>' % (err.__class__.__name__, err.message)
+                active_branch = '<Could not find active branch - %s: %s>. Branch out of date. Try running git pull' % (err.__class__.__name__, err.message)
                 
                 # Debug what the hell is wrong
                 commands_to_try = ['git status', 'git branch -r', 'git branch']
