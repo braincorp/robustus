@@ -10,7 +10,9 @@ from robustus.detail import run_shell, RequirementException, fix_rpath
 def install(robustus, requirement_specifier, rob_file, ignore_index):
     cmake_options = []
     if sys.platform.startswith('linux'):
-        cmake_options = ['-DCMAKE_C_COMPILER=/usr/bin/gcc-4.9', '-DCMAKE_CXX_COMPILER=/usr/bin/g++-4.9']
+        cmake_options = ['-DCMAKE_C_COMPILER=/usr/bin/gcc-4.9',
+                         '-DCMAKE_CXX_COMPILER=/usr/bin/g++-4.9',
+                         '-DBRAINOS_BUILD_NODES=OFF']
 
     robustus.install_cmake_package(requirement_specifier,
                                    cmake_options,
