@@ -10,6 +10,7 @@ import fnmatch
 import glob
 import importlib
 import logging
+import multiprocessing
 import os
 import platform
 import shutil
@@ -637,7 +638,10 @@ class Robustus(object):
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('%s configure failed' % requirement_specifier.name)
-                retcode = run_shell(['make', '-j4'],
+
+                # on bStem we can build only in single thread, but bStem has 2 cores, thus
+                # we are using this weird formula to determine number of threads for make
+                retcode = run_shell(['make', '-j%i' % max(multiprocessing.cpu_count() / 2, 1)],
                                     verbose=self.settings['verbosity'] >= 1)
                 if retcode != 0:
                     raise RequirementException('%s build failed' % requirement_specifier.name)
