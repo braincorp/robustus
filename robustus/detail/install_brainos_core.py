@@ -19,9 +19,6 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                                    ignore_index,
                                    clone_url='git@github.com:braincorp/brainos_core.git')
 
-    # patch rpaths
-    fix_rpath(robustus, robustus.env, os.path.join(robustus.env, 'bin/brainosd'), os.path.join(robustus.env, 'lib'))
-
     # install python part of brainos_core
     url = 'git+ssh://git@github.com/braincorp/brainos_core.git'
     if requirement_specifier.version is not None:
