@@ -147,7 +147,7 @@ class Robustus(object):
         # we store all packages in binary wheel somewhere on the PC to avoid recompilation of packages
 
         # wheel needs pip>=1.4, setuptools>=0.8 and wheel packages for wheeling
-        run_shell([pip_executable, 'install', 'pip==1.5.6', '--upgrade'], settings['verbosity'] >= 1)
+        run_shell([pip_executable, 'install', 'pip==6.1.1', '--upgrade'], settings['verbosity'] >= 1)
         run_shell([pip_executable, 'install', 'wheel==0.24.0', '--upgrade'], settings['verbosity'] >= 1)
         # some sloppy maintained packages (like ROS) require outdated distribute for installation
         # and we need to install it before setuptools. For those there used to be the following lines here:
@@ -217,10 +217,8 @@ class Robustus(object):
         logging.info('Attempting to install package from remote wheel')
         for find_link in self.settings['find_links']:
             find_links_url = find_link + '/python-wheels/index.html',  # TEMPORARY.
-            dtemp_path = tempfile.mkdtemp()
             return_code = run_shell([self.pip_executable,
                                      'install',
-                                     '--download-cache=%s' % dtemp_path,
                                      '--no-index',
                                      '--use-wheel',
                                      '--find-links=%s' % find_links_url,
@@ -242,7 +240,6 @@ class Robustus(object):
             else:
                 logging.info('pip failed to install requirement %s from remote wheels cache %s.'
                              % (requirement_specifier.freeze(), find_links_url))
-                safe_remove(dtemp_path)
 
         return False
 
