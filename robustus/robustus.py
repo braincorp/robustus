@@ -221,12 +221,12 @@ class Robustus(object):
             find_links_url = find_link + '/python-wheels/index.html',  # TEMPORARY.
             dtemp_path = tempfile.mkdtemp()
             return_code = run_shell([self.pip_executable,
-                                     '--trusted-host', find_link,
                                      'install',
                                      '--download-cache=%s' % dtemp_path,
                                      '--no-index',
                                      '--use-wheel',
                                      '--find-links=%s' % find_links_url,
+                                     '--trusted-host=%s' % find_link.split("http://")[1],
                                      requirement_specifier.freeze()],
                                     verbose=self.settings['verbosity'] >= 2)
             if return_code == 0:
