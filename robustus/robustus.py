@@ -154,6 +154,8 @@ class Robustus(object):
         # run_shell([pip_executable, 'install', 'distribute==0.7.3'], settings['verbosity'] >= 1)
         # run_shell([pip_executable, 'install', 'setuptools==1.1.6', '--upgrade'], settings['verbosity'] >= 1)
         # that are gone now, but please consider uncommenting those if new problems with ROS appear.
+        # Currently we upgrade setuptools to the moder version:
+        run_shell([pip_executable, 'install', 'setuptools==15.2', '--upgrade'], settings['verbosity'] >= 1)
 
         # linking BLAS and LAPACK libraries
         if os.path.isfile('/usr/lib64/libblas.so.3'):
@@ -224,7 +226,7 @@ class Robustus(object):
                                      '--no-index',
                                      '--use-wheel',
                                      '--find-links=%s' % find_links_url,
-                                     '--trusted-host %s' % find_link,
+                                     '--trusted-host=%s' % find_link.split("http://")[1],
                                      requirement_specifier.freeze()],
                                     verbose=self.settings['verbosity'] >= 2)
             if return_code == 0:
