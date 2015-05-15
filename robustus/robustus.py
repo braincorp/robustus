@@ -217,11 +217,14 @@ class Robustus(object):
         logging.info('Attempting to install package from remote wheel')
         for find_link in self.settings['find_links']:
             find_links_url = find_link + '/python-wheels/index.html',  # TEMPORARY.
+            dtemp_path = tempfile.mkdtemp()
             return_code = run_shell([self.pip_executable,
                                      'install',
+                                     '--download-cache=%s' % dtemp_path,
                                      '--no-index',
                                      '--use-wheel',
                                      '--find-links=%s' % find_links_url,
+                                     '--trusted-host %s' % find_link,
                                      requirement_specifier.freeze()],
                                     verbose=self.settings['verbosity'] >= 2)
             if return_code == 0:
@@ -240,6 +243,7 @@ class Robustus(object):
             else:
                 logging.info('pip failed to install requirement %s from remote wheels cache %s.'
                              % (requirement_specifier.freeze(), find_links_url))
+                safe_remove(dtemp_path)
 
         return False
 
