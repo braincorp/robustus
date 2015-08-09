@@ -18,6 +18,7 @@ install:
   - sudo apt-get install -y --force-yes libgts-dev libltdl3-dev playerc++ libxml2-dev libfreeimage-dev freeglut3-dev
   - sudo apt-get install -y --force-yes python-gst0.10 python-cairo python-gobject-2
   - sudo apt-get install -y --force-yes portaudio19-dev
+  - sudo apt-get install -y --force-yes python-pyside
   - source use_repo.sh
 script:
   - "./test"
