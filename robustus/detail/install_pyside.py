@@ -37,4 +37,7 @@ def install(robustus, requirement_specifier, rob_file, ignore_index):
                     os.path.join(robustus.env, 'lib/python2.7/site-packages/PySide'), force = True)
                 break
         else:
-            raise RequirementException('System-wide PySide is missing, run: sudo apt-get install python-pyside')
+            raise RequirementException('System-wide PySide is missing, run: sudo apt-get install python-pyside'
+                                       'Recently we removed pyside compilation on travis because it just takes 25 minutes'
+                                       'and does not lead to any benefits.'
+                                       'Please add "- sudo apt-get install -y --force-yes python-pyside" to your .travis.yml')
