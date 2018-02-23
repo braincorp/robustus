@@ -555,7 +555,7 @@ class Robustus(object):
                 os.chdir(directory)
                 msg =subprocess.check_output('git branch -rv --abbrev=40|grep $(git rev-parse HEAD)', shell=True)
                 try:
-                    active_branch |= re.search('^\\* master', msg).group(0)
+                    active_branch |= re.search('\\*\w+master', msg).group(0)
                 except Exception as err:
                     # Try a second option
                     pass
